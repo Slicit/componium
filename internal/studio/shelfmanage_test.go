@@ -262,3 +262,58 @@ func TestAStudioWithOneRigFileSaysThereIsNoShelf(t *testing.T) {
 		t.Errorf("could not export the only rig: %s", w.Body.String())
 	}
 }
+
+func TestTurningAnInstrumentVirtualDropsItsAddress(t *testing.T) {
+	/* Found on a real shelf. A rig copied to be the fully virtual one kept
+	 * `addr = "192.168.1.75:5570"` on three instruments, because switching a
+	 * driver dropped the sACN fields and never the address.
+	 *
+	 * Harmless to the code, which ignores it, and not harmless to a person: a
+	 * rig that has nothing plugged in still named a board, and every rig
+	 * copied from it inherited the claim. The neighbouring rule already said
+	 * fields belonging to a driver an instrument no longer uses are dropped.
+	 */
+	s, rigPath := withRig(t)
+
+	// The rig starts with a cip instrument at an address.
+	if w := do(t, s, "PUT", "/api/rig", `{"name":"bench","instruments":[
+		{"id":"light.ambient","kind":"light","driver":"cip",
+		 "addr":"192.168.1.75:5570","latency":0,"position":[0,1,0]}]}`); w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	if text, _ := os.ReadFile(rigPath); !strings.Contains(string(text), "192.168.1.75") {
+		t.Fatalf("the address was not written in the first place:\n%s", text)
+	}
+
+	// Turned virtual, it should not still name a board.
+	if w := do(t, s, "PUT", "/api/rig", `{"name":"bench","instruments":[
+		{"id":"light.ambient","kind":"light","driver":"virtual",
+		 "addr":"192.168.1.75:5570","latency":0,"position":[0,1,0]}]}`); w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	text, err := os.ReadFile(rigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(text), "192.168.1.75") {
+		t.Errorf("a virtual instrument kept a board address:\n%s", text)
+	}
+}
+
+func TestARealInstrumentKeepsItsAddress(t *testing.T) {
+	// The other half, and the one that would be a disaster to get wrong: a rig
+	// that quietly forgot where its boards are.
+	s, rigPath := withRig(t)
+	if w := do(t, s, "PUT", "/api/rig", `{"name":"bench","instruments":[
+		{"id":"light.ambient","kind":"light","driver":"cip",
+		 "addr":"192.168.1.75:5570","latency":0,"position":[0,1,0]}]}`); w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	text, err := os.ReadFile(rigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(text), "192.168.1.75:5570") {
+		t.Errorf("a cip instrument lost its address:\n%s", text)
+	}
+}

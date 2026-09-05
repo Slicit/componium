@@ -80,6 +80,13 @@ func (s *Server) handleRigSave(w http.ResponseWriter, r *http.Request) {
 		if out.Driver != "sacn" {
 			out.Universe, out.Start, out.Mode = 0, 0, ""
 		}
+		if out.Driver == "virtual" {
+			// Same rule, and it was missing. Turning an instrument virtual left
+			// the board address on it, so a rig with nothing plugged in still
+			// named a board: read by a person as hardware this rig talks to,
+			// and copied onward into every rig made from it.
+			out.Addr = ""
+		}
 		next.Instruments = append(next.Instruments, out)
 	}
 
