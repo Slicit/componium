@@ -317,3 +317,92 @@ func TestARealInstrumentKeepsItsAddress(t *testing.T) {
 		t.Errorf("a cip instrument lost its address:\n%s", text)
 	}
 }
+
+func TestARigCanBeRenamed(t *testing.T) {
+	// Doing it by hand was copy, select, delete, which is three chances to end
+	// up with two rigs or none.
+	s, shelf := onShelf(t, map[string]string{"demo-rig.toml": trimRig})
+
+	w := do(t, s, "POST", "/api/rigs/rename", `{"name":"demo-rig","to":"esp32-rig"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	if got := shelfFrom(t, w.Body.Bytes()); len(got) != 1 || got[0] != "esp32-rig.toml" {
+		t.Errorf("the shelf holds %v", got)
+	}
+	if _, err := os.Stat(filepath.Join(shelf, "demo-rig.toml")); err == nil {
+		t.Error("the old name is still there, so this was a copy")
+	}
+}
+
+func TestRenamingTheRigInUseKeepsItInUse(t *testing.T) {
+	/* The selection is a separate file, and a rename that left it pointing at
+	 * a name that no longer exists falls back to whatever is first
+	 * alphabetically. The studio would come up on a different rig than the one
+	 * it was on, for no reason anybody could see. */
+	s, _ := onShelf(t, map[string]string{
+		"aaa-other.toml": trimRig, "demo-rig.toml": trimRig,
+	})
+	do(t, s, "POST", "/api/rigs", `{"rig":"demo-rig.toml"}`)
+
+	w := do(t, s, "POST", "/api/rigs/rename", `{"name":"demo-rig","to":"esp32-rig"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	var got struct {
+		Current string `json:"current"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	// aaa-other.toml sorts first, and is what a fallback would have chosen.
+	if got.Current != "esp32-rig.toml" {
+		t.Errorf("the studio moved to %s", got.Current)
+	}
+}
+
+func TestRenamingOntoAnotherRigIsRefused(t *testing.T) {
+	// It would delete that rig, which is not what the word means.
+	s, shelf := onShelf(t, map[string]string{
+		"demo-rig.toml": trimRig, "bench.toml": trimRig,
+	})
+	w := do(t, s, "POST", "/api/rigs/rename", `{"name":"demo-rig","to":"bench"}`)
+	if w.Code != http.StatusConflict {
+		t.Errorf("said %d: %s", w.Code, w.Body.String())
+	}
+	for _, name := range []string{"demo-rig.toml", "bench.toml"} {
+		if _, err := os.Stat(filepath.Join(shelf, name)); err != nil {
+			t.Errorf("%s is gone", name)
+		}
+	}
+}
+
+func TestARenameCannotEscapeTheShelf(t *testing.T) {
+	// Both names are names, and a rename is a write with a path on each side.
+	s, _ := onShelf(t, map[string]string{"demo-rig.toml": trimRig})
+	for _, body := range []string{
+		`{"name":"demo-rig","to":"../escaped"}`,
+		`{"name":"../demo-rig","to":"fine"}`,
+		`{"name":"demo-rig","to":""}`,
+	} {
+		if w := do(t, s, "POST", "/api/rigs/rename", body); w.Code == http.StatusOK {
+			t.Errorf("accepted %s", body)
+		}
+	}
+}
+
+func TestRenamingARigLeavesWhatItCallsItselfAlone(t *testing.T) {
+	/* Two different names, both shown: the shelf lists file names and the
+	 * devices page shows what the rig calls itself. Rewriting the second from
+	 * here would quietly edit a field somebody chose. */
+	s, shelf := onShelf(t, map[string]string{"demo-rig.toml": trimRig})
+	do(t, s, "POST", "/api/rigs/rename", `{"name":"demo-rig","to":"esp32-rig"}`)
+
+	text, err := os.ReadFile(filepath.Join(shelf, "esp32-rig.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(text), `name = "bench"`) {
+		t.Errorf("the rig's own name was changed:\n%s", text)
+	}
+}

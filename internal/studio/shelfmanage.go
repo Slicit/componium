@@ -343,3 +343,75 @@ func (s *Server) sayShelf(w http.ResponseWriter) {
 		"rigs":    files,
 	})
 }
+
+// handleRigRename changes what a rig is called on the shelf.
+//
+// The file, not the name inside it. Those are two different names and both are
+// shown: the shelf lists file names, and the devices page shows what the rig
+// calls itself. Rewriting the second one from here would quietly edit a field
+// somebody chose, so this moves the file and leaves the contents alone.
+//
+// The selection follows. A rename that left `.chosen` pointing at a name that
+// no longer exists would fall back to whatever is first alphabetically, so the
+// studio would come up on a different rig than the one it was on, for no
+// reason anybody could see.
+func (s *Server) handleRigRename(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodPut {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var want struct {
+		Name string `json:"name"`
+		To   string `json:"to"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&want); err != nil {
+		http.Error(w, "could not read that: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.rigDir == "" {
+		http.Error(w, "this studio was started with a single rig file rather "+
+			"than a directory, so there is nothing to rename it within",
+			http.StatusConflict)
+		return
+	}
+	for _, name := range []string{want.Name, want.To} {
+		if problem := rigNameProblem(name); problem != "" {
+			http.Error(w, problem, http.StatusBadRequest)
+			return
+		}
+	}
+
+	from, to := rigFileName(want.Name), rigFileName(want.To)
+	if from == to {
+		s.sayShelf(w)
+		return
+	}
+	if _, err := os.Stat(filepath.Join(s.rigDir, to)); err == nil {
+		// Refused rather than merged. Renaming onto an existing rig would
+		// delete that rig, which is not what the word means.
+		http.Error(w, to+" is already on the shelf", http.StatusConflict)
+		return
+	}
+
+	wasChosen := filepath.Base(s.rigPath) == from
+	if err := os.Rename(filepath.Join(s.rigDir, from), filepath.Join(s.rigDir, to)); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if wasChosen {
+		if err := rig.Select(s.rigDir, to); err != nil {
+			http.Error(w, "renamed it, and could not keep it selected: "+err.Error(),
+				http.StatusInternalServerError)
+			return
+		}
+	}
+	if err := s.openChosenRig(); err != nil {
+		http.Error(w, "renamed it, and the shelf will not open: "+err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
+	s.sayShelf(w)
+}

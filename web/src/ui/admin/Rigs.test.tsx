@@ -131,6 +131,26 @@ describe('the shelf', () => {
       expect(screen.getByText('bench.toml is already on the shelf')).toBeTruthy());
   });
 
+  it('renames a rig, and does not rename it to nothing', async () => {
+    /* The file name, which is what the shelf lists. Cancelling the prompt or
+       leaving the name alone must send nothing: a rename endpoint called with
+       the same name on both sides is a write nobody asked for. */
+    vi.stubGlobal('prompt', vi.fn(() => 'esp32-rig'));
+    await open();
+    fireEvent.click(screen.getByLabelText('Rename demo-rig'));
+    await waitFor(() => expect(sent.length).toBe(1));
+    expect(sent[0].url).toBe('/api/rigs/rename');
+    expect(JSON.parse(sent[0].body)).toEqual({ name: 'demo-rig', to: 'esp32-rig' });
+
+    vi.stubGlobal('prompt', vi.fn(() => null));
+    fireEvent.click(screen.getByLabelText('Rename bench'));
+    expect(sent.length).toBe(1);
+
+    vi.stubGlobal('prompt', vi.fn(() => '  bench  '));
+    fireEvent.click(screen.getByLabelText('Rename bench'));
+    expect(sent.length).toBe(1);
+  });
+
   it('says there is nothing to manage when the studio holds one file', async () => {
     /* Started with -rig pointing at a file. Showing an empty shelf would look
      * like the rigs had gone missing. */

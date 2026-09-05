@@ -278,6 +278,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/rigs", s.handleRigs)
 	mux.HandleFunc("/api/rigs/new", s.handleRigNew)
 	mux.HandleFunc("/api/rigs/delete", s.handleRigDelete)
+	mux.HandleFunc("/api/rigs/rename", s.handleRigRename)
 	mux.HandleFunc("/api/rigs/export", s.handleRigExport)
 	mux.HandleFunc("/api/rigs/import", s.handleRigImport)
 	mux.HandleFunc("/api/score/export", s.handleScoreExport)

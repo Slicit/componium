@@ -90,6 +90,17 @@ export function Rigs() {
     void send('/api/rigs/delete', { name: plain(name) }, name + ' removed');
   };
 
+  /* The file name, which is what the shelf lists. The name inside the rig is
+     a different name and is left alone: rewriting it from here would quietly
+     edit a field somebody chose. */
+  const rename = (file: string) => {
+    const was = plain(file);
+    const to = window.prompt('Rename ' + was + ' to what?', was);
+    if (to === null || to.trim() === was || to.trim() === '') return;
+    void send('/api/rigs/rename', { name: was, to: to.trim() },
+      was + ' is now ' + to.trim());
+  };
+
   const bring = async (chosen: File) => {
     const text = await chosen.text();
     const name = plain(chosen.name);
@@ -179,6 +190,12 @@ export function Rigs() {
                     <a className="adm-link" download
                        href={'/api/rigs/export?rig=' + encodeURIComponent(plain(r))}
                     >export</a>
+                    <button
+                      disabled={busy}
+                      title={'Rename ' + plain(r) + '. The name inside the file is left alone.'}
+                      aria-label={'Rename ' + plain(r)}
+                      onClick={() => rename(r)}
+                    >rename</button>
                     <button
                       disabled={busy}
                       title={'Start a new rig from ' + plain(r)}
