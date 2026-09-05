@@ -56,6 +56,7 @@ TIMEOUT = float(os.environ.get("COMPONIUM_VLM_TIMEOUT", "120"))
 # What the composer can do something with. Anything else is noise.
 EFFECTS = (
     "explosion", "lightning", "fire", "smoke", "dust", "splash", "rain",
+    "wind", "carried",
 )
 SCENES = ("calm", "active")
 
@@ -99,6 +100,14 @@ The only permitted effect words:
   splash     water thrown into the air: spray, a breaking wave, something
              hitting water. The water must be moving.
   rain       rain visibly falling.
+  wind       air visibly moving things: trees or grass bent over, hair or
+             clothing pulled, spray torn sideways, debris carried past.
+             Not a small creature flying under its own power, not a
+             character walking, not water flowing downhill.
+  carried    the view itself is travelling fast through air: riding,
+             driving, flying, falling. Answer this about the camera and
+             not about anything in the frame. A bird crossing the shot is
+             not carried; being the bird is.
 
 If none of those are plainly visible, answer exactly: EFFECTS: none
 

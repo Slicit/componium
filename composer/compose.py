@@ -35,6 +35,7 @@ import dynamics
 import span as span_mod
 import light
 import motion_est
+import wind
 import scenes
 import scent
 import subtitles
@@ -596,17 +597,13 @@ def build(args) -> str:
             tracks.append(_curve_track(args.motion_id, [
                 (t, dict(zip(axes, v))) for t, v in points]))
 
-    # --- wind, from apparent speed -------------------------------------------
-    if args.wind_id:
-        wind = motion_est.wind_series(movements, args.fps)
-        wpts = compress([(i / args.fps, (v * args.wind_gain,))
-                         for i, v in enumerate(wind)], args.threshold)
-        wpts = scenes.snap(wpts, cuts)
-        if len(wpts) >= 2:
-            tracks.append(_curve_track(args.wind_id,
-                                       [(t, {"intensity": v[0]}) for t, v in wpts]))
-
     # --- subtitles and the vision model --------------------------------------
+    #
+    # The wind track is built after this rather than before, which is a change
+    # worth stating. Air moves for reasons a motion signal cannot see: weather,
+    # flight, a blast. Those are things the film says and the vision pass is
+    # what reads them, so wind has to be built where its evidence is.
+    seen_rows = []
     confirmations = []
     semantic = []
     if not args.no_subtitles:
@@ -676,9 +673,29 @@ def build(args) -> str:
                 add_cues(cue["instrument"], [cue])
             report(f"{len(watched)} scenes read, {len(found)} scents\n")
 
+        seen_rows = [{"t": o.get("t", 0.0),
+                      "labels": o.get("labels") or [],
+                      "seen": o.get("seen") or ""} for o in observations]
+
         written = write_observations(args, observations, span)
         if written:
             report(f"{len(observations)} observations kept in {written}\n")
+
+    # --- wind, from every cause a film has -----------------------------------
+    #
+    # Expansion alone was the whole model and it is a push-in detector: on
+    # big-buck-bunny its four hardest moments were a tranquil garden, a perched
+    # bird, a standing rabbit and a hanging squirrel. See composer/wind.py and
+    # LOGBOOK/experiments/README-wind-causes.md.
+    if args.wind_id:
+        expansion = motion_est.wind_series(movements, args.fps)
+        blown = wind.series(expansion, seen_rows, args.fps, len(expansion))
+        wpts = compress([(i / args.fps, (v * args.wind_gain,))
+                         for i, v in enumerate(blown)], args.threshold)
+        wpts = scenes.snap(wpts, cuts)
+        if len(wpts) >= 2:
+            tracks.append(_curve_track(args.wind_id,
+                                       [(t, {"intensity": v[0]}) for t, v in wpts]))
 
     # --- water, nominated then confirmed -------------------------------------
     progress(0.95, "nominating water")
