@@ -1,14 +1,18 @@
 """Drive every output on one board at once, over authenticated CIP 0.3.
 
-The companion to poke.py, which speaks 0.2 unauthenticated and drives one
-output at a time. That was the right tool when a node was an instrument. A node
-now carries several, so the interesting question moved: not "does the fan
-spin", which poke.py already answers, but "do the fan and both strips move
-together, and does each strip get the colour meant for it".
+The companion to poke.py, which drives one output at a time and is the one to
+reach for with a multimeter in hand. Both speak the same authenticated 0.3
+through hack/cip.py. The question here is the one a single output cannot
+answer: not "does the fan spin", which poke.py settles, but "do the fan and
+both strips move together, and does each strip get the colour meant for it".
 
-    python3 poke-together.py 192.168.1.75 <secret>            # everything
-    python3 poke-together.py 192.168.1.75 <secret> hello      # just look
-    python3 poke-together.py 192.168.1.75 <secret> rollcall   # one movement
+    python3 poke-together.py 192.168.1.75            # everything
+    python3 poke-together.py 192.168.1.75 hello      # just look
+    python3 poke-together.py 192.168.1.75 rollcall   # one movement
+
+The secret is found rather than typed: $COMPONIUM_CIP_SECRET if it is set,
+otherwise ~/.componium/node-secret. Pass --secret to override, or give it
+as a second argument as before. Which one was used is printed every run.
 
 Colour is the reason this is worth doing by eye rather than by counter. Two
 strips both lit is not evidence: two strips lit in *different* colours, then
@@ -46,20 +50,17 @@ page included, silences this script for the rest of the run. See
 LOGBOOK/notes.md.
 """
 
-import hashlib
-import hmac
-import json
+import os
 import re
-import socket
-import struct
 import sys
 import time
 import urllib.request
 
-CIP_PORT = 5570
-CIP_VERSION = "0.3"
-TAG_LEN = 16
-WATCHDOG_MS = 300
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from cip import (WATCHDOG_MS, Link, hold, secret,  # noqa: E402
+                 where_from)
+
 
 # Named because the operator is going to read one of these off the terminal and
 # compare it against something glowing on a bench. Ordered most distinguishable
@@ -75,124 +76,6 @@ PALETTE = [
     ("white", (1.0, 1.0, 1.0)),
 ]
 DARK = (0.0, 0.0, 0.0)
-
-
-class Link:
-    """One authenticated conversation with a node.
-
-    The counter is seeded from the clock in microseconds, exactly as the Go
-    client does, and for the same two reasons. It has to beat whatever the node
-    last heard, which a counter starting at 1 does not after the first client
-    of the boot. And it has to stay under 2^53, because the other end parses it
-    into a double: nanoseconds do not, and two consecutive nanosecond counters
-    land on the same float and the second message is refused as a replay.
-    """
-
-    def __init__(self, host, secret):
-        self.host = host
-        self.secret = secret.encode()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.n = int(time.time() * 1e6)
-        self.sent_frames = 0
-        self.sent_outputs = 0
-        self.sent_cues = 0
-
-    def wrap(self, body):
-        if not self.secret:
-            return body
-        tag = hmac.new(self.secret, body, hashlib.sha256).digest()[:TAG_LEN]
-        return tag + body
-
-    def unwrap(self, datagram):
-        """Verify and strip the tag on the way in.
-
-        The node signs what it sends as well as what it accepts, which is easy
-        to forget when writing a client: a reply read without stripping the tag
-        is sixteen bytes of binary followed by valid JSON, and json.loads says
-        only that it is not JSON. That looked exactly like a board not
-        answering, for about ten minutes.
-        """
-        if not self.secret:
-            return datagram
-        if len(datagram) < TAG_LEN:
-            return None
-        body = datagram[TAG_LEN:]
-        want = hmac.new(self.secret, body, hashlib.sha256).digest()[:TAG_LEN]
-        if not hmac.compare_digest(want, datagram[:TAG_LEN]):
-            return None
-        return body
-
-    def send(self, message):
-        self.n += 1
-        message = dict(message, v=CIP_VERSION, n=self.n)
-        self.sock.sendto(self.wrap(json.dumps(message).encode()), (self.host, CIP_PORT))
-
-    def send_frame(self, outputs):
-        """One curve frame carrying several outputs.
-
-        Binary, and not counted: a frame is superseded 20ms later, so the
-        replay guard would cost more than it protects. The tag still applies.
-        """
-        body = bytearray([ord("C"), ord("F"), 1, len(outputs)])
-        for index, values in outputs:
-            body.append(index)
-            body.append(len(values))
-            for v in values:
-                body += struct.pack(">f", max(0.0, min(1.0, v)))
-        self.sock.sendto(self.wrap(bytes(body)), (self.host, CIP_PORT))
-        self.sent_frames += 1
-        self.sent_outputs += len(outputs)
-
-    def cue(self, instrument, params, hold_ms=8000):
-        self.sent_cues += 1
-        self.send({"t": "cue", "seq": self.sent_cues, "instrument": instrument,
-                   "params": params, "hold_ms": hold_ms})
-
-    def ask(self, message, wait=2.0):
-        self.send(message)
-        self.sock.settimeout(wait)
-        deadline = time.time() + wait
-        while time.time() < deadline:
-            try:
-                data, _ = self.sock.recvfrom(4096)
-            except socket.timeout:
-                return None
-            body = self.unwrap(data)
-            if body is None:
-                continue        # not signed with our secret, so not for us
-            try:
-                return json.loads(body.decode())
-            except (UnicodeDecodeError, ValueError):
-                continue        # a curve frame, or somebody else's datagram
-        return None
-
-    def beat(self):
-        self.send({"t": "heartbeat"})
-
-    def close(self):
-        self.sock.close()
-
-
-def hold(link, seconds, paint=None):
-    """Keep the outputs alive for a while, beating as the conductor would.
-
-    The heartbeats are the point of this helper. Without them the node drops
-    everything to safe after 300ms, which looks exactly like a cue that never
-    landed. `paint` is called with elapsed seconds when a movement wants to
-    keep sending frames while it waits.
-    """
-    start = time.time()
-    last_beat = -1.0
-    while True:
-        t = time.time() - start
-        if t >= seconds:
-            return
-        if t - last_beat > 0.1:
-            link.beat()
-            last_beat = t
-        if paint:
-            paint(t)
-        time.sleep(0.02)
 
 
 # --- what is attached ------------------------------------------------------
@@ -576,10 +459,26 @@ def report(link, before, after):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
+    args = sys.argv[1:]
+    given = None
+    if "--secret" in args:
+        at = args.index("--secret")
+        given = args[at + 1]
+        del args[at:at + 2]
+    if not args:
         raise SystemExit(__doc__)
-    where, key = sys.argv[1], sys.argv[2]
-    what = sys.argv[3] if len(sys.argv) > 3 else "all"
+
+    where = args[0]
+    rest = args[1:]
+    # A bare second argument is a secret unless it names something to
+    # run. That keeps every invocation anybody has typed before working,
+    # without making the shorter form ambiguous.
+    if rest and rest[0] not in set(MOVEMENTS) | {"all", "hello"}:
+        given = rest.pop(0)
+    what = rest[0] if rest else "all"
+
+    key = secret(given)
+    print("  secret from %s" % where_from(given))
 
     if what == "hello":
         conn = Link(where, key)
