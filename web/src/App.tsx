@@ -31,6 +31,7 @@ import { settingOf, writeSetting } from './core/settings';
 import { isTyping } from './core/typing';
 import { useLive } from './ui/useLive';
 import { LiveTrim } from './ui/LiveTrim';
+import { RigPicker } from './ui/RigPicker';
 import type { Preset } from './core/presets';
 import { canCollapse } from './core/layout';
 import { menuFor } from './ui/menuItems';
@@ -52,6 +53,14 @@ const NO_MUTES = new Set<string>();
 export function App({ active = true }: { active?: boolean } = {}) {
   const [score, setScore] = useState<Score | null>(null);
   const [rig, setRig] = useState<Rig | null>(null);
+  /* Read again when the rig is switched from the toolbar, so the room draws
+     the rig now in use rather than the one that was loaded with the page. */
+  const rereadRig = useCallback(() => {
+    void fetch('/api/rig')
+      .then((x) => (x.ok ? x.json() : null))
+      .then((r) => { if (r) setRig(r); })
+      .catch(() => { /* the next load gets it */ });
+  }, []);
   const [films, setFilms] = useState<Film[]>([]);
   const [film, setFilm] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -686,6 +695,7 @@ export function App({ active = true }: { active?: boolean } = {}) {
           </span>
         )}
         {live.armed && <LiveTrim lights={live.state.lights ?? []} />}
+        <RigPicker armed={live.armed} onChanged={rereadRig} />
         <button
           className={'toggle' + (overlays.calm ? ' on' : '')}
           onClick={() => setOverlays((o) => ({ ...o, calm: !o.calm }))}

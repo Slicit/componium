@@ -1,7 +1,9 @@
 package studio
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"path/filepath"
 
@@ -23,6 +25,33 @@ import (
 
 // handleRigs lists the shelf, or moves it.
 func (s *Server) handleRigs(w http.ResponseWriter, r *http.Request) {
+	/* Changing the rig while the room is being driven puts the room away first.
+	 *
+	 * An armed session holds the instruments it built when it was armed, so a
+	 * switch on its own would leave the show driving the rig nobody is looking
+	 * at any more: the old boards still moving, the new ones silent, and the
+	 * page reporting that everything is live. Disarming takes the old rig to
+	 * safe on the way out, which is the only version of this that ends with
+	 * nothing running that nobody asked for.
+	 *
+	 * Not re-armed afterwards. Going live is a deliberate act with a red button,
+	 * and starting a different rig on somebody's behalf because they changed a
+	 * dropdown is not the same decision they made a minute ago.
+	 *
+	 * Done before the lock rather than under it: disarming waits for the show
+	 * loop to finish, and holding the studio's lock while waiting on another
+	 * goroutine is how a deadlock gets written.
+	 */
+	if r.Method == http.MethodPost || r.Method == http.MethodPut {
+		if changing, name := s.rigIsChanging(r); changing {
+			s.disarmLive()
+			s.liveMu.Lock()
+			s.liveProblem = "the rig changed to " + name + ", so the room was put " +
+				"away. Go live again to drive it."
+			s.liveMu.Unlock()
+		}
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -85,4 +114,36 @@ func (s *Server) openChosenRig() error {
 	s.rigPath = path
 	s.rig = cfg
 	return nil
+}
+
+// rigIsChanging reports whether this request picks a different rig, and reads
+// the body in a way that leaves it readable again.
+//
+// Asked before anything is disarmed, because a page re-selecting the rig it is
+// already on should not stop a show. That happens: the shelf redraws, a radio
+// reports a change, and nothing about it was meant as an instruction.
+func (s *Server) rigIsChanging(r *http.Request) (bool, string) {
+	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<16))
+	r.Body = io.NopCloser(bytes.NewReader(body))
+	if err != nil {
+		return false, ""
+	}
+	var want struct {
+		Rig string `json:"rig"`
+	}
+	if json.Unmarshal(body, &want) != nil || want.Rig == "" {
+		return false, ""
+	}
+
+	s.mu.Lock()
+	same := filepath.Base(s.rigPath) == want.Rig
+	s.mu.Unlock()
+	if same {
+		return false, ""
+	}
+
+	s.liveMu.Lock()
+	armed := s.live != nil
+	s.liveMu.Unlock()
+	return armed, want.Rig
 }

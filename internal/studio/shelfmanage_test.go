@@ -406,3 +406,83 @@ func TestRenamingARigLeavesWhatItCallsItselfAlone(t *testing.T) {
 		t.Errorf("the rig's own name was changed:\n%s", text)
 	}
 }
+
+func TestChangingTheRigPutsTheRoomAway(t *testing.T) {
+	/* An armed session holds the instruments it built when it was armed. A
+	 * switch on its own would leave the show driving the rig nobody is looking
+	 * at any more: the old boards still moving, the new ones silent, and the
+	 * page reporting that everything is live. */
+	s, _ := onShelf(t, map[string]string{
+		"esp32-rig.toml": trimRig, "virtual-rig.toml": trimRig,
+	})
+
+	if w := do(t, s, "POST", "/api/live", `{"armed":true}`); w.Code != http.StatusOK {
+		t.Fatalf("could not arm: %s", w.Body.String())
+	}
+	if !armed(t, s) {
+		t.Fatal("it did not arm")
+	}
+
+	if w := do(t, s, "POST", "/api/rigs", `{"rig":"virtual-rig.toml"}`); w.Code != http.StatusOK {
+		t.Fatalf("the switch said %d: %s", w.Code, w.Body.String())
+	}
+	if armed(t, s) {
+		t.Error("still live, on a rig it no longer holds")
+	}
+
+	// And it says why, because a room that stopped for a reason nobody stated
+	// is a room somebody starts debugging.
+	var got struct {
+		Problem string `json:"problem"`
+	}
+	if err := json.Unmarshal(do(t, s, "GET", "/api/live", "").Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.Problem, "rig changed") {
+		t.Errorf("it stopped without saying why: %q", got.Problem)
+	}
+}
+
+func TestReselectingTheSameRigDoesNotStopAShow(t *testing.T) {
+	/* A shelf redraws, a radio reports a change, and nothing about it was
+	 * meant as an instruction. Stopping the room for that would be a show that
+	 * dies whenever somebody opens the admin page. */
+	s, _ := onShelf(t, map[string]string{
+		"esp32-rig.toml": trimRig, "virtual-rig.toml": trimRig,
+	})
+	do(t, s, "POST", "/api/rigs", `{"rig":"esp32-rig.toml"}`)
+	do(t, s, "POST", "/api/live", `{"armed":true}`)
+	if !armed(t, s) {
+		t.Fatal("it did not arm")
+	}
+
+	if w := do(t, s, "POST", "/api/rigs", `{"rig":"esp32-rig.toml"}`); w.Code != http.StatusOK {
+		t.Fatalf("said %d: %s", w.Code, w.Body.String())
+	}
+	if !armed(t, s) {
+		t.Error("choosing the rig it was already on stopped the show")
+	}
+}
+
+func TestListingTheShelfDoesNotStopAShow(t *testing.T) {
+	// A GET is what every page load does.
+	s, _ := onShelf(t, map[string]string{
+		"esp32-rig.toml": trimRig, "virtual-rig.toml": trimRig,
+	})
+	do(t, s, "POST", "/api/live", `{"armed":true}`)
+	do(t, s, "GET", "/api/rigs", "")
+	if !armed(t, s) {
+		t.Error("looking at the shelf stopped the show")
+	}
+}
+
+func armed(t *testing.T, s *Server) bool {
+	t.Helper()
+	var got struct {
+		Armed bool `json:"armed"`
+	}
+	if err := json.Unmarshal(do(t, s, "GET", "/api/live", "").Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	return got.Armed
+}

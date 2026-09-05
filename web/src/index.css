@@ -1345,3 +1345,8 @@ button:hover { border-color: #3a4553; }
 
 /* A row of small actions at the end of an admin table row. */
 .adm-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+
+/* The rig in use, on the toolbar. Small, because it is a statement about
+   which room this is rather than a control used often. */
+.rig-pick { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.rig-pick-name { opacity: 0.6; }
