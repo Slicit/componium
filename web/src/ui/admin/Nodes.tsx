@@ -20,6 +20,12 @@ interface Attached {
   gpio: number;
   kind: string;
   freqHz?: number;
+  /* Where a motor actually starts, in 0..1, and the shove that breaks it
+     away from stopped, in milliseconds. A twelve volt fan does nothing
+     below roughly a third of full, and needs more to start than to keep
+     turning. */
+  minDuty?: number;
+  kickMs?: number;
   pixels?: number;
   active?: string;
   order?: string;
@@ -40,6 +46,8 @@ interface Announced {
   type?: Attached['type'];
   gpio?: number;
   freqHz?: number;
+  minDuty?: number;
+  kickMs?: number;
   pixels?: number;
   active?: string;
   order?: string;
@@ -101,6 +109,8 @@ function fromBoard(i: Announced): Attached {
     ...(i.type ? { type: i.type } : {}),
     ...(i.gpio !== undefined ? { gpio: i.gpio } : {}),
     ...(i.freqHz !== undefined ? { freqHz: i.freqHz } : {}),
+    ...(i.minDuty !== undefined ? { minDuty: i.minDuty } : {}),
+    ...(i.kickMs !== undefined ? { kickMs: i.kickMs } : {}),
     ...(i.pixels !== undefined ? { pixels: i.pixels } : {}),
     ...(i.active !== undefined ? { active: i.active } : {}),
     ...(i.order !== undefined ? { order: i.order } : {}),
@@ -345,15 +355,45 @@ export function Nodes() {
                           </label>
                         )}
                         {d.type === 'pwm' && (
-                          <label>
-                            Hz{' '}
-                            <input
-                              type="number" min={100} max={40000} step={100}
-                              value={d.freqHz ?? 25000}
-                              aria-label={'Device ' + (i + 1) + ' frequency'}
-                              onChange={(e) => change(i, { freqHz: Number(e.target.value) })}
-                            />
-                          </label>
+                          <>
+                            <label>
+                              Hz{' '}
+                              <input
+                                type="number" min={100} max={40000} step={100}
+                                value={d.freqHz ?? 25000}
+                                aria-label={'Device ' + (i + 1) + ' frequency'}
+                                onChange={(e) => change(i, { freqHz: Number(e.target.value) })}
+                              />
+                            </label>
+                            <label title={
+                              'Where this motor actually starts, as a fraction of full. '
+                              + 'A twelve volt fan does nothing below roughly 0.3, so a score '
+                              + 'ramping from zero spends its first third commanding silence. '
+                              + 'Anything above zero is mapped onto what is left above this. '
+                              + 'Zero still means off.'}>
+                              min{' '}
+                              <input
+                                type="number" min={0} max={0.9} step={0.05}
+                                value={d.minDuty ?? 0}
+                                aria-label={'Device ' + (i + 1) + ' minimum duty'}
+                                onChange={(e) => change(i, { minDuty: Number(e.target.value) })}
+                              />
+                            </label>
+                            <label title={
+                              'A shove at full to break the motor away from stopped, in '
+                              + 'milliseconds. It takes more to start a stopped fan than to keep '
+                              + 'a turning one going, so without this the minimum has to be set '
+                              + 'high enough to start it, which throws away every speed below. '
+                              + 'Try 250. Zero is off.'}>
+                              kick{' '}
+                              <input
+                                type="number" min={0} max={2000} step={50}
+                                value={d.kickMs ?? 0}
+                                aria-label={'Device ' + (i + 1) + ' kick'}
+                                onChange={(e) => change(i, { kickMs: Number(e.target.value) })}
+                              />
+                            </label>
+                          </>
                         )}
                       </td>
                       <td>

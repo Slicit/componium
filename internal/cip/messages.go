@@ -146,13 +146,18 @@ type Manifest struct {
 	// Absent on a node that was built before ADR 0007 or configured from a
 	// compiled-in manifest, which is why they are all omitempty: unknown and
 	// zero are different answers, and a GPIO of 0 is a real pin.
-	Type   string  `json:"type,omitempty"`
-	GPIO   int     `json:"gpio,omitempty"`
-	FreqHz int     `json:"freq_hz,omitempty"`
-	Pixels int     `json:"pixels,omitempty"`
-	Active string  `json:"active,omitempty"`
-	Order  string  `json:"order,omitempty"`
-	Safe   float64 `json:"safe,omitempty"`
+	Type   string `json:"type,omitempty"`
+	GPIO   int    `json:"gpio,omitempty"`
+	FreqHz int    `json:"freq_hz,omitempty"`
+	// MinDuty is where this motor actually starts, and KickMS is a shove
+	// to break it away from stopped. A fan does nothing below roughly a
+	// third of full, and needs more to start than to keep turning.
+	MinDuty float64 `json:"min_duty,omitempty"`
+	KickMS  float64 `json:"kick_ms,omitempty"`
+	Pixels  int     `json:"pixels,omitempty"`
+	Active  string  `json:"active,omitempty"`
+	Order   string  `json:"order,omitempty"`
+	Safe    float64 `json:"safe,omitempty"`
 }
 
 // Channel documents one value a node accepts.
@@ -232,6 +237,8 @@ func (m Manifest) toAnnouncement(index int) Instrument {
 		Type:        m.Type,
 		GPIO:        m.GPIO,
 		FreqHz:      m.FreqHz,
+		MinDuty:     m.MinDuty,
+		KickMS:      m.KickMS,
 		Pixels:      m.Pixels,
 		Active:      m.Active,
 		Order:       m.Order,
@@ -259,13 +266,15 @@ type Instrument struct {
 
 	// How it is wired, from the board's own configuration. Omitted by a node
 	// that has none, so that unknown stays distinguishable from zero.
-	Type   string  `json:"type,omitempty"`
-	GPIO   int     `json:"gpio,omitempty"`
-	FreqHz int     `json:"freq_hz,omitempty"`
-	Pixels int     `json:"pixels,omitempty"`
-	Active string  `json:"active,omitempty"`
-	Order  string  `json:"order,omitempty"`
-	Safe   float64 `json:"safe,omitempty"`
+	Type    string  `json:"type,omitempty"`
+	GPIO    int     `json:"gpio,omitempty"`
+	FreqHz  int     `json:"freq_hz,omitempty"`
+	MinDuty float64 `json:"min_duty,omitempty"`
+	KickMS  float64 `json:"kick_ms,omitempty"`
+	Pixels  int     `json:"pixels,omitempty"`
+	Active  string  `json:"active,omitempty"`
+	Order   string  `json:"order,omitempty"`
+	Safe    float64 `json:"safe,omitempty"`
 
 	SafeState map[string]float64 `json:"safe_state,omitempty"`
 	Channels  []Channel          `json:"channels,omitempty"`
@@ -293,7 +302,9 @@ type Device struct {
 	Kind string `json:"kind"`
 
 	// pwm
-	FreqHz int `json:"freq_hz,omitempty"`
+	FreqHz  int     `json:"freq_hz,omitempty"`
+	MinDuty float64 `json:"min_duty,omitempty"`
+	KickMS  float64 `json:"kick_ms,omitempty"`
 	// ws28xx
 	Pixels int    `json:"pixels,omitempty"`
 	Order  string `json:"order,omitempty"`
@@ -321,6 +332,8 @@ func (d Device) toManifest() Manifest {
 		Type:       d.Type,
 		GPIO:       d.GPIO,
 		FreqHz:     d.FreqHz,
+		MinDuty:    d.MinDuty,
+		KickMS:     d.KickMS,
 		Pixels:     d.Pixels,
 		Active:     d.Active,
 		Order:      d.Order,

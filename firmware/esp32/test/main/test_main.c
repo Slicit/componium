@@ -368,6 +368,80 @@ static void a_bad_order_is_refused_rather_than_half_applied(void)
     }
 }
 
+
+/* ------------------------------------------------------ the fan's own range
+ *
+ * A twelve volt fan does nothing below roughly a third of full, so a score
+ * ramping zero to one spends its first third commanding silence and then
+ * jumps. min_duty is the bottom of the range the fan can actually use.
+ *
+ * The reason there is also a kick: it takes more to start a stopped fan than
+ * to keep a turning one going. Without one, min_duty has to be set high
+ * enough to break away, which throws away every speed below that.
+ */
+
+static void off_is_off_whatever_the_minimum_is(void)
+{
+    /* The whole reason this is done on the board rather than in a score. A
+     * safe state, a stop and a score at zero must all stop the fan, and a
+     * minimum that lifted zero off the floor would be a fan that never stops. */
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.9f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(-1.0f, 0.4f, false));
+    /* Not even while kicking, because a kick is something a start does and
+     * zero is not a start. */
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, true));
+}
+
+static void anything_on_at_least_turns_the_fan(void)
+{
+    /* The complaint this fixes: the bottom of a ramp commanding a speed the
+     * motor cannot use. */
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.406f, device_duty(0.01f, 0.4f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.40f, device_duty(0.0001f, 0.4f, false));
+}
+
+static void full_is_still_full(void)
+{
+    /* A minimum raises the floor and must not lower the ceiling, or every fan
+     * on every rig quietly loses its top end. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.4f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(2.0f, 0.4f, false));
+}
+
+static void the_range_is_used_evenly(void)
+{
+    /* Half way up a score is half way up what the fan can do, not half of
+     * full. A linear map onto the usable range is the whole idea. */
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.55f, device_duty(0.25f, 0.4f, false));
+}
+
+static void no_minimum_changes_nothing(void)
+{
+    /* Every board that exists today has no minimum set, and none of them may
+     * behave differently after this. */
+    for (float v = 0.0f; v <= 1.0f; v += 0.125f) {
+        TEST_ASSERT_EQUAL_FLOAT(v, device_duty(v, 0.0f, false));
+    }
+}
+
+static void a_kick_is_full_whatever_was_asked(void)
+{
+    /* Breaking away, which is a different threshold from turning. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.05f, 0.4f, true));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.0f, true));
+}
+
+static void a_minimum_past_the_top_still_means_on(void)
+{
+    /* A number somebody typed wrong. On meaning off would be the worst
+     * available reading of it. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 1.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 4.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 4.0f, false));
+}
+
 void app_main(void)
 {
     UNITY_BEGIN();
@@ -406,6 +480,14 @@ void app_main(void)
     RUN_TEST(grb_swaps_red_and_green);
     RUN_TEST(every_permutation_is_accepted);
     RUN_TEST(a_bad_order_is_refused_rather_than_half_applied);
+
+    RUN_TEST(off_is_off_whatever_the_minimum_is);
+    RUN_TEST(anything_on_at_least_turns_the_fan);
+    RUN_TEST(full_is_still_full);
+    RUN_TEST(the_range_is_used_evenly);
+    RUN_TEST(no_minimum_changes_nothing);
+    RUN_TEST(a_kick_is_full_whatever_was_asked);
+    RUN_TEST(a_minimum_past_the_top_still_means_on);
 
     /* What the board is told, stores, and says back. */
     register_roundtrip_tests();

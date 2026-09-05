@@ -42,6 +42,27 @@ typedef struct {
 
     /* pwm */
     int freq_hz;
+    /* Where this motor actually starts, and what it takes to break it
+     * away from stopped.
+     *
+     * A twelve volt fan does nothing at all below roughly a third of
+     * full, so a score ramping zero to one spends its first third
+     * commanding silence and then jumps. min_duty is the bottom of the
+     * range the fan can actually use, and a commanded value is mapped
+     * onto what is left above it.
+     *
+     * kick_ms is the other half, and it exists because these are two
+     * different thresholds: it takes more to start a stopped fan than to
+     * keep a turning one going. Without it min_duty has to be set high
+     * enough to break away, which throws away every speed below that.
+     * With it, min_duty can sit at the running minimum and a start gets
+     * a brief shove.
+     *
+     * Zero for both is exactly what every board did before these
+     * existed.
+     */
+    float min_duty;
+    float kick_ms;
     /* ws28xx */
     int  pixels;
     char order[8];
@@ -62,6 +83,11 @@ typedef struct {
     float safe;
 
     /* --- runtime, not configuration --- */
+    /* What was commanded last, so that starting from stopped can be told
+     * apart from carrying on. */
+    float value_was;
+    /* When the shove ends. Zero when nothing is being started. */
+    int64_t kick_until_us;
 
     /* channels is 1 for a dimmed output or a switch, 3 for a strip. */
     int   channels;
@@ -91,6 +117,9 @@ bool device_action_stops(const char *action);
 
 /** The name a configuration uses for a type, and that a node announces. */
 bool device_channel_map(const char *order, int map[3]);
+
+/* The duty a commanded value becomes on a real motor. */
+float device_duty(float value, float min_duty, bool kicking);
 
 const char *device_type_name(device_type_t t);
 

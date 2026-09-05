@@ -4,6 +4,7 @@
 
 #include "cJSON.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "soc/soc_caps.h"
 
 static const char *TAG = "devices";
@@ -202,6 +203,41 @@ void device_stop(device_t *d)
     d->type = DEV_NONE;
 }
 
+/* What a commanded value is worth on a motor that will not start at the
+ * bottom of its range.
+ *
+ * Zero stays zero, and that is the point of doing this here rather than in a
+ * score: off has to mean off. Everything above zero is mapped onto what the
+ * fan can actually use, so a cue asking for a tenth gets the slowest speed
+ * that turns rather than a speed that hums.
+ *
+ * While kicking, full. A stopped fan needs more than a turning one, and the
+ * alternative is setting min_duty high enough to break away and losing every
+ * speed below it.
+ */
+float device_duty(float value, float min_duty, bool kicking)
+{
+    if (value <= 0) {
+        return 0;
+    }
+    if (value > 1) {
+        value = 1;
+    }
+    if (kicking) {
+        return 1;
+    }
+    if (min_duty <= 0) {
+        return value;
+    }
+    if (min_duty >= 1) {
+        /* Configured past the top. Something is wrong with the number and
+         * the honest reading is that anything on means full, rather than
+         * that on means off. */
+        return 1;
+    }
+    return min_duty + value * (1.0f - min_duty);
+}
+
 void device_apply(device_t *d)
 {
     switch (d->type) {
@@ -209,7 +245,20 @@ void device_apply(device_t *d)
         float v = d->value[0];
         if (v < 0) v = 0;
         if (v > 1) v = 1;
-        uint32_t duty = (uint32_t)(v * PWM_MAX_DUTY + 0.5f);
+        /* Starting from stopped, so shove it. Noted here because this is
+         * the one place that knows the output was off a moment ago.
+         * device_settle() below takes it back down when the shove is
+         * over, which is the watchdog's job because nothing else runs. */
+        if (v > 0 && d->kick_ms > 0 && d->value_was <= 0) {
+            d->kick_until_us = esp_timer_get_time() + (int64_t)(d->kick_ms * 1000);
+        }
+        if (v <= 0) {
+            d->kick_until_us = 0;
+        }
+        d->value_was = v;
+        bool kicking = d->kick_until_us > esp_timer_get_time();
+        uint32_t duty = (uint32_t)(device_duty(v, d->min_duty, kicking)
+                                   * PWM_MAX_DUTY + 0.5f);
         ledc_set_duty(LEDC_LOW_SPEED_MODE, d->ledc, duty);
         ledc_update_duty(LEDC_LOW_SPEED_MODE, d->ledc);
         break;
@@ -308,6 +357,12 @@ cJSON *device_announcement(const device_t *d, int index)
     switch (d->type) {
     case DEV_PWM:
         cJSON_AddNumberToObject(in, "freq_hz", d->freq_hz);
+        if (d->min_duty > 0) {
+            cJSON_AddNumberToObject(in, "min_duty", d->min_duty);
+        }
+        if (d->kick_ms > 0) {
+            cJSON_AddNumberToObject(in, "kick_ms", d->kick_ms);
+        }
         break;
     case DEV_WS28XX:
         cJSON_AddNumberToObject(in, "pixels", d->pixels);

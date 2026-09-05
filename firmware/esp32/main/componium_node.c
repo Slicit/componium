@@ -662,6 +662,21 @@ static void watchdog_task(void *arg)
             device_t *d = &s_devices[i];
             if (d->hold_until_us != 0 && now_us > d->hold_until_us && !d->is_safe) {
                 device_safe(d);
+                continue;
+            }
+            /* The shove that starts a stopped fan is over, so put the
+             * output back to what was actually asked for. Here because
+             * this is the only thing that runs between cues: a fan given
+             * a kick and then left alone would stay at full until the
+             * next one, which is the opposite of a minimum.
+             *
+             * Applied rather than flagged, because device_apply is what
+             * reads the kick deadline and it has just passed. */
+            if (d->kick_until_us != 0 && now_us > d->kick_until_us) {
+                d->kick_until_us = 0;
+                if (!d->is_safe) {
+                    device_apply(d);
+                }
             }
         }
         unlock();
