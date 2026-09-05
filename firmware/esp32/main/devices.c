@@ -215,7 +215,8 @@ void device_stop(device_t *d)
  * alternative is setting min_duty high enough to break away and losing every
  * speed below it.
  */
-float device_duty(float value, float min_duty, bool kicking)
+float device_duty(float value, float min_duty, float start_duty,
+                  bool kicking)
 {
     if (value <= 0) {
         return 0;
@@ -223,19 +224,35 @@ float device_duty(float value, float min_duty, bool kicking)
     if (value > 1) {
         value = 1;
     }
-    if (kicking) {
-        return 1;
-    }
-    if (min_duty <= 0) {
-        return value;
-    }
+
+    float duty = value;
     if (min_duty >= 1) {
         /* Configured past the top. Something is wrong with the number and
          * the honest reading is that anything on means full, rather than
          * that on means off. */
-        return 1;
+        duty = 1;
+    } else if (min_duty > 0) {
+        duty = min_duty + value * (1.0f - min_duty);
     }
-    return min_duty + value * (1.0f - min_duty);
+
+    if (kicking) {
+        /* The shove that breaks a stopped rotor away. start_duty is measured
+         * on the bench and is higher than min_duty, which is measured on a
+         * rotor already turning: those are two different thresholds and
+         * conflating them is what costs a fan the bottom of its range.
+         *
+         * Never downward. A kick is there to add to a small commanded value,
+         * not to cap a large one, and a start_duty typed lower than what was
+         * asked for must not quietly become a speed limit. */
+        float shove = start_duty > 0 ? start_duty : 1.0f;
+        if (shove > 1) {
+            shove = 1;
+        }
+        if (shove > duty) {
+            duty = shove;
+        }
+    }
+    return duty;
 }
 
 void device_apply(device_t *d)
@@ -257,7 +274,8 @@ void device_apply(device_t *d)
         }
         d->value_was = v;
         bool kicking = d->kick_until_us > esp_timer_get_time();
-        uint32_t duty = (uint32_t)(device_duty(v, d->min_duty, kicking)
+        uint32_t duty = (uint32_t)(device_duty(v, d->min_duty,
+                                               d->start_duty, kicking)
                                    * PWM_MAX_DUTY + 0.5f);
         ledc_set_duty(LEDC_LOW_SPEED_MODE, d->ledc, duty);
         ledc_update_duty(LEDC_LOW_SPEED_MODE, d->ledc);
@@ -359,6 +377,9 @@ cJSON *device_announcement(const device_t *d, int index)
         cJSON_AddNumberToObject(in, "freq_hz", d->freq_hz);
         if (d->min_duty > 0) {
             cJSON_AddNumberToObject(in, "min_duty", d->min_duty);
+        }
+        if (d->start_duty > 0) {
+            cJSON_AddNumberToObject(in, "start_duty", d->start_duty);
         }
         if (d->kick_ms > 0) {
             cJSON_AddNumberToObject(in, "kick_ms", d->kick_ms);

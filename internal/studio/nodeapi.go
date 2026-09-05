@@ -30,9 +30,10 @@ type wireDevice struct {
 
 	FreqHz int `json:"freqHz,omitempty"`
 	// Where the motor starts, and the shove that breaks it away.
-	MinDuty float64 `json:"minDuty,omitempty"`
-	KickMS  float64 `json:"kickMs,omitempty"`
-	Pixels  int     `json:"pixels,omitempty"`
+	MinDuty   float64 `json:"minDuty,omitempty"`
+	StartDuty float64 `json:"startDuty,omitempty"`
+	KickMS    float64 `json:"kickMs,omitempty"`
+	Pixels    int     `json:"pixels,omitempty"`
 	// Colour order for a strip. The board has announced it since this
 	// morning and the form could not set it, so a fetched configuration
 	// could show one and saving the same table would drop it.
@@ -49,7 +50,7 @@ func (w wireDevice) toCIP() cip.Device {
 	return cip.Device{
 		ID: w.ID, Type: w.Type, GPIO: w.GPIO, Kind: w.Kind,
 		FreqHz: w.FreqHz, Pixels: w.Pixels, Active: w.Active, Order: w.Order,
-		MinDuty: w.MinDuty, KickMS: w.KickMS,
+		MinDuty: w.MinDuty, StartDuty: w.StartDuty, KickMS: w.KickMS,
 		LatencyMS: w.LatencyMS, RampUpMS: w.RampUpMS,
 		RampDownMS: w.RampDownMS, Safe: w.Safe,
 	}
@@ -74,14 +75,15 @@ type wireNodeInstrument struct {
 	// How it is wired, as the board reports it. Omitted when the board says
 	// nothing, so that the page can tell "not told" from "GPIO 0" and show the
 	// difference instead of filling in a default that looks like an answer.
-	Type    string  `json:"type,omitempty"`
-	GPIO    *int    `json:"gpio,omitempty"`
-	FreqHz  int     `json:"freqHz,omitempty"`
-	MinDuty float64 `json:"minDuty,omitempty"`
-	KickMS  float64 `json:"kickMs,omitempty"`
-	Pixels  int     `json:"pixels,omitempty"`
-	Active  string  `json:"active,omitempty"`
-	Order   string  `json:"order,omitempty"`
+	Type      string  `json:"type,omitempty"`
+	GPIO      *int    `json:"gpio,omitempty"`
+	FreqHz    int     `json:"freqHz,omitempty"`
+	MinDuty   float64 `json:"minDuty,omitempty"`
+	StartDuty float64 `json:"startDuty,omitempty"`
+	KickMS    float64 `json:"kickMs,omitempty"`
+	Pixels    int     `json:"pixels,omitempty"`
+	Active    string  `json:"active,omitempty"`
+	Order     string  `json:"order,omitempty"`
 
 	// The rest of what a configuration can set. Carried because a field that
 	// comes back empty is a field the next write clears: fetching a fan with an
@@ -106,6 +108,7 @@ func describe(c *cip.Client) wireNode {
 			Type:       w.Type,
 			FreqHz:     w.FreqHz,
 			MinDuty:    w.MinDuty,
+			StartDuty:  w.StartDuty,
 			KickMS:     w.KickMS,
 			Pixels:     w.Pixels,
 			Active:     w.Active,

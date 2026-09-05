@@ -62,6 +62,15 @@ typedef struct {
      * existed.
      */
     float min_duty;
+    /* The duty that breaks this motor away from rest, which is a
+     * different and higher number than the one it will keep turning at.
+     * Used for kick_ms after a start, and only then.
+     *
+     * Zero means full, which is what every board did before this existed
+     * and is the honest default: without a measurement, the only shove
+     * certain to start a fan is all of it.
+     */
+    float start_duty;
     float kick_ms;
     /* ws28xx */
     int  pixels;
@@ -119,7 +128,8 @@ bool device_action_stops(const char *action);
 bool device_channel_map(const char *order, int map[3]);
 
 /* The duty a commanded value becomes on a real motor. */
-float device_duty(float value, float min_duty, bool kicking);
+float device_duty(float value, float min_duty, float start_duty,
+                  bool kicking);
 
 const char *device_type_name(device_type_t t);
 

@@ -385,36 +385,36 @@ static void off_is_off_whatever_the_minimum_is(void)
     /* The whole reason this is done on the board rather than in a score. A
      * safe state, a stop and a score at zero must all stop the fan, and a
      * minimum that lifted zero off the floor would be a fan that never stops. */
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, false));
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.9f, false));
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(-1.0f, 0.4f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, 0.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.9f, 0.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(-1.0f, 0.4f, 0.0f, false));
     /* Not even while kicking, because a kick is something a start does and
      * zero is not a start. */
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, true));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 0.4f, 0.0f, true));
 }
 
 static void anything_on_at_least_turns_the_fan(void)
 {
     /* The complaint this fixes: the bottom of a ramp commanding a speed the
      * motor cannot use. */
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.406f, device_duty(0.01f, 0.4f, false));
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.40f, device_duty(0.0001f, 0.4f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.406f, device_duty(0.01f, 0.4f, 0.0f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.40f, device_duty(0.0001f, 0.4f, 0.0f, false));
 }
 
 static void full_is_still_full(void)
 {
     /* A minimum raises the floor and must not lower the ceiling, or every fan
      * on every rig quietly loses its top end. */
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.4f, false));
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(2.0f, 0.4f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.4f, 0.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(2.0f, 0.4f, 0.0f, false));
 }
 
 static void the_range_is_used_evenly(void)
 {
     /* Half way up a score is half way up what the fan can do, not half of
      * full. A linear map onto the usable range is the whole idea. */
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, false));
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.55f, device_duty(0.25f, 0.4f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, 0.0f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.55f, device_duty(0.25f, 0.4f, 0.0f, false));
 }
 
 static void no_minimum_changes_nothing(void)
@@ -422,24 +422,62 @@ static void no_minimum_changes_nothing(void)
     /* Every board that exists today has no minimum set, and none of them may
      * behave differently after this. */
     for (float v = 0.0f; v <= 1.0f; v += 0.125f) {
-        TEST_ASSERT_EQUAL_FLOAT(v, device_duty(v, 0.0f, false));
+        TEST_ASSERT_EQUAL_FLOAT(v, device_duty(v, 0.0f, 0.0f, false));
     }
 }
 
-static void a_kick_is_full_whatever_was_asked(void)
+static void a_kick_with_no_start_measured_is_full(void)
 {
-    /* Breaking away, which is a different threshold from turning. */
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.05f, 0.4f, true));
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.0f, true));
+    /* Breaking away, which is a different threshold from turning.
+     * With nothing measured, full is the only shove certain to work,
+     * and every board configured before start_duty existed relies on
+     * it staying that way. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.05f, 0.4f, 0.0f, true));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.0f, 0.0f, true));
 }
 
 static void a_minimum_past_the_top_still_means_on(void)
 {
     /* A number somebody typed wrong. On meaning off would be the worst
      * available reading of it. */
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 1.0f, false));
-    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 4.0f, false));
-    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 4.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 1.0f, 0.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.5f, 4.0f, 0.0f, false));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, device_duty(0.0f, 4.0f, 0.0f, false));
+}
+
+static void a_kick_uses_the_measured_start(void)
+{
+    /* The point of measuring it. A fan that breaks away at 0.65 does not need
+     * 1.0 to do it, and slamming to full is a bang, a current spike and a
+     * gust nobody scored. */
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.65f, device_duty(0.05f, 0.4f, 0.65f, true));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.65f, device_duty(0.01f, 0.0f, 0.65f, true));
+}
+
+static void a_kick_never_lowers_what_was_asked(void)
+{
+    /* A start duty typed lower than the commanded value must not become a
+     * speed limit for as long as the kick lasts. The kick adds; it does not
+     * cap. Getting this backwards would make a full blast start soft, which
+     * is exactly the cue nobody would think to test. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(1.0f, 0.0f, 0.3f, true));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, 0.3f, true));
+}
+
+static void a_start_past_the_top_is_just_full(void)
+{
+    /* Another number somebody typed wrong, and the same reading as for a
+     * minimum past the top: on means on. */
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, device_duty(0.05f, 0.0f, 4.0f, true));
+}
+
+static void a_start_does_nothing_when_not_kicking(void)
+{
+    /* It is a property of starting, not a floor. Leaking it into the steady
+     * state would raise every speed on the fan and look exactly like a
+     * minimum that was set too high. */
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.05f, device_duty(0.05f, 0.0f, 0.65f, false));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, 0.65f, false));
 }
 
 void app_main(void)
@@ -486,8 +524,12 @@ void app_main(void)
     RUN_TEST(full_is_still_full);
     RUN_TEST(the_range_is_used_evenly);
     RUN_TEST(no_minimum_changes_nothing);
-    RUN_TEST(a_kick_is_full_whatever_was_asked);
+    RUN_TEST(a_kick_with_no_start_measured_is_full);
     RUN_TEST(a_minimum_past_the_top_still_means_on);
+    RUN_TEST(a_kick_uses_the_measured_start);
+    RUN_TEST(a_kick_never_lowers_what_was_asked);
+    RUN_TEST(a_start_past_the_top_is_just_full);
+    RUN_TEST(a_start_does_nothing_when_not_kicking);
 
     /* What the board is told, stores, and says back. */
     register_roundtrip_tests();

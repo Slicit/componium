@@ -25,6 +25,7 @@ interface Attached {
      below roughly a third of full, and needs more to start than to keep
      turning. */
   minDuty?: number;
+  startDuty?: number;
   kickMs?: number;
   pixels?: number;
   active?: string;
@@ -47,6 +48,7 @@ interface Announced {
   gpio?: number;
   freqHz?: number;
   minDuty?: number;
+  startDuty?: number;
   kickMs?: number;
   pixels?: number;
   active?: string;
@@ -110,6 +112,7 @@ function fromBoard(i: Announced): Attached {
     ...(i.gpio !== undefined ? { gpio: i.gpio } : {}),
     ...(i.freqHz !== undefined ? { freqHz: i.freqHz } : {}),
     ...(i.minDuty !== undefined ? { minDuty: i.minDuty } : {}),
+    ...(i.startDuty !== undefined ? { startDuty: i.startDuty } : {}),
     ...(i.kickMs !== undefined ? { kickMs: i.kickMs } : {}),
     ...(i.pixels !== undefined ? { pixels: i.pixels } : {}),
     ...(i.active !== undefined ? { active: i.active } : {}),
@@ -380,10 +383,24 @@ export function Nodes() {
                               />
                             </label>
                             <label title={
-                              'A shove at full to break the motor away from stopped, in '
-                              + 'milliseconds. It takes more to start a stopped fan than to keep '
-                              + 'a turning one going, so without this the minimum has to be set '
-                              + 'high enough to start it, which throws away every speed below. '
+                              'The duty that breaks this motor away from rest, which is '
+                              + 'higher than the duty it will keep turning at. Held for the '
+                              + 'kick below, and only just after a start. Measure it with '
+                              + 'hack/poke.py find. Zero means use full, which is what every '
+                              + 'board did before this existed.'}>
+                              start{' '}
+                              <input
+                                type="number" min={0} max={1} step={0.05}
+                                value={d.startDuty ?? 0}
+                                aria-label={'Device ' + (i + 1) + ' start duty'}
+                                onChange={(e) => change(i, { startDuty: Number(e.target.value) })}
+                              />
+                            </label>
+                            <label title={
+                              'How long to hold the start duty above, in milliseconds. '
+                              + 'It takes more to start a stopped fan than to keep a turning '
+                              + 'one going, so without this the minimum has to be set high '
+                              + 'enough to start it, which throws away every speed below. '
                               + 'Try 250. Zero is off.'}>
                               kick{' '}
                               <input

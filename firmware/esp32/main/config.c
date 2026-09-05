@@ -123,6 +123,7 @@ int config_parse(const char *json, device_t *out, char *problem, size_t problem_
         /* Bounded hard. A shove is a fraction of a second; a kick of ten
          * seconds is a fan at full for ten seconds, which is not what
          * anybody meant by a minimum. */
+        d->start_duty = unit_value(number(item, "start_duty", 0));
         d->kick_ms = bounded_int(number(item, "kick_ms", 0), 0, 2000, 0);
         d->safe = unit_value(number(item, "safe", 0));
 
