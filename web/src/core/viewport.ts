@@ -11,7 +11,7 @@
  * controls that happen to sit near each other.
  */
 
-import { columnsAt, clampHeight, DEFAULT_COLUMNS, DEFAULT_HEIGHT } from '../ui/useSplit';
+import { columnsAt, clampHeight, DEFAULT_COLUMNS, DEFAULT_HEIGHT } from './split';
 
 /** Where the room's camera is standing, and what it is looking at. */
 export interface CameraView {

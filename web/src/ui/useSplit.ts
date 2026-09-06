@@ -8,37 +8,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import {
+  COLUMNS, DEFAULT_COLUMNS, DEFAULT_HEIGHT, clampHeight, columnsAt,
+} from '../core/split';
 
-export const COLUMNS = 12;
-
-/**
- * Neither pane may be squeezed to nothing.
- *
- * Two columns is already narrow enough that the room is a stamp and the video
- * is a strip; below that the pane stops being a preview and becomes a handle
- * you cannot find again. The limit is what makes the drag safe to let go of.
- */
-export const MIN_COLUMNS = 2;
-export const MAX_COLUMNS = COLUMNS - MIN_COLUMNS;
-
-export const MIN_HEIGHT = 160;
-export const MAX_HEIGHT = 900;
-
-/** Half and half. */
-export const DEFAULT_COLUMNS = COLUMNS / 2;
-export const DEFAULT_HEIGHT = 300;
-
-/** Which column boundary a drag at this fraction of the width lands on. */
-export function columnsAt(fraction: number): number {
-  if (!isFinite(fraction)) return DEFAULT_COLUMNS;
-  const snapped = Math.round(fraction * COLUMNS);
-  return Math.max(MIN_COLUMNS, Math.min(MAX_COLUMNS, snapped));
-}
-
-export function clampHeight(px: number): number {
-  if (!isFinite(px)) return DEFAULT_HEIGHT;
-  return Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, Math.round(px)));
-}
+export {
+  COLUMNS, MIN_COLUMNS, MAX_COLUMNS, MIN_HEIGHT, MAX_HEIGHT,
+  DEFAULT_COLUMNS, DEFAULT_HEIGHT, columnsAt, clampHeight,
+} from '../core/split';
 
 function remembered(key: string, fallback: number, clamp: (v: number) => number): number {
   try {

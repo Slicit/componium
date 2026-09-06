@@ -75,6 +75,18 @@ that needs the name.
 cannot be tabbed to, cannot be pressed from a keyboard, and are announced as
 nothing. The fix is always the same and is never more work.
 
+## The timeline
+
+It is three layers pointing downward: `core/` is the model, `render/`
+turns a score and a view into a list of primitives, `ui/Timeline.tsx` owns
+pixels and pointers. The renderer never touches a canvas, which is the only
+reason the drawing is tested at all. Everything the component draws arrives
+as a prop.
+
+`web/src/core/layering.test.ts` fails the build if a layer reaches upward.
+Improving it is expected; growing it needs an argument that says which
+layer the new thing belongs in. See ADR 0009.
+
 ## Numbers on the wire
 
 A value is announced at the resolution the hardware has, not at the resolution
