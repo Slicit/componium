@@ -1,14 +1,16 @@
 /* The bar across the top, and the only thing above the studio.
  *
- * Two entries and no more. This exists to get to the admin section and back,
- * not to become a second toolbar: the studio's own bar is the working surface
- * and everything that acts on a score belongs there, next to the score.
+ * One entry per place you can be, and no more. This exists to move between
+ * sections, not to become a second toolbar: the studio's own bar is the
+ * working surface and everything that acts on a score belongs there, next to
+ * the score.
  */
 
 import { isCurrent, routeHash, type Route } from '../core/route';
 
 const SECTIONS = [
-  { id: '', label: 'Studio', hint: 'The timeline, the room and the library' },
+  { id: '', label: 'Studio', hint: 'The timeline and the room' },
+  { id: 'library', label: 'Library', hint: 'Films, their scores, and the analysis queue' },
   { id: 'admin', label: 'Admin', hint: 'Devices, firmware and preview settings' },
 ] as const;
 

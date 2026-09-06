@@ -17,7 +17,6 @@ import { Menu } from './ui/Menu';
 import { Inspector } from './ui/Inspector';
 import { Room } from './ui/room/Room';
 import { Force } from './ui/Force';
-import { Library } from './ui/Library';
 import { COLUMNS, useDrag } from './ui/useSplit';
 import { useViewport } from './ui/useViewport';
 import { Viewports } from './ui/Viewports';
@@ -32,6 +31,7 @@ import { isTyping } from './core/typing';
 import { useLive } from './ui/useLive';
 import { LiveTrim } from './ui/LiveTrim';
 import { RigPicker } from './ui/RigPicker';
+import { FilmPicker } from './ui/FilmPicker';
 import type { Preset } from './core/presets';
 import { canCollapse } from './core/layout';
 import { menuFor } from './ui/menuItems';
@@ -50,7 +50,12 @@ interface Film { name: string; size: number; preview?: boolean }
  */
 const NO_MUTES = new Set<string>();
 
-export function App({ active = true }: { active?: boolean } = {}) {
+export function App({ active = true, open = null, onOpened }: {
+  active?: boolean;
+  /** A film the library asked for, applied once and then cleared. */
+  open?: string | null;
+  onOpened?: () => void;
+} = {}) {
   const [score, setScore] = useState<Score | null>(null);
   const [rig, setRig] = useState<Rig | null>(null);
   /* Read again when the rig is switched from the toolbar, so the room draws
@@ -256,6 +261,48 @@ export function App({ active = true }: { active?: boolean } = {}) {
     setTime(0);
     void loadLayout();
   }, [loadLayout]);
+
+  /* A film the library asked for, applied once.
+   *
+   * The library is a sibling page and the studio is hidden rather than
+   * unmounted while it is open, so there is no parent rendering both to
+   * hand one to the other. The shell holds the request and clears it as
+   * soon as it has been taken, which is what stops the same film being
+   * reopened on every later render. */
+  useEffect(() => {
+    if (!open) return;
+    void openFilm(open);
+    onOpened?.();
+  }, [open, openFilm, onOpened]);
+
+  /* The film list, read again whenever the studio comes back into view.
+   *
+   * It used to be fetched once, on mount, and never again. That was
+   * survivable while the library sat on this same page, where a film
+   * appearing in one list and not the other was at least visible. With the
+   * library on a page of its own it is not: upload a film there, come back,
+   * and the selector is a snapshot from whenever the page was loaded, with
+   * no hint that it is out of date. Deleting one is worse, because the name
+   * stays selectable and opening it fails.
+   *
+   * Only on the way in, not on a timer. Nothing else changes this list, so
+   * polling it would be work with nothing to find. */
+  useEffect(() => {
+    if (!active) return;
+    let gone = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/media');
+        if (!res.ok || gone) return;
+        setFilms(await res.json() ?? []);
+      } catch {
+        /* Leave the list alone. A selector showing what it showed a moment
+           ago is better than one that empties itself because a fetch
+           failed while somebody was mid edit. */
+      }
+    })();
+    return () => { gone = true; };
+  }, [active]);
 
   /* --- transport --- */
 
@@ -619,16 +666,12 @@ export function App({ active = true }: { active?: boolean } = {}) {
       )}
       <header className="bar">
         <h1>Componium <span className="dim">studio</span> <span className="tag">v2</span></h1>
-        <select
+        <FilmPicker
+          films={films}
           value={film}
-          onChange={(e) => openFilm(e.target.value)}
-          aria-label="Film"
-        >
-          <option value="">{score.title || '(score)'}</option>
-          {films.map((f) => (
-            <option key={f.name} value={f.name}>{f.name}</option>
-          ))}
-        </select>
+          fallback={score.title || '(score)'}
+          onPick={(name) => { void openFilm(name); }}
+        />
         <select
           className="versions"
           value={versions.current}
@@ -964,11 +1007,6 @@ export function App({ active = true }: { active?: boolean } = {}) {
           · <kbd>,</kbd><kbd>.</kbd> nudge a frame · <kbd>⌘C</kbd><kbd>⌘X</kbd><kbd>⌘V</kbd> · <kbd>⌘D</kbd> duplicate
           {shuttle !== 0 && <strong className="shuttle"> shuttle {shuttle > 0 ? '▶' : '◀'} {Math.abs(shuttle)}×</strong>}
         </p>
-      </section>
-
-      <section className="panel">
-        <h2>Library <span className="dim small">one film, one score; analysis runs in the background, one at a time</span></h2>
-        <Library onOpen={openFilm} fps={fps} />
       </section>
     </div>
   );
