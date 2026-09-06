@@ -80,7 +80,12 @@ const timecode = () => document.querySelector('.tc')!.textContent;
 
 async function openFilm() {
   render(<App />);
-  await screen.findByText(/Componium/);
+  /* The studio's name is in the shell's bar now, not in App, so this waits on
+     something App actually renders: the film picker, which is the first thing
+     that means the page is up. */
+  await waitFor(() => {
+    if (!document.querySelector('.picker-current')) throw new Error('not up yet');
+  });
   /* The film select became a searchable popover, so choosing one is now
      two steps: open it, then press the row. Done through the same
      controls a person uses rather than by setting a value, which is the
@@ -388,7 +393,12 @@ describe('a studio nobody is looking at', () => {
   it('does not answer the keyboard', async () => {
     /* Mounted, holding its score and its history, and silent. */
     render(<App active={false} />);
-    await screen.findByText(/Componium/);
+    /* The studio's name is in the shell's bar now, not in App, so this waits on
+     something App actually renders: the film picker, which is the first thing
+     that means the page is up. */
+    await waitFor(() => {
+      if (!document.querySelector('.picker-current')) throw new Error('not up yet');
+    });
     await waitFor(() => expect(document.querySelector('.tc')).toBeTruthy());
     const before = timecode();
     fireEvent.keyDown(document.body, { key: 'ArrowRight' });

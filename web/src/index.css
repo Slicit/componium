@@ -128,6 +128,22 @@ body {
   border-bottom: 1px solid var(--line);
   margin-bottom: 14px;
 }
+/* The transport and the editing controls, directly above the timeline.
+   Same shape as the old top bar, because it is the same row of controls;
+   what changed is that it now sits against the thing it acts on rather
+   than a picture's height away from it. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 10px;
+}
+.controls .tc {
+  font-family: var(--mono);
+}
+
 .bar h1 {
   font-size: 15px;
   font-weight: 600;
@@ -817,17 +833,35 @@ button[aria-disabled='true']:hover {
   display: block;
   padding: 3px 10px;
   border-radius: 3px;
-  color: var(--dim);
+  color: var(--muted);
   text-decoration: none;
   font-size: 13px;
 }
-.nav a:hover {
-  color: var(--ink);
-  background: var(--raise);
-}
+.nav a:hover,
 .nav a.is-current {
   color: var(--ink);
-  background: var(--raise);
+  background: var(--surface-2);
+}
+
+/* What the page puts beside its own name: for the studio, which film and
+   which of its scores. Grows to take the middle so that Admin is pushed
+   to the far edge whether or not anything is in here. */
+.nav-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nav-slot .versions {
+  max-width: 200px;
+}
+
+/* Hard right, and away from the others. It is the way out of the working
+   surface rather than a place within it, and sitting next to Library made
+   it read as a third of the same kind. */
+.nav-admin {
+  margin-left: auto;
 }
 
 .adm {
@@ -852,17 +886,17 @@ button[aria-disabled='true']:hover {
   display: block;
   padding: 6px 10px;
   border-radius: 3px;
-  color: var(--dim);
+  color: var(--muted);
   text-decoration: none;
   font-size: 13px;
 }
 .adm-menu a:hover {
   color: var(--ink);
-  background: var(--raise);
+  background: var(--surface-2);
 }
 .adm-menu a.is-current {
   color: var(--ink);
-  background: var(--raise);
+  background: var(--surface-2);
   font-weight: 500;
 }
 
@@ -956,7 +990,7 @@ button[aria-disabled='true']:hover {
   font-weight: 600;
 }
 .adm-code {
-  background: var(--raise);
+  background: var(--surface-2);
   border-radius: 3px;
   padding: 8px 10px;
   overflow-x: auto;
@@ -986,7 +1020,7 @@ button[aria-disabled='true']:hover {
   font-size: 13px;
 }
 .adm-facts dt {
-  color: var(--dim);
+  color: var(--muted);
 }
 .adm-facts dd {
   margin: 0;
@@ -1008,7 +1042,7 @@ button[aria-disabled='true']:hover {
   white-space: nowrap;
 }
 .adm-table th {
-  color: var(--dim);
+  color: var(--muted);
   font-weight: 500;
   border-bottom: 1px solid var(--line);
 }
@@ -1024,8 +1058,8 @@ button[aria-disabled='true']:hover {
   padding: 1px 7px;
   border-radius: 9px;
   font-size: 11px;
-  background: var(--raise);
-  color: var(--dim);
+  background: var(--surface-2);
+  color: var(--muted);
 }
 .adm-pill.is-real {
   color: var(--ink);
@@ -1055,7 +1089,7 @@ button[aria-disabled='true']:hover {
 }
 .adm-set-value {
   font-variant-numeric: tabular-nums;
-  color: var(--dim);
+  color: var(--muted);
   font-size: 13px;
 }
 .adm-set input[type='range'] {
@@ -1124,7 +1158,7 @@ button[aria-disabled='true']:hover {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
-  color: var(--dim);
+  color: var(--muted);
   background: color-mix(in srgb, var(--ground) 72%, transparent);
   pointer-events: none;
 }

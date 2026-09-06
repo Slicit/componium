@@ -101,6 +101,47 @@ function definitionOf(name: string): string | null {
   return line ? line[1].trim() : null;
 }
 
+describe('every colour resolves', () => {
+  /* An undefined custom property is silent in a way that costs hours.
+   * `color: var(--dim)` where --dim does not exist is not a wrong colour, it
+   * is an invalid declaration: the browser throws the whole line away and the
+   * element inherits. So it does not look broken, it looks like a choice.
+   *
+   * Ten declarations in this stylesheet had never applied, including both of
+   * the navigation bar's states, which is why every entry looked the same as
+   * the one you were on.
+   */
+  const defined = new Set([...CSS.matchAll(/^\s*(--[\w-]+)\s*:/gm)].map((m) => m[1]));
+
+  it('uses no custom property it does not define', () => {
+    const missing: string[] = [];
+    for (const use of CSS.matchAll(/var\((--[\w-]+)([^)]*)\)/g)) {
+      const [, name, rest] = use;
+      if (defined.has(name)) continue;
+      /* A fallback makes it valid, so it renders. Still worth knowing about,
+       * because a hardcoded fallback is a colour that stops following the
+       * palette, which is the thing ADR 0010 stage one was about. Listed in
+       * the test below rather than failed on here. */
+      if (rest.includes(',')) continue;
+      missing.push(name);
+    }
+    expect([...new Set(missing)]).toEqual([]);
+  });
+
+  it('has these off-palette fallbacks left, and no others', () => {
+    /* Not a failure, a list. Each renders its fallback and therefore ignores
+     * the theme. Fixing one means picking which token it should have been and
+     * accepting that the colour moves slightly, which is a decision rather
+     * than a tidy-up. */
+    const withFallback = new Set<string>();
+    for (const use of CSS.matchAll(/var\((--[\w-]+)([^)]*)\)/g)) {
+      const [, name, rest] = use;
+      if (!defined.has(name) && rest.includes(',')) withFallback.add(name);
+    }
+    expect([...withFallback].sort()).toEqual(['--dim', '--fg', '--panel']);
+  });
+});
+
 describe('the palette', () => {
   it('still paints exactly the colours it shipped with', () => {
     const drifted: string[] = [];

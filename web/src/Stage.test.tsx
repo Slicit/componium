@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 import { App } from './App';
 
 const score = {
@@ -84,7 +84,12 @@ function chosen(): string {
 
 async function open() {
   render(<App />);
-  await screen.findByText(/Componium/);
+  /* The studio's name is in the shell's bar now, not in App, so this waits on
+     something App actually renders: the film picker, which is the first thing
+     that means the page is up. */
+  await waitFor(() => {
+    if (!document.querySelector('.picker-current')) throw new Error('not up yet');
+  });
   /* The media list arrives after the first paint, and the picker shows the
      score's title until it does. Waiting for the button to exist is not
      enough: it exists immediately, holding the fallback. */

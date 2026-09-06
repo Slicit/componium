@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, cleanup, waitFor } from '@testing-library/react';
 import { App } from './App';
 
 const score = {
@@ -67,7 +67,12 @@ afterEach(() => {
 
 async function surface(): Promise<HTMLElement> {
   render(<App />);
-  await screen.findByText(/Componium/);
+  /* The studio's name is in the shell's bar now, not in App, so this waits on
+     something App actually renders: the film picker, which is the first thing
+     that means the page is up. */
+  await waitFor(() => {
+    if (!document.querySelector('.picker-current')) throw new Error('not up yet');
+  });
   return waitFor(() => {
     const el = document.querySelector('.tl-surface');
     if (!el) throw new Error('no timeline surface');

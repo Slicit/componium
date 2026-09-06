@@ -31,8 +31,10 @@ import { isTyping } from './core/typing';
 import { useLive } from './ui/useLive';
 import { LiveTrim } from './ui/LiveTrim';
 import { RigPicker } from './ui/RigPicker';
+import { createPortal } from 'react-dom';
 import { FilmPicker } from './ui/FilmPicker';
 import { Tip, TooltipProvider } from './ui/Tip';
+import { NAV_SLOT } from './ui/Nav';
 import type { Preset } from './core/presets';
 import { canCollapse } from './core/layout';
 import { menuFor } from './ui/menuItems';
@@ -89,6 +91,10 @@ export function App({
       });
   }, []);
   const [films, setFilms] = useState<Film[]>([]);
+  /* The bar at the top belongs to the shell, so this is found rather than
+     rendered. Resolved after mount because the shell paints first, and
+     null when there is no shell at all, which is how the tests run. */
+  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null);
   const [film, setFilm] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [time, setTime] = useState(0);
@@ -365,6 +371,10 @@ export function App({
       gone = true;
     };
   }, [active]);
+
+  useEffect(() => {
+    setNavSlot(document.getElementById(NAV_SLOT));
+  }, []);
 
   /* --- transport --- */
 
@@ -843,153 +853,75 @@ export function App({
             </button>
           </p>
         )}
-        <header className="bar">
-          <h1>
-            Componium <span className="dim">studio</span> <span className="tag">v2</span>
-          </h1>
-          <FilmPicker
-            films={films}
-            value={film}
-            fallback={score.title || '(score)'}
-            onPick={(name) => {
-              void openFilm(name);
-            }}
-          />
-          <select
-            className="versions"
-            value={versions.current}
-            onChange={(e) => versions.select(e.target.value)}
-            disabled={!film || versions.list.length === 0}
-            aria-label="Score version"
-            title={
-              versions.list.length === 0
-                ? 'No earlier scores kept for this film yet'
-                : 'Scores kept from earlier analyses of this film'
-            }
-          >
-            <option value="">{versions.list.length === 0 ? 'no history' : 'latest'}</option>
-            {versions.list.map((v) => (
-              <option key={v.id} value={v.id} title={v.note}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-          <span className="spacer" />
-          <span className="tc" title="Timecode, HH:MM:SS:FF">
-            {timecode(time, fps, { hours: true })}
-          </span>
-          <span className="dim small">{fps} fps</span>
-          <span className="dim small">{Math.round(view.fraction * 100)}% shown</span>
-          <Tip say="The room preview">
-            <button
-              className={'toggle' + (split.room ? ' on' : '')}
-              onClick={() => views.setRoom(!split.room)}
-            >
-              room
-            </button>
-          </Tip>
-          <Tip
-            say={
-              split.room
-                ? 'The sliders that force one effect on, whatever the score says'
-                : 'The sliders live in the room pane, which is hidden'
-            }
-          >
-            {/* aria-disabled rather than disabled, so it stays focusable and
-              can say why it is unavailable. That sentence is the whole
-              point of it, and a disabled button cannot show a tooltip. */}
-            <button
-              className={'toggle' + (split.force ? ' on' : '')}
-              onClick={() => split.room && views.setForce(!split.force)}
-              aria-disabled={!split.room}
-            >
-              sliders
-            </button>
-          </Tip>
-          <Viewports
-            viewport={split}
-            saved={views.saved}
-            onSave={views.save}
-            onApply={views.apply}
-            onRemove={views.remove}
-            onReset={views.reset}
-          />
-          <button
-            className={'toggle live' + (live.armed ? ' on' : '')}
-            onClick={() => (live.armed ? live.disarm() : live.arm())}
-            title={
-              live.armed
-                ? 'Driving the rig from this playhead. Click to stop.'
-                : 'Drive the real rig from this playhead, through the same clock ' +
-                  'and safety supervisor a show uses'
-            }
-          >
-            {live.armed ? 'live' : 'go live'}
-          </button>
-          {live.armed && (
-            <span
-              className={'chip' + (live.state.real === 0 ? ' warn' : '')}
+
+        {/* Beside the studio's own name in the one bar at the top. The
+          fallback is not a nicety: App is rendered on its own in four test
+          files, and a component that renders nothing without a particular
+          ancestor is one that cannot be tested by itself. */}
+        {navSlot ? (
+          createPortal(
+            <>
+              <FilmPicker
+                films={films}
+                value={film}
+                fallback={score.title || '(score)'}
+                onPick={(name) => {
+                  void openFilm(name);
+                }}
+              />
+              <select
+                className="versions"
+                value={versions.current}
+                onChange={(e) => versions.select(e.target.value)}
+                disabled={!film || versions.list.length === 0}
+                aria-label="Score version"
+                title={
+                  versions.list.length === 0
+                    ? 'No earlier scores kept for this film yet'
+                    : 'Scores kept from earlier analyses of this film'
+                }
+              >
+                <option value="">{versions.list.length === 0 ? 'no history' : 'latest'}</option>
+                {versions.list.map((v) => (
+                  <option key={v.id} value={v.id} title={v.note}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+            </>,
+            navSlot,
+          )
+        ) : (
+          <div className="bar">
+            <FilmPicker
+              films={films}
+              value={film}
+              fallback={score.title || '(score)'}
+              onPick={(name) => {
+                void openFilm(name);
+              }}
+            />
+            <select
+              className="versions"
+              value={versions.current}
+              onChange={(e) => versions.select(e.target.value)}
+              disabled={!film || versions.list.length === 0}
+              aria-label="Score version"
               title={
-                live.state.real === 0
-                  ? 'Every instrument in this rig is virtual, so nothing physical ' +
-                    'will move. The conductor is logging what it would have sent.'
-                  : live.state.cues +
-                    ' cues and ' +
-                    live.state.curves +
-                    ' curve updates sent, ' +
-                    Math.round(live.state.precision * 1000) +
-                    'ms precision'
+                versions.list.length === 0
+                  ? 'No earlier scores kept for this film yet'
+                  : 'Scores kept from earlier analyses of this film'
               }
             >
-              {live.state.real === 0 ? 'all virtual' : live.state.real + ' live'}
-            </span>
-          )}
-          {live.armed && <LiveTrim lights={live.state.lights ?? []} />}
-          <RigPicker armed={live.armed} onChanged={rereadRig} />
-          <button
-            className={'toggle' + (overlays.calm ? ' on' : '')}
-            onClick={() => setOverlays((o) => ({ ...o, calm: !o.calm }))}
-            title={
-              score?.calm?.length
-                ? 'Where the analysis decided to leave the film alone'
-                : 'This score records no calm regions — rebuild it to get them'
-            }
-            disabled={!score?.calm?.length}
-          >
-            calm
-          </button>
-          <button
-            className={'toggle' + (overlays.latency ? ' on' : '')}
-            onClick={() => setOverlays((o) => ({ ...o, latency: !o.latency }))}
-            title="When the conductor actually fires, against when the effect lands"
-          >
-            lead
-          </button>
-          {edit.selected.size > 0 && <span className="chip">{edit.selected.size} selected</span>}
-          <Tip say={history.undoLabel ? 'Undo ' + history.undoLabel : 'Nothing to undo'}>
-            <button
-              onClick={() => {
-                if (history.undo()) onView();
-              }}
-              aria-disabled={!history.canUndo}
-            >
-              Undo
-            </button>
-          </Tip>
-          <Tip say={history.redoLabel ? 'Redo ' + history.redoLabel : 'Nothing to redo'}>
-            <button
-              onClick={() => {
-                if (history.redo()) onView();
-              }}
-              aria-disabled={!history.canRedo}
-            >
-              Redo
-            </button>
-          </Tip>
-          <button onClick={() => void save()} disabled={!history.dirty}>
-            {saving ?? (history.dirty ? 'Save' : 'Saved')}
-          </button>
-        </header>
+              <option value="">{versions.list.length === 0 ? 'no history' : 'latest'}</option>
+              {versions.list.map((v) => (
+                <option key={v.id} value={v.id} title={v.note}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {error && <p className="warn">{error}</p>}
 
@@ -1160,6 +1092,127 @@ export function App({
           aria-label="Resize the height of the picture and the room"
           title="Drag to resize, double click to reset"
         />
+
+        {/* The transport and the editing controls, directly above the
+            thing they act on. They were at the top of the page, a whole
+            picture away from the timeline, which meant looking up to check
+            a timecode that describes the playhead you are dragging. */}
+        <div className="controls">
+          <span className="tc" title="Timecode, HH:MM:SS:FF">
+            {timecode(time, fps, { hours: true })}
+          </span>
+          <span className="dim small">{fps} fps</span>
+          <span className="dim small">{Math.round(view.fraction * 100)}% shown</span>
+          <Tip say="The room preview">
+            <button
+              className={'toggle' + (split.room ? ' on' : '')}
+              onClick={() => views.setRoom(!split.room)}
+            >
+              room
+            </button>
+          </Tip>
+          <Tip
+            say={
+              split.room
+                ? 'The sliders that force one effect on, whatever the score says'
+                : 'The sliders live in the room pane, which is hidden'
+            }
+          >
+            {/* aria-disabled rather than disabled, so it stays focusable and
+              can say why it is unavailable. That sentence is the whole
+              point of it, and a disabled button cannot show a tooltip. */}
+            <button
+              className={'toggle' + (split.force ? ' on' : '')}
+              onClick={() => split.room && views.setForce(!split.force)}
+              aria-disabled={!split.room}
+            >
+              sliders
+            </button>
+          </Tip>
+          <Viewports
+            viewport={split}
+            saved={views.saved}
+            onSave={views.save}
+            onApply={views.apply}
+            onRemove={views.remove}
+            onReset={views.reset}
+          />
+          <button
+            className={'toggle live' + (live.armed ? ' on' : '')}
+            onClick={() => (live.armed ? live.disarm() : live.arm())}
+            title={
+              live.armed
+                ? 'Driving the rig from this playhead. Click to stop.'
+                : 'Drive the real rig from this playhead, through the same clock ' +
+                  'and safety supervisor a show uses'
+            }
+          >
+            {live.armed ? 'live' : 'go live'}
+          </button>
+          {live.armed && (
+            <span
+              className={'chip' + (live.state.real === 0 ? ' warn' : '')}
+              title={
+                live.state.real === 0
+                  ? 'Every instrument in this rig is virtual, so nothing physical ' +
+                    'will move. The conductor is logging what it would have sent.'
+                  : live.state.cues +
+                    ' cues and ' +
+                    live.state.curves +
+                    ' curve updates sent, ' +
+                    Math.round(live.state.precision * 1000) +
+                    'ms precision'
+              }
+            >
+              {live.state.real === 0 ? 'all virtual' : live.state.real + ' live'}
+            </span>
+          )}
+          {live.armed && <LiveTrim lights={live.state.lights ?? []} />}
+          <RigPicker armed={live.armed} onChanged={rereadRig} />
+          <button
+            className={'toggle' + (overlays.calm ? ' on' : '')}
+            onClick={() => setOverlays((o) => ({ ...o, calm: !o.calm }))}
+            title={
+              score?.calm?.length
+                ? 'Where the analysis decided to leave the film alone'
+                : 'This score records no calm regions — rebuild it to get them'
+            }
+            disabled={!score?.calm?.length}
+          >
+            calm
+          </button>
+          <button
+            className={'toggle' + (overlays.latency ? ' on' : '')}
+            onClick={() => setOverlays((o) => ({ ...o, latency: !o.latency }))}
+            title="When the conductor actually fires, against when the effect lands"
+          >
+            lead
+          </button>
+          {edit.selected.size > 0 && <span className="chip">{edit.selected.size} selected</span>}
+          <Tip say={history.undoLabel ? 'Undo ' + history.undoLabel : 'Nothing to undo'}>
+            <button
+              onClick={() => {
+                if (history.undo()) onView();
+              }}
+              aria-disabled={!history.canUndo}
+            >
+              Undo
+            </button>
+          </Tip>
+          <Tip say={history.redoLabel ? 'Redo ' + history.redoLabel : 'Nothing to redo'}>
+            <button
+              onClick={() => {
+                if (history.redo()) onView();
+              }}
+              aria-disabled={!history.canRedo}
+            >
+              Redo
+            </button>
+          </Tip>
+          <button onClick={() => void save()} disabled={!history.dirty}>
+            {saving ?? (history.dirty ? 'Save' : 'Saved')}
+          </button>
+        </div>
 
         <section className="tl">
           {/* The lanes and the editor, side by side. The editor is a column
