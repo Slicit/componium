@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Vision } from './Vision';
 
 const trace = {
@@ -186,17 +186,26 @@ describe('getting out again', () => {
   it('closes on escape', async () => {
     const { onClose } = show();
     await waitFor(() => expect(said().length).toBe(3));
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  it('closes when the backdrop is pressed, but not the panel', async () => {
+  it('does not close when the panel itself is pressed', async () => {
     const { onClose } = show();
     await waitFor(() => expect(said().length).toBe(3));
-    fireEvent.pointerDown(document.querySelector('.modal')!);
+    fireEvent.pointerDown(screen.getByRole('dialog'));
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.pointerDown(document.querySelector('.modal-back')!);
-    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('takes the focus, and does not give it back to the page behind', async () => {
+    /* The two things the hand-built panel got wrong and the reason it was
+     * replaced. It was a full screen panel that the keyboard could walk
+     * straight out of, into a studio nobody could see, and it never moved
+     * focus into itself in the first place. */
+    show();
+    await waitFor(() => expect(said().length).toBe(3));
+    const panel = screen.getByRole('dialog');
+    await waitFor(() => expect(panel.contains(document.activeElement)).toBe(true));
   });
 });
 
