@@ -8,9 +8,30 @@
  * exception — Split, which is disabled with a reason when the playhead is not
  * inside the span, because "why is Split missing" is a worse question than
  * "why is Split grey".
+ *
+ * The props are unchanged from the hand-built version: a point, a list, and a
+ * way to close. What is underneath is Radix now, and the reason is the part
+ * that was missing rather than the part that worked. The old menu closed on a
+ * click away, on Escape, on a scroll and on the window losing focus, and it
+ * kept itself on screen — all of that was written out by hand and all of it
+ * was right. What it had none of was a keyboard: no arrow keys, no Home or
+ * End, no typeahead, and focus never entered the menu at all. A right-click
+ * menu that can only be answered with a mouse is one a keyboard user can open
+ * and then not use.
+ *
+ * It is anchored to a point rather than to a control, which is what the
+ * invisible trigger below is for: the menu is opened by a right-click on a
+ * canvas, so there is no button to hang it from.
  */
 
 import { useEffect, useRef } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './shad/dropdown-menu';
 
 export interface MenuItem {
   label: string;
@@ -27,68 +48,49 @@ export type MenuEntry = MenuItem | { separator: true };
 
 export function Menu(props: { x: number; y: number; items: MenuEntry[]; onClose: () => void }) {
   const { x, y, items, onClose } = props;
-  const box = useRef<HTMLDivElement>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
 
-  /* Close on anything that is not choosing something: a click elsewhere, the
-   * escape key, a scroll, or the window losing focus. A menu that outlives its
-   * context and then acts on stale state is worse than no menu. */
+  /* A scroll closes it. Radix handles the click away, Escape and the window
+   * losing focus, but leaves a menu open through a scroll on purpose, since a
+   * menu hanging off a button should travel with it. This one hangs off a
+   * point in a timeline, and that point means something different once the
+   * timeline has moved under it. */
   useEffect(() => {
-    const away = (e: Event) => {
-      if (box.current && e.target instanceof Node && box.current.contains(e.target)) return;
-      onClose();
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('pointerdown', away, true);
     window.addEventListener('wheel', onClose, { passive: true });
-    window.addEventListener('blur', onClose);
-    window.addEventListener('keydown', key);
-    return () => {
-      window.removeEventListener('pointerdown', away, true);
-      window.removeEventListener('wheel', onClose);
-      window.removeEventListener('blur', onClose);
-      window.removeEventListener('keydown', key);
-    };
+    return () => window.removeEventListener('wheel', onClose);
   }, [onClose]);
 
-  /* Keep it on screen. Opening near the right edge otherwise puts half the
-   * menu past it, and near the bottom puts the destructive items out of
-   * reach — which is exactly where a mis-click lands. */
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const dx = Math.min(0, window.innerWidth - (r.right + 8));
-    const dy = Math.min(0, window.innerHeight - (r.bottom + 8));
-    if (dx || dy) {
-      el.style.left = `${x + dx}px`;
-      el.style.top = `${y + dy}px`;
-    }
-  }, [x, y, items]);
-
   return (
-    <div className="menu" ref={box} style={{ left: x, top: y }} role="menu">
-      {items.map((item, i) =>
-        'separator' in item && item.separator ? (
-          <div key={'s' + i} className="menu-sep" />
-        ) : (
-          <button
-            key={item.label + i}
-            className={'menu-item' + (item.danger ? ' danger' : '')}
-            role="menuitem"
-            disabled={!!item.why || !item.run}
-            title={item.why}
-            onClick={() => {
-              item.run?.();
-              onClose();
-            }}
-          >
-            <span>{item.label}</span>
-            {item.key && <kbd>{item.key}</kbd>}
-          </button>
-        ),
-      )}
-    </div>
+    <DropdownMenu open onOpenChange={(open) => !open && onClose()}>
+      <DropdownMenuTrigger asChild>
+        {/* Nothing to see: it exists so the menu has something to be
+            positioned against, and so that focus has somewhere to return to
+            when the menu closes. */}
+        <span
+          ref={anchor}
+          aria-hidden="true"
+          style={{ position: 'fixed', left: x, top: y, width: 0, height: 0 }}
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="start" side="bottom" collisionPadding={8}>
+        {items.map((item, i) =>
+          'separator' in item && item.separator ? (
+            <DropdownMenuSeparator key={'s' + i} />
+          ) : (
+            <DropdownMenuItem
+              key={item.label + i}
+              danger={item.danger}
+              disabled={!!item.why || !item.run}
+              title={item.why}
+              onSelect={() => item.run?.()}
+            >
+              <span>{item.label}</span>
+              {item.key && <kbd>{item.key}</kbd>}
+            </DropdownMenuItem>
+          ),
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
