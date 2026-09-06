@@ -21,6 +21,7 @@
 #include "config.h"
 #include "devices.h"
 #include "guard.h"
+#include "cJSON.h"
 
 /* ------------------------------------------------------------ depth guard */
 
@@ -480,6 +481,134 @@ static void a_start_does_nothing_when_not_kicking(void)
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.70f, device_duty(0.5f, 0.4f, 0.65f, false));
 }
 
+/* ------------------------------------------------- the hello has to fit */
+
+/* CIP_MAX_DATAGRAM, repeated here on purpose rather than included.
+ *
+ * componium_node.c is the socket loop and pulling it into a test binary drags
+ * the radio in with it. So this is a copy, and a copy that drifts is a test
+ * that passes while the board goes quiet. Kept honest by naming the same
+ * number in the same words as the thing it mirrors. */
+#define ANNOUNCE_LIMIT 1472
+#define ANNOUNCE_TAG   16
+
+static device_t a_fan(const char *id, int gpio)
+{
+    device_t d;
+    memset(&d, 0, sizeof(d));
+    snprintf(d.id, sizeof(d.id), "%s", id);
+    snprintf(d.kind, sizeof(d.kind), "wind");
+    d.type = DEV_PWM;
+    d.gpio = gpio;
+    d.channels = 1;
+    d.freq_hz = 25000;
+    d.latency_ms = 500;
+    d.ramp_up_ms = 1800;
+    d.ramp_down_ms = 3000;
+    /* Values that print long. cJSON writes a float at full double precision,
+     * so 0.4f becomes 0.40000000596046448 on the wire: the numbers that cost
+     * the most space are the ones that look cheapest in source. */
+    d.min_duty = 0.4f;
+    d.start_duty = 0.65f;
+    d.kick_ms = 250;
+    return d;
+}
+
+static device_t a_strip(const char *id, int gpio)
+{
+    device_t d;
+    memset(&d, 0, sizeof(d));
+    snprintf(d.id, sizeof(d.id), "%s", id);
+    snprintf(d.kind, sizeof(d.kind), "light");
+    d.type = DEV_WS28XX;
+    d.gpio = gpio;
+    d.channels = 3;
+    d.pixels = 5;
+    return d;
+}
+
+static size_t hello_bytes(const device_t *devices, int count)
+{
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "v", "0.3");
+    cJSON_AddStringToObject(root, "t", "hello");
+    cJSON *node = cJSON_CreateObject();
+    cJSON_AddStringToObject(node, "name", "componium-node");
+    cJSON_AddStringToObject(node, "firmware", "0.3");
+    cJSON_AddStringToObject(node, "chip", "ESP32");
+    cJSON_AddItemToObject(root, "node", node);
+    cJSON *list = cJSON_CreateArray();
+    for (int i = 0; i < count; i++) {
+        cJSON *in = device_announcement(&devices[i], i);
+        if (in) {
+            cJSON_AddItemToArray(list, in);
+        }
+    }
+    cJSON_AddItemToObject(root, "instruments", list);
+
+    char *text = cJSON_PrintUnformatted(root);
+    size_t len = text ? strlen(text) : 0;
+    if (text) {
+        cJSON_free(text);
+    }
+    cJSON_Delete(root);
+    return len + ANNOUNCE_TAG;
+}
+
+static void a_full_board_still_fits_in_one_datagram(void)
+{
+    /* The board on the bench, with every measured number set, which is the
+     * configuration that did not fit and took CIP down with it. A hello that
+     * does not fit is not a degraded hello: it is no hello at all, and hello
+     * is how every conductor and every tool starts. */
+    device_t board[3] = {
+        a_fan("wind.main", 18),
+        a_strip("light.event", 19),
+        a_strip("light.ambient", 5),
+    };
+    size_t len = hello_bytes(board, 3);
+    TEST_ASSERT_LESS_OR_EQUAL_UINT32(ANNOUNCE_LIMIT, len);
+}
+
+static void there_is_room_for_one_more_device(void)
+{
+    /* One more than the bench board, because a limit that exactly fits what is
+     * plugged in today breaks on the day something is added, and breaks by
+     * going silent rather than by complaining. */
+    device_t board[4] = {
+        a_fan("wind.main", 18),
+        a_strip("light.event", 19),
+        a_strip("light.ambient", 5),
+        a_strip("light.rear", 22),
+    };
+    TEST_ASSERT_LESS_OR_EQUAL_UINT32(ANNOUNCE_LIMIT, hello_bytes(board, 4));
+}
+
+static void a_bigger_rig_does_not_fit_and_that_is_known(void)
+{
+    /* Five devices come to about 1640 bytes, and there is no buffer inside one
+     * datagram that holds them: 1472 is already the largest UDP payload that
+     * survives a 1500 byte MTU without fragmenting.
+     *
+     * Asserted rather than left to be found, because of how it fails. The
+     * board keeps answering its web page and keeps taking cues, and is
+     * invisible to every conductor and every tool, since all of them start
+     * with hello.
+     *
+     * The fix when this day comes is to stop repeating the channels array for
+     * every device. Most of a hello is the same channel names and units
+     * written out again, and that is compressible without changing what any
+     * reader can learn. Raising the limit past the MTU is not the fix. */
+    device_t board[5] = {
+        a_fan("wind.main", 18),
+        a_fan("wind.side", 21),
+        a_strip("light.event", 19),
+        a_strip("light.ambient", 5),
+        a_strip("light.rear", 22),
+    };
+    TEST_ASSERT_GREATER_THAN_UINT32(ANNOUNCE_LIMIT, hello_bytes(board, 5));
+}
+
 void app_main(void)
 {
     UNITY_BEGIN();
@@ -530,6 +659,9 @@ void app_main(void)
     RUN_TEST(a_kick_never_lowers_what_was_asked);
     RUN_TEST(a_start_past_the_top_is_just_full);
     RUN_TEST(a_start_does_nothing_when_not_kicking);
+    RUN_TEST(a_full_board_still_fits_in_one_datagram);
+    RUN_TEST(there_is_room_for_one_more_device);
+    RUN_TEST(a_bigger_rig_does_not_fit_and_that_is_known);
 
     /* What the board is told, stores, and says back. */
     register_roundtrip_tests();

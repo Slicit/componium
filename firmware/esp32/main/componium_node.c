@@ -43,7 +43,33 @@
 #define CIP_PORT          5570
 #define CIP_VERSION       "0.3"
 #define CIP_WATCHDOG_MS   300
-#define CIP_MAX_DATAGRAM  1024
+/* One datagram, in or out.
+ *
+ * 1024 was enough until a board with three devices had all of its
+ * measured numbers set, at which point the hello came to 1012 bytes of
+ * body and the reply was dropped on the floor. The board went on
+ * accepting cues and answering its web page while being, from the
+ * conductor's side, absent: hello is how everything starts, so nothing
+ * could start.
+ *
+ * What made it expensive is that cJSON prints a float at full double
+ * precision, so a min_duty of 0.4 is not ten characters on the wire but
+ * thirty. Three such numbers on one device is seventy six bytes nobody
+ * would predict by reading the code.
+ *
+ * 1472 is the largest UDP payload that still fits inside a 1500 byte
+ * MTU once IP and UDP headers are counted, so nothing here fragments.
+ * It is not room to grow into: five devices with everything set come
+ * to 1640 bytes, and the test below says so. A rig larger than about
+ * four devices needs the hello slimmed rather than the buffer raised,
+ * because most of it is the channels array repeating the same names
+ * and units for every device.
+ *
+ * The old 1400 comment said this kept us inside the MTU, which was
+ * true and less than the whole story. The conductor reads into 2048
+ * and the bench tools into 4096, so both ends already allow more.
+ */
+#define CIP_MAX_DATAGRAM  1472
 #define CIP_TAG_LEN       16
 
 /* Stack for the socket loop.
@@ -51,7 +77,7 @@
  * Generous because the loop is not: a 1KB receive buffer, a cJSON tree per
  * reply, and another 1KB buffer to sign it into. It ran on app_main's 3584 byte
  * stack until the first datagram arrived and overflowed it. */
-#define CIP_TASK_STACK    8192
+#define CIP_TASK_STACK    9216
 
 /* Stack for the watchdog.
  *
@@ -266,6 +292,13 @@ static void send_raw(int sock, struct sockaddr_in *to, const uint8_t *body, size
     }
     uint8_t out[CIP_MAX_DATAGRAM];
     if (len + CIP_TAG_LEN > sizeof(out)) {
+        /* Said out loud, because the silent version of this cost an
+         * evening. A board that cannot answer looks exactly like a board
+         * that is not there, and the one place that knows the difference
+         * is here. */
+        ESP_LOGE(TAG, "cannot send %u bytes, the limit is %u: nothing was"
+                      " sent and the other end will see silence",
+                 (unsigned)(len + CIP_TAG_LEN), (unsigned)sizeof(out));
         return;
     }
     const mbedtls_md_info_t *info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
