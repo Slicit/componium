@@ -72,27 +72,46 @@ Preserving the theme is not a risk. shadcn reads colours from CSS variables
 holding bare HSL triplets, consumed as `hsl(var(--background))`. The existing
 palette maps onto its names directly, and the numbers are already known:
 
-| now | value | HSL triplet | shadcn name |
+| now | value | HSL triplet | stands in for |
 |---|---|---|---|
-| `--ground` | `#0d1015` | `218 24% 7%` | `--background` |
-| `--surface` | `#141920` | `215 23% 10%` | `--card`, `--popover` |
-| `--surface-2` | `#1b222b` | `214 23% 14%` | `--secondary`, `--muted` |
-| `--ink` | `#e4e9f0` | `215 29% 92%` | `--foreground` |
-| `--muted` | `#8c96a5` | `216 12% 60%` | `--muted-foreground` |
-| `--line` | `#232b35` | `213 20% 17%` | `--border`, `--input` |
-| `--accent` | `#d8a24a` | `37 65% 57%` | `--primary`, `--ring` |
-| `--warn` | `#d66e63` | `6 58% 61%` | `--destructive` |
+| `--ground` | `#0d1015` | `217.5 23.5% 6.7%` | `--ui-background` |
+| `--surface` | `#141920` | `215 23.1% 10.2%` | `--ui-card`, `--ui-popover` |
+| `--surface-2` | `#1b222b` | `213.8 22.9% 13.7%` | `--ui-secondary`, `--ui-muted` |
+| `--ink` | `#e4e9f0` | `215 28.6% 91.8%` | `--ui-foreground` |
+| `--muted` | `#8c96a5` | `216 12.2% 59.8%` | `--ui-muted-foreground` |
+| `--line` | `#232b35` | `213.3 20.5% 17.3%` | `--ui-border`, `--ui-input` |
+| `--accent` | `#d8a24a` | `37.2 64.5% 56.9%` | `--ui-primary`, `--ui-ring` |
+| `--warn` | `#d66e63` | `5.7 58.4% 61.4%` | `--ui-destructive` |
 
 Written as aliases rather than as a second copy, so there is one palette and
 changing a colour still means changing one line.
 
+Two details that only appeared on doing it.
+
+The decimals are not decoration. Rounded to whole numbers, `--accent` comes
+back as `#d8a24b` rather than `#d8a24a`: one byte, invisible, and exactly the
+sort of drift that makes a theme migration something people distrust
+afterwards. Each triplet carries the fewest decimals that convert back to the
+bytes it started as, and `web/src/core/theme.test.ts` checks all eleven
+against the hex the studio shipped with.
+
+The `--ui-` prefix is not neatness either. `--muted` exists in both
+vocabularies and means opposite things: here it is the colour of dim text,
+in shadcn it is a dim surface whose text is `--muted-foreground`. Aliased
+unprefixed, the day a component library arrived every `color: var(--muted)`
+in 1,425 lines of stylesheet would become a panel colour. Nothing would
+fail; the text would go dark. The prefix costs nothing on the other side,
+because shadcn components read Tailwind classes rather than these variables,
+and `tailwind.config` is the one place a class is pointed at a name.
+
 ## Proposal
 
-**Stage 1, worth doing whether or not the rest ever happens.** Express the
-palette as HSL triplets under both names, in `index.css`. No dependency, no
-build change, nothing to undo. It costs an hour, it makes the theme
-machine-readable, and it removes the only part of a future migration that
-would otherwise touch every colour in the app.
+**Stage 1, worth doing whether or not the rest ever happens. Done.
+2026-09-06.** The palette is HSL triplets under both sets of names in
+`index.css`, with every colour proved to paint exactly what it did before.
+No dependency, no build change, nothing to undo. It removed the only part of
+a future migration that would otherwise touch every colour in the app, and
+it found the `--muted` collision while nothing depended on the answer.
 
 **Stage 2, only when a specific control justifies it.** Add Tailwind with
 preflight disabled and a prefix, and Radix for one component: whichever of

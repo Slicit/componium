@@ -8,18 +8,77 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
 :root {
-  --ground: #0d1015;
-  --surface: #141920;
-  --surface-2: #1b222b;
-  --ink: #e4e9f0;
-  --muted: #8c96a5;
-  --line: #232b35;
-  --accent: #d8a24a;
-  --warn: #d66e63;
+  /* The palette, as the three numbers a hue, a saturation and a
+     lightness actually are.
 
-  --ch-r: #e3736b;
-  --ch-g: #79c073;
-  --ch-b: #6b93e3;
+     Written this way rather than as hex because it is the one form
+     that can be handed to something else. Every value below paints
+     exactly the colour its hex did, which is checked by
+     src/core/theme.test.ts against the hex the studio shipped with:
+     changing how a colour is written must not change the colour.
+
+     See ADR 0010. This is stage one of it and stands on its own:
+     nothing here depends on anything being adopted later. */
+  --ground-hsl: 217.5 23.5% 6.7%;   /* #0d1015 */
+  --surface-hsl: 215 23.1% 10.2%;   /* #141920 */
+  --surface-2-hsl: 213.8 22.9% 13.7%;   /* #1b222b */
+  --ink-hsl: 215 28.6% 91.8%;   /* #e4e9f0 */
+  --muted-hsl: 216 12.2% 59.8%;   /* #8c96a5 */
+  --line-hsl: 213.3 20.5% 17.3%;   /* #232b35 */
+  --accent-hsl: 37.2 64.5% 56.9%;   /* #d8a24a */
+  --warn-hsl: 5.7 58.4% 61.4%;   /* #d66e63 */
+  --ch-r-hsl: 4 68.2% 65.5%;   /* #e3736b */
+  --ch-g-hsl: 115.3 37.9% 60.2%;   /* #79c073 */
+  --ch-b-hsl: 220 68.2% 65.5%;   /* #6b93e3 */
+
+  /* What the studio calls them. Derived, so there is still one
+     palette and changing a colour is still one line. */
+  --ground: hsl(var(--ground-hsl));
+  --surface: hsl(var(--surface-hsl));
+  --surface-2: hsl(var(--surface-2-hsl));
+  --ink: hsl(var(--ink-hsl));
+  --muted: hsl(var(--muted-hsl));
+  --line: hsl(var(--line-hsl));
+  --accent: hsl(var(--accent-hsl));
+  --warn: hsl(var(--warn-hsl));
+  --ch-r: hsl(var(--ch-r-hsl));
+  --ch-g: hsl(var(--ch-g-hsl));
+  --ch-b: hsl(var(--ch-b-hsl));
+
+  /* What a component library would call them, should one ever be
+     brought in. Aliases onto the same numbers rather than a second copy of
+     the palette: two copies drift, and the way they drift is one dialog in
+     almost the right grey.
+
+     Prefixed, and that is not neatness. --muted exists in both
+     vocabularies and means opposite things: here it is the colour of dim
+     text, in shadcn it is a dim surface with --muted-foreground as the
+     text on it. Unprefixed, adopting one would silently repaint every
+     piece of dim text in the studio as a panel.
+
+     The prefix costs nothing on the other side. shadcn components do not
+     read these directly; they use Tailwind classes, and tailwind.config is
+     where bg-background is pointed at a variable.
+
+     Bare triplets, because that is the form they are read in:
+     hsl(var(--ui-background)). Unused today and costing nothing, which is
+     the whole argument for doing this part before deciding anything else.
+     See ADR 0010. */
+  --ui-background: var(--ground-hsl);
+  --ui-card: var(--surface-hsl);
+  --ui-popover: var(--surface-hsl);
+  --ui-secondary: var(--surface-2-hsl);
+  --ui-muted: var(--surface-2-hsl);
+  --ui-foreground: var(--ink-hsl);
+  --ui-card-foreground: var(--ink-hsl);
+  --ui-popover-foreground: var(--ink-hsl);
+  --ui-muted-foreground: var(--muted-hsl);
+  --ui-secondary-foreground: var(--muted-hsl);
+  --ui-border: var(--line-hsl);
+  --ui-input: var(--line-hsl);
+  --ui-primary: var(--accent-hsl);
+  --ui-ring: var(--accent-hsl);
+  --ui-destructive: var(--warn-hsl);
 
   --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
