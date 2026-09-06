@@ -1,0 +1,8 @@
+# Commits that moved every line without changing any behaviour.
+#
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub reads this file on its own.
+
+# style(web): oxfmt over the front end, formatting only
+f8cfc41e8d7c6a08202b064cda5eadaddf98997a
