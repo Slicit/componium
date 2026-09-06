@@ -609,6 +609,46 @@ static void a_bigger_rig_does_not_fit_and_that_is_known(void)
     TEST_ASSERT_GREATER_THAN_UINT32(ANNOUNCE_LIMIT, hello_bytes(board, 5));
 }
 
+static void a_duty_is_announced_at_the_boards_resolution(void)
+{
+    /* What a person reads, and what the wire carries. 0.65 stored in a float
+     * is 0.649999976158142 when promoted to a double, and cJSON prints every
+     * digit it needs to round trip that. Nobody wants to read it, no output
+     * here can produce the difference, and those digits are what pushed a
+     * hello past the datagram it had to fit in. */
+    device_t d = a_fan("wind.main", 18);
+    cJSON *in = device_announcement(&d, 0);
+    TEST_ASSERT_NOT_NULL(in);
+    char *text = cJSON_PrintUnformatted(in);
+    TEST_ASSERT_NOT_NULL(text);
+
+    TEST_ASSERT_NOT_NULL(strstr(text, "\"start_duty\":0.65"));
+    TEST_ASSERT_NOT_NULL(strstr(text, "\"min_duty\":0.4"));
+    /* The long form must be gone, not merely joined by a short one. */
+    TEST_ASSERT_NULL(strstr(text, "0.649999"));
+    TEST_ASSERT_NULL(strstr(text, "0.400000"));
+
+    cJSON_free(text);
+    cJSON_Delete(in);
+}
+
+static void rounding_is_what_bought_the_room(void)
+{
+    /* The saving, asserted rather than assumed. Three unit values on one
+     * device were about sixty bytes of digits describing nothing, and a board
+     * that could not answer at all. */
+    device_t fan = a_fan("wind.main", 18);
+    device_t bare = a_fan("wind.main", 18);
+    bare.min_duty = 0;
+    bare.start_duty = 0;
+
+    device_t with[1] = {fan};
+    device_t without[1] = {bare};
+    size_t cost = hello_bytes(with, 1) - hello_bytes(without, 1);
+    /* Two short numbers and their keys, rather than two long ones. */
+    TEST_ASSERT_LESS_THAN_UINT32(50, cost);
+}
+
 void app_main(void)
 {
     UNITY_BEGIN();
@@ -662,6 +702,8 @@ void app_main(void)
     RUN_TEST(a_full_board_still_fits_in_one_datagram);
     RUN_TEST(there_is_room_for_one_more_device);
     RUN_TEST(a_bigger_rig_does_not_fit_and_that_is_known);
+    RUN_TEST(a_duty_is_announced_at_the_boards_resolution);
+    RUN_TEST(rounding_is_what_bought_the_room);
 
     /* What the board is told, stores, and says back. */
     register_roundtrip_tests();

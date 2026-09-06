@@ -1,5 +1,6 @@
 #include "devices.h"
 
+#include <math.h>
 #include <string.h>
 
 #include "cJSON.h"
@@ -348,6 +349,29 @@ void device_safe(device_t *d)
  * Everything a configuration can set appears here. Nothing else does: index is
  * the caller's, because it is a fact about the list rather than the device.
  */
+/* A unit value as it should appear on the wire.
+
+ * Three decimals, because that is the resolution this board has: the PWM
+ * timer is ten bits, so one step is 1/1024 and roughly 0.001. A fourth
+ * decimal describes a duty no output here can produce, and the digits after
+ * that describe nothing at all.
+ *
+ * Done in double deliberately. These are floats, and promoting a float to a
+ * double is what put 0.649999976158142 on the wire: the nearest float to 0.65
+ * is not the nearest double to 0.65, and cJSON prints as many digits as it
+ * takes to round trip the double it was handed. Rounding in double lands on a
+ * double that prints as "0.65", which is what somebody typed and is also
+ * fifteen bytes shorter.
+ *
+ * Those bytes are not cosmetic. Three of these numbers on one device took a
+ * hello from 952 bytes to 1028 and past the datagram it had to fit in, and the
+ * board went silent without saying why.
+ */
+static double announced_unit(float v)
+{
+    return round((double)v * 1000.0) / 1000.0;
+}
+
 cJSON *device_announcement(const device_t *d, int index)
 {
     cJSON *in = cJSON_CreateObject();
@@ -368,7 +392,7 @@ cJSON *device_announcement(const device_t *d, int index)
     /* The value this output falls back to, as a plain number and not only
      * inside safe_state. A fogger set to fail closed has to read back as one,
      * or the next write turns it into a fogger that fails open. */
-    cJSON_AddNumberToObject(in, "safe", d->safe);
+    cJSON_AddNumberToObject(in, "safe", announced_unit(d->safe));
     if (d->order[0]) {
         cJSON_AddStringToObject(in, "order", d->order);
     }
@@ -376,10 +400,10 @@ cJSON *device_announcement(const device_t *d, int index)
     case DEV_PWM:
         cJSON_AddNumberToObject(in, "freq_hz", d->freq_hz);
         if (d->min_duty > 0) {
-            cJSON_AddNumberToObject(in, "min_duty", d->min_duty);
+            cJSON_AddNumberToObject(in, "min_duty", announced_unit(d->min_duty));
         }
         if (d->start_duty > 0) {
-            cJSON_AddNumberToObject(in, "start_duty", d->start_duty);
+            cJSON_AddNumberToObject(in, "start_duty", announced_unit(d->start_duty));
         }
         if (d->kick_ms > 0) {
             cJSON_AddNumberToObject(in, "kick_ms", d->kick_ms);
@@ -406,7 +430,8 @@ cJSON *device_announcement(const device_t *d, int index)
     static const char *rgb[3] = {"r", "g", "b"};
     for (int c = 0; c < d->channels; c++) {
         const char *name = (d->channels == 3) ? rgb[c] : "intensity";
-        cJSON_AddNumberToObject(safe, name, (d->channels == 3) ? 0 : d->safe);
+        cJSON_AddNumberToObject(safe, name,
+                                (d->channels == 3) ? 0 : announced_unit(d->safe));
         cJSON *ch = cJSON_CreateObject();
         cJSON_AddStringToObject(ch, "name", name);
         cJSON_AddStringToObject(ch, "unit", "normalised");
