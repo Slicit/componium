@@ -50,12 +50,26 @@ beforeEach(() => {
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
 
+/* What the film picker is showing.
+ *
+ * It was a <select> and is now a button that opens a searchable list, so
+ * the film in use is read off the button rather than off a value. Same
+ * question, different control. */
+function chosen(): string {
+  const button = document.querySelector('.picker-current');
+  return button?.textContent?.trim() ?? '';
+}
+
 async function open() {
   render(<App />);
   await screen.findByText(/Componium/);
+  /* The media list arrives after the first paint, and the picker shows the
+     score's title until it does. Waiting for the button to exist is not
+     enough: it exists immediately, holding the fallback. */
   await waitFor(() => {
-    const s = document.querySelector('select') as HTMLSelectElement;
-    if (!s || s.options.length < 2) throw new Error('films not loaded');
+    if (!document.querySelector('.picker-current')) {
+      throw new Error('no picker yet');
+    }
   });
 }
 
@@ -77,9 +91,7 @@ describe('opening a film', () => {
 
   it('shows that film as the one selected in the picker', async () => {
     await open();
-    await waitFor(() => {
-      expect((document.querySelector('select') as HTMLSelectElement).value).toBe('sintel.mp4');
-    });
+    await waitFor(() => expect(chosen()).toBe('sintel.mp4'));
   });
 
   it('leaves the picker alone when no film matches the score', async () => {
@@ -88,7 +100,9 @@ describe('opening a film', () => {
      * wrong picture, which is worse than showing no picture. */
     score.path = '/scores/deleted.componium';
     await open();
-    expect((document.querySelector('select') as HTMLSelectElement).value).toBe('');
+    /* The score's own title, which is the picker saying it has no film
+       rather than quietly naming one it did not choose. */
+    expect(chosen()).toBe('Sintel');
     expect(document.querySelector('video')).toBeNull();
     score.path = '/scores/sintel.componium';
   });

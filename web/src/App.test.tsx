@@ -65,12 +65,20 @@ const timecode = () => document.querySelector('.tc')!.textContent;
 async function openFilm() {
   render(<App />);
   await screen.findByText(/Componium/);
-  const picker = await waitFor(() => {
-    const s = document.querySelector('select') as HTMLSelectElement;
-    if (!s || s.options.length < 2) throw new Error('films not loaded');
-    return s;
+  /* The film select became a searchable popover, so choosing one is now
+     two steps: open it, then press the row. Done through the same
+     controls a person uses rather than by setting a value, which is the
+     only version of this that would have noticed the popover failing to
+     open at all. */
+  const button = await waitFor(() => {
+    const b = document.querySelector('.picker-current') as HTMLButtonElement;
+    if (!b) throw new Error('no picker yet');
+    return b;
   });
-  fireEvent.change(picker, { target: { value: 'sintel.mp4' } });
+  fireEvent.click(button);
+  /* Waited for rather than assumed: the media list arrives after the
+     first paint, so the row may not be there when the popover opens. */
+  fireEvent.click(await screen.findByRole('button', { name: 'sintel.mp4' }));
   return await waitFor(() => {
     const v = document.querySelector('[data-testid="film"]') as HTMLVideoElement;
     if (!v) throw new Error('no video');
