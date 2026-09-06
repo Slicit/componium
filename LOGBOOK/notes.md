@@ -151,3 +151,43 @@ the field that was supposed to guarantee that.
 Either honour it in `device_apply` or stop announcing it. Announcing a setting
 that does nothing is worse than not having it, because the studio offers it and
 the operator believes it.
+
+### 2026-09-06 · Three numbers on a fan took the board off the network
+
+Setting `min`, `start` and `kick` on wind.main from the Boards page and
+the board stopped answering CIP. It kept serving its status page, kept its
+wifi, kept accepting cues, and was invisible to the studio, the conductor
+and every tool in `hack/`, because all of them begin with `hello`.
+
+`hello` is one datagram built into a fixed buffer. `send_raw` found the
+reply did not fit and returned, without a log or a counter. From outside
+that is exactly a board that is switched off, and the way back was blocked
+by the same fault: the studio's update button dials first, and dialling
+waits for a hello. Recovery was a raw `update` datagram sent by hand,
+which works because nothing about an update needs a hello.
+
+Four bytes over. The three numbers looked like twenty bytes and were
+seventy six, because cJSON prints a number at whatever precision round
+trips the double it is given, and these are floats: 0.65 goes on the wire
+as 0.649999976158142.
+
+Fixed, and written up as ADR 0008. The buffer is 1472, the announcement
+rounds to three decimals, and a datagram that does not fit now says so.
+The tests assert both that a full board fits and that a five device board
+does not, so the next time this matters it arrives as a failing test.
+
+Three things about the diagnosis are worth keeping.
+
+A valid message that arrives increments no counter, so "the refusal count
+did not move" does not mean "nothing arrived". Probing with a
+deliberately invalid datagram is what showed the socket was alive all
+along, after an earlier probe had concluded the opposite.
+
+Testing the replay guard by sending `n = 4e15` left the board refusing
+every honest client until it rebooted, because the guard remembers the
+highest it has seen. A diagnostic that writes state is not a diagnostic.
+
+The studio container runs the image CI built from main. Testing a branch
+through it says nothing about the branch: the old binary decoded the new
+field, did not recognise it, and dropped it silently, which looked exactly
+like a firmware bug.
