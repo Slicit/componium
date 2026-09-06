@@ -75,6 +75,44 @@ that needs the name.
 cannot be tabbed to, cannot be pressed from a keyboard, and are announced as
 nothing. The fix is always the same and is never more work.
 
+## Dependencies
+
+**Nothing younger than two weeks.** The attack this is against is
+specific: someone takes over a maintainer account, publishes a version
+with an altered build step, and it is pulled into thousands of installs
+within hours. It is usually caught, and usually in days. Waiting two weeks
+costs almost nothing and puts this project outside that window.
+
+So updates are resolved *as of* a date rather than taken newest-first,
+which is the only way the rule reaches transitive packages too:
+
+```sh
+cd web
+npm install --before="$(date -u -d '15 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+npm audit && node ../hack/check-dep-age.mjs
+```
+
+Direct ranges are widened to their major on purpose. A range pinned to the
+newest patch cannot express "the newest that is old enough": npm is asked
+for a version it may not use and gives up rather than falling back.
+
+`hack/check-dep-age.mjs` enforces it and runs in CI on any change to a
+lockfile. The escape hatch is `hack/dep-age-allow.json`, and every entry
+needs a reason and a date it expires: a security fix worth taking on the
+day it lands is a real thing, and a rule with no way to say so out loud
+gets deleted the first time it is inconvenient.
+
+**A monthly review, on the first.** `.github/workflows/dependencies.yml`
+reports what has moved and what is known to be broken, across npm and Go,
+and opens or updates a single issue with it. It does not fail the build
+for things being out of date, because that is the normal state of a
+project between reviews and a permanently red schedule is one nobody
+reads. The gates that do fail run on every push: known vulnerabilities,
+and anything too new.
+
+**Node 22.** Node 20 left support in April 2026. `engines` says so and CI
+runs it.
+
 ## The timeline
 
 It is three layers pointing downward: `core/` is the model, `render/`

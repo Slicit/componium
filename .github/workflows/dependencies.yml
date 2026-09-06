@@ -1,0 +1,149 @@
+name: Dependencies
+
+# The monthly review, and the gate that runs on every change.
+#
+# Two different jobs with two different purposes, deliberately not merged.
+#
+# `age` runs on every push that touches a lockfile and answers one question:
+# is anything here newer than the policy allows. It is a gate, it is fast, and
+# it fails the build.
+#
+# `review` runs on the first of the month and answers "what has moved". It does
+# not fail on things being out of date, because out of date is the normal state
+# of a project between reviews and a permanently red schedule is a schedule
+# nobody reads. It opens or updates one issue with what it found, which is a
+# thing a person can act on.
+
+on:
+  push:
+    paths:
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/dependencies.yml'
+      - 'hack/check-dep-age.mjs'
+      - 'hack/dep-age-allow.json'
+  pull_request:
+    paths:
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'go.mod'
+      - 'go.sum'
+  schedule:
+    # 07:00 UTC on the first of every month.
+    - cron: '0 7 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  age:
+    name: nothing too new
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: no package younger than the policy allows
+        run: node hack/check-dep-age.mjs
+
+  vulnerabilities:
+    name: nothing known to be broken
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: npm
+        working-directory: web
+        run: npm audit --audit-level=moderate
+      - name: go
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  review:
+    name: the monthly look
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: what has moved
+        id: report
+        run: |
+          {
+            echo '## Dependencies, as of '"$(date -u +%Y-%m-%d)"
+            echo
+            echo 'Raised by the monthly review. Nothing here is urgent by itself;'
+            echo 'the gates on every push are what catch the urgent things.'
+            echo
+            echo '### npm, out of date'
+            echo
+            echo '```'
+            ( cd web && npm outdated || true )
+            echo '```'
+            echo
+            echo '### npm, known vulnerabilities'
+            echo
+            echo '```'
+            ( cd web && npm audit || true )
+            echo '```'
+            echo
+            echo '### Go modules, out of date'
+            echo
+            echo '```'
+            go list -u -m all 2>/dev/null | grep '\[' || echo 'nothing'
+            echo '```'
+            echo
+            echo '### Go, known vulnerabilities'
+            echo
+            echo '```'
+            go install golang.org/x/vuln/cmd/govulncheck@latest
+            govulncheck ./... || true
+            echo '```'
+            echo
+            echo '### How to take an update'
+            echo
+            echo 'Resolve as of the cutoff rather than taking the newest, so'
+            echo 'the two week rule holds for transitive packages too:'
+            echo
+            echo '```'
+            echo 'cd web'
+            echo 'npm install --before="$(date -u -d "15 days ago" +%Y-%m-%dT%H:%M:%SZ)"'
+            echo 'npm audit && node ../hack/check-dep-age.mjs'
+            echo '```'
+          } > report.md
+          cat report.md
+
+      - name: raise it, or update the one already open
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          title="Dependency review, $(date -u +%B\ %Y)"
+          existing=$(gh issue list --label dependencies --state open \
+                       --json number,title --jq '.[0].number' || true)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file report.md
+            echo "commented on #$existing"
+          else
+            gh issue create --title "$title" --label dependencies \
+              --body-file report.md || \
+            gh issue create --title "$title" --body-file report.md
+          fi
