@@ -9,6 +9,32 @@ It catches the failures that tests do not: a file whose line endings changed, a
 backtick a shell ate, a Go file gofmt would reformat. Two of those have shipped
 here, and both left code that still parsed and still built.
 
+## The web code
+
+```sh
+cd web
+npx oxlint src         # errors fail CI, warnings are the backlog
+npx oxfmt --write src  # formatting is not a review topic
+```
+
+oxlint runs at two levels on purpose. `error` is the line CI holds and the
+tree is clean of them, so anything that trips one is something a branch
+just added. `warn` is a written down backlog: each rule in
+`web/.oxlintrc.json` carries the count it had when it was set, so it is a
+number that can be watched going down. Promoting a warn to an error is how
+this gets stricter, one rule and one small commit at a time.
+
+A rule that is off has a sentence saying why, and every one of them was
+judged against the code rather than silenced: `prefer-tag-over-role` is
+wrong about custom widgets built the way ARIA says to build them, and
+`control-has-associated-label` was wrong all 23 times it fired here.
+
+It is worth knowing that oxlint found a real gap the project's own house
+rules had missed: the pane splitters could not be resized from a keyboard.
+The house rules look for `onClick` on a non-interactive element, and those
+handlers were `onPointerDown`. A rule written from memory catches the cases
+its author thought of.
+
 ## Editing a file
 
 **Never put a program inside an ssh argument.** A heredoc or a quoted command

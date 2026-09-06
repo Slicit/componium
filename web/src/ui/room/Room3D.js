@@ -1526,7 +1526,7 @@ export function webglAvailable() {
   try {
     const canvas = document.createElement('canvas');
     return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
-  } catch (err) {
+  } catch {
     return false;
   }
 }

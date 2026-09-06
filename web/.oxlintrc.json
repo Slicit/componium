@@ -1,0 +1,92 @@
+{
+  // Two levels, on purpose.
+  //
+  // `error` is the line CI holds. The tree is clean of them today, so anything
+  // that trips one is something a branch just added, and that is the moment it
+  // is cheapest to deal with.
+  //
+  // `warn` is the backlog: real findings, worth fixing, and not worth blocking
+  // on until they are. Each has its count from the day it was written, so the
+  // backlog is a number that can be watched going down rather than a vague
+  // intention. Promoting a warn to an error is how this gets stricter, one rule
+  // and one small commit at a time.
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+
+  "plugins": [
+    "react",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "jsx-a11y",
+    "import",
+    "promise",
+    "vitest"
+  ],
+
+  "categories": {
+    "correctness": "error"
+  },
+
+  "rules": {
+    // The automatic JSX transform means React is not a name this code needs in
+    // scope, and 846 files disagreeing with the compiler is not a finding.
+    "react/react-in-jsx-scope": "off",
+
+    // Over-fires on things that are not controls and on controls labelled by
+    // their own content: an empty <th/>, a <video>, a <div role="progressbar">
+    // carrying aria-valuenow, and a <li role="option"> whose child button holds
+    // the text. Every one of its 23 hits here was wrong. The rest of jsx-a11y
+    // stays on.
+    "jsx-a11y/control-has-associated-label": "off",
+
+    // Wants the native tag that carries a role. Right in general and
+    // wrong for all 8 here, which are custom widgets built the way ARIA
+    // says to build them: role="separator" on the pane splitters,
+    // role="listbox" on the film picker, role="progressbar" on the
+    // analysis bar. There is no native tag for a resizable pane divider,
+    // and <select> is not a combobox.
+    "jsx-a11y/prefer-tag-over-role": "off",
+
+    // Fires on <li role="option">, which is the listbox pattern from the
+    // ARIA authoring practices verbatim.
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+
+    // The one <video> is a film being scored. Captions belong to the film
+    // and are not something the studio can supply.
+    "jsx-a11y/media-has-caption": "off",
+
+    // A blanket ban, and the one use here is the case it is not about:
+    // a name field that exists only because somebody just pressed "add a
+    // rig". Focus following an explicit action is where it belongs.
+    "jsx-a11y/no-autofocus": "off",
+
+    // Hook dependencies, 27 between them. Real, and deliberately not fixed in
+    // the same commit that turned the linter on: changing what an effect
+    // depends on changes when it runs, and this project has already been bitten
+    // both ways — an effect with no dependency array rebuilding the timeline on
+    // every unrelated render, and a memo keyed on a mutable object that never
+    // recomputed at all. See ADR 0009. Each of these wants reading rather than
+    // applying.
+    "react-hooks/exhaustive-deps": "warn",
+    "react/exhaustive-effect-dependencies": "warn",
+    "react/set-state-in-effect": "warn",
+
+    // 9 between them, same reasoning: they are about how state and refs are
+    // handled and the fixes are judgement rather than mechanism.
+    "react/refs": "warn",
+    "react/immutability": "warn",
+    "react/globals": "warn",
+
+    // 41 in the test suites. Worth tidying, and none of it changes what is
+    // being tested, so it is the safest part of the backlog and the first to
+    // promote once somebody has an hour.
+    "vitest/no-conditional-expect": "warn",
+    "vitest/valid-expect": "warn",
+    "vitest/require-mock-type-parameters": "warn"
+  },
+
+  "ignorePatterns": [
+    "node_modules",
+    "dist"
+  ]
+}

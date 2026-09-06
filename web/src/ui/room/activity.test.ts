@@ -32,7 +32,7 @@ describe('when the room needs drawing', () => {
     const a = new Activity();
     a.take();
     frames(a, [true, false]);
-    expect(frames(a, new Array(60).fill(false)).some(Boolean)).toBe(false);
+    expect(frames(a, Array.from({ length: 60 }, () => false)).some(Boolean)).toBe(false);
   });
 
   it('wakes on the frame something starts moving again', () => {

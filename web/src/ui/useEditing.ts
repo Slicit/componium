@@ -113,7 +113,8 @@ export function useEditing(opts: {
       const item = hit.k === 'cue' ? hit.cue : hit.point;
       if (additive) {
         picked = new Set(selected);
-        picked.has(item) ? picked.delete(item) : picked.add(item);
+        if (picked.has(item)) picked.delete(item);
+        else picked.add(item);
       } else if (!selected.has(item)) {
         picked = new Set([item]);
       }

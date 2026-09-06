@@ -478,7 +478,10 @@ export function App({ active = true, open = null, onOpened }: {
         case ' ': {
           e.preventDefault();
           const v = video.current;
-          if (v && Number.isFinite(v.duration)) { v.paused ? v.play() : v.pause(); }
+          if (v && Number.isFinite(v.duration)) {
+            if (v.paused) void v.play();
+            else v.pause();
+          }
           break;
         }
         case 'ArrowLeft':
@@ -527,7 +530,10 @@ export function App({ active = true, open = null, onOpened }: {
           /* Split whatever span the playhead is inside, in any selected
            * track — the closest thing to an editor's blade tool. */
           for (const t of score.tracks ?? []) {
-            for (const c of [...(t.cues ?? [])]) {
+            /* A copy, because splitCue adds to this same array as it
+               goes: walking the live one would visit the halves it just
+               made, and split those too. */
+            for (const c of Array.from(t.cues ?? [])) {
               if (!edit.selected.has(c)) continue;
               const cmd = splitCue(t, c, time);
               if (cmd) { history.run(cmd); history.seal(); onView(); }
@@ -582,7 +588,8 @@ export function App({ active = true, open = null, onOpened }: {
   const toggleCollapse = useCallback((instrument: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
-      next.has(instrument) ? next.delete(instrument) : next.add(instrument);
+      if (next.has(instrument)) next.delete(instrument);
+      else next.add(instrument);
       return next;
     });
   }, []);
@@ -644,6 +651,31 @@ export function App({ active = true, open = null, onOpened }: {
     if (!box || box.width <= 0) return;
     views.setColumns(((e.clientX - box.left) / box.width) * COLUMNS);
   });
+  /* Arrow keys move a splitter, the way a splitter is expected to move.
+   * Home and End go to the ends, and the step is one column or twenty
+   * pixels, which is roughly what a person aims for with a mouse.
+   *
+   * Written as a factory rather than two handlers because the only
+   * difference between the two splitters is which axis and which setter,
+   * and a second copy would be the one that stops getting fixed. */
+  const splitKeys = useCallback((
+    axis: 'x' | 'y',
+    at: number,
+    set: (v: number) => void,
+    ends: [number, number],
+    step: number,
+  ) => (e: React.KeyboardEvent) => {
+    const less = axis === 'x' ? 'ArrowLeft' : 'ArrowUp';
+    const more = axis === 'x' ? 'ArrowRight' : 'ArrowDown';
+    if (e.key === less) set(at - step);
+    else if (e.key === more) set(at + step);
+    else if (e.key === 'Home') set(ends[0]);
+    else if (e.key === 'End') set(ends[1]);
+    else if (e.key === 'Enter') views.reset();
+    else return;
+    e.preventDefault();
+  }, [views]);
+
   const dragHeight = useDrag((e) => {
     const box = stage.current?.getBoundingClientRect();
     if (!box) return;
@@ -813,12 +845,14 @@ export function App({ active = true, open = null, onOpened }: {
             className="split-v"
             onPointerDown={dragSplit}
             onDoubleClick={views.reset}
+            onKeyDown={splitKeys('x', split.columns, views.setColumns, [2, 10], 1)}
+            tabIndex={0}
             role="separator"
             aria-label="Resize the picture and the room"
             aria-valuenow={split.columns}
             aria-valuemin={2}
             aria-valuemax={10}
-            title={`${split.columns} of ${COLUMNS} columns — drag to resize, double click for half and half`}
+            title={`${split.columns} of ${COLUMNS} columns — drag or use the arrow keys, double click or Enter for half and half`}
           />
         )}
 
@@ -892,6 +926,8 @@ export function App({ active = true, open = null, onOpened }: {
         className="split-h"
         onPointerDown={dragHeight}
         onDoubleClick={views.reset}
+        onKeyDown={splitKeys('y', split.height, views.setHeight, [160, 900], 20)}
+        tabIndex={0}
         role="separator"
         aria-label="Resize the height of the picture and the room"
         title="Drag to resize, double click to reset"

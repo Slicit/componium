@@ -105,6 +105,20 @@ jobs:
         working-directory: web
         run: npm test
 
+      - name: lint
+        # Errors only. The warnings are a written down backlog in
+        # web/.oxlintrc.json with counts beside each rule, and a branch
+        # should not be blocked on them; adding a new error should block
+        # it, which is what this catches.
+        working-directory: web
+        run: npx oxlint src
+
+      - name: formatting
+        # oxfmt is the arbiter, so that nobody spends a review on where a
+        # line wraps. Run `npx oxfmt --write src` in web/ to fix.
+        working-directory: web
+        run: npx oxfmt --check src
+
       - name: the committed bundle is current
         # internal/studio/webdist is committed, the same bargain as vendoring
         # three.js: `go build` alone keeps producing a working studio, and a
