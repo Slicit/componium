@@ -544,7 +544,12 @@ describe('the timeline itself', () => {
   it('starts with nothing to undo and nothing to save', async () => {
     render(<App />);
     const undo = (await screen.findByRole('button', { name: 'Undo' })) as HTMLButtonElement;
-    expect(undo.disabled).toBe(true);
+    /* aria-disabled rather than disabled, so the control stays focusable
+     * and can still say why there is nothing to undo. A disabled button is
+     * unreachable from a keyboard and cannot show a tooltip, which makes it
+     * the one state that most needs explaining and least can. */
+    expect(undo.getAttribute('aria-disabled')).toBe('true');
+    expect(undo.disabled).toBe(false);
     expect((screen.getByRole('button', { name: 'Saved' }) as HTMLButtonElement).disabled).toBe(
       true,
     );

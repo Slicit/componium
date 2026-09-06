@@ -17,6 +17,7 @@ import { App } from '../App';
 import { Nav } from './Nav';
 import { Admin } from './admin/Admin';
 import { LibraryPage } from './LibraryPage';
+import { TooltipProvider } from './Tip';
 import { useRoute } from './useRoute';
 
 export function Shell() {
@@ -25,18 +26,20 @@ export function Shell() {
   const studio = route.section === '';
 
   return (
-    <div className="shell">
-      <Nav route={route} />
-      <div className="shell-body">
-        <div
-          className={studio ? 'shell-here' : 'shell-away'}
-          aria-hidden={studio ? undefined : true}
-        >
-          <App active={studio} open={wanted} onOpened={() => setWanted(null)} />
+    <TooltipProvider delayDuration={400} skipDelayDuration={300}>
+      <div className="shell">
+        <Nav route={route} />
+        <div className="shell-body">
+          <div
+            className={studio ? 'shell-here' : 'shell-away'}
+            aria-hidden={studio ? undefined : true}
+          >
+            <App active={studio} open={wanted} onOpened={() => setWanted(null)} />
+          </div>
+          {route.section === 'library' && <LibraryPage onOpen={setWanted} />}
+          {route.section === 'admin' && <Admin route={route} />}
         </div>
-        {route.section === 'library' && <LibraryPage onOpen={setWanted} />}
-        {route.section === 'admin' && <Admin route={route} />}
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

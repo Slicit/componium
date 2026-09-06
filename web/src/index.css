@@ -181,6 +181,26 @@ button {
 button:hover {
   border-color: #3a4553;
 }
+
+/* There was no rule here at all, and the effect was not what anybody would
+   assume: a browser dims a disabled button only while nothing has set its
+   colour, and the rule above sets it. So every disabled button in the
+   studio looked exactly like a working one. Undo with nothing to undo was
+   a button that simply did nothing when pressed.
+
+   aria-disabled is styled the same, because it means the same thing to a
+   person. It is used where a control has to stay focusable in order to say
+   why it is unavailable; a disabled button cannot be reached by keyboard
+   and cannot show a tooltip, so it cannot explain itself. */
+button:disabled,
+button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+button:disabled:hover,
+button[aria-disabled='true']:hover {
+  border-color: var(--line);
+}
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;

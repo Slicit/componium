@@ -32,6 +32,7 @@ import { useLive } from './ui/useLive';
 import { LiveTrim } from './ui/LiveTrim';
 import { RigPicker } from './ui/RigPicker';
 import { FilmPicker } from './ui/FilmPicker';
+import { Tip, TooltipProvider } from './ui/Tip';
 import type { Preset } from './core/presets';
 import { canCollapse } from './core/layout';
 import { menuFor } from './ui/menuItems';
@@ -828,457 +829,472 @@ export function App({
   const playable = films.find((f) => f.name === film);
 
   return (
-    <div className="app">
-      {live.state.problem && !live.armed && (
-        <p className="bar-problem" role="alert">
-          <strong>Not live:</strong> {live.state.problem}
-          <button className="bar-dismiss" onClick={live.forget} aria-label="Dismiss">
-            dismiss
-          </button>
-        </p>
-      )}
-      <header className="bar">
-        <h1>
-          Componium <span className="dim">studio</span> <span className="tag">v2</span>
-        </h1>
-        <FilmPicker
-          films={films}
-          value={film}
-          fallback={score.title || '(score)'}
-          onPick={(name) => {
-            void openFilm(name);
-          }}
-        />
-        <select
-          className="versions"
-          value={versions.current}
-          onChange={(e) => versions.select(e.target.value)}
-          disabled={!film || versions.list.length === 0}
-          aria-label="Score version"
-          title={
-            versions.list.length === 0
-              ? 'No earlier scores kept for this film yet'
-              : 'Scores kept from earlier analyses of this film'
-          }
-        >
-          <option value="">{versions.list.length === 0 ? 'no history' : 'latest'}</option>
-          {versions.list.map((v) => (
-            <option key={v.id} value={v.id} title={v.note}>
-              {v.label}
-            </option>
-          ))}
-        </select>
-        <span className="spacer" />
-        <span className="tc" title="Timecode, HH:MM:SS:FF">
-          {timecode(time, fps, { hours: true })}
-        </span>
-        <span className="dim small">{fps} fps</span>
-        <span className="dim small">{Math.round(view.fraction * 100)}% shown</span>
-        <button
-          className={'toggle' + (split.room ? ' on' : '')}
-          onClick={() => views.setRoom(!split.room)}
-          title="The room preview"
-        >
-          room
-        </button>
-        <button
-          className={'toggle' + (split.force ? ' on' : '')}
-          onClick={() => views.setForce(!split.force)}
-          disabled={!split.room}
-          title={
-            split.room
-              ? 'The sliders that force one effect on, whatever the score says'
-              : 'The sliders live in the room pane, which is hidden'
-          }
-        >
-          sliders
-        </button>
-        <Viewports
-          viewport={split}
-          saved={views.saved}
-          onSave={views.save}
-          onApply={views.apply}
-          onRemove={views.remove}
-          onReset={views.reset}
-        />
-        <button
-          className={'toggle live' + (live.armed ? ' on' : '')}
-          onClick={() => (live.armed ? live.disarm() : live.arm())}
-          title={
-            live.armed
-              ? 'Driving the rig from this playhead. Click to stop.'
-              : 'Drive the real rig from this playhead, through the same clock ' +
-                'and safety supervisor a show uses'
-          }
-        >
-          {live.armed ? 'live' : 'go live'}
-        </button>
-        {live.armed && (
-          <span
-            className={'chip' + (live.state.real === 0 ? ' warn' : '')}
+    /* The studio's own, so that App can be rendered by itself. The delay is
+       long enough not to flicker while the pointer crosses the toolbar, and
+       the skip means moving between two buttons shows the second at once
+       rather than waiting again. */
+    <TooltipProvider delayDuration={400} skipDelayDuration={300}>
+      <div className="app">
+        {live.state.problem && !live.armed && (
+          <p className="bar-problem" role="alert">
+            <strong>Not live:</strong> {live.state.problem}
+            <button className="bar-dismiss" onClick={live.forget} aria-label="Dismiss">
+              dismiss
+            </button>
+          </p>
+        )}
+        <header className="bar">
+          <h1>
+            Componium <span className="dim">studio</span> <span className="tag">v2</span>
+          </h1>
+          <FilmPicker
+            films={films}
+            value={film}
+            fallback={score.title || '(score)'}
+            onPick={(name) => {
+              void openFilm(name);
+            }}
+          />
+          <select
+            className="versions"
+            value={versions.current}
+            onChange={(e) => versions.select(e.target.value)}
+            disabled={!film || versions.list.length === 0}
+            aria-label="Score version"
             title={
-              live.state.real === 0
-                ? 'Every instrument in this rig is virtual, so nothing physical ' +
-                  'will move. The conductor is logging what it would have sent.'
-                : live.state.cues +
-                  ' cues and ' +
-                  live.state.curves +
-                  ' curve updates sent, ' +
-                  Math.round(live.state.precision * 1000) +
-                  'ms precision'
+              versions.list.length === 0
+                ? 'No earlier scores kept for this film yet'
+                : 'Scores kept from earlier analyses of this film'
             }
           >
-            {live.state.real === 0 ? 'all virtual' : live.state.real + ' live'}
+            <option value="">{versions.list.length === 0 ? 'no history' : 'latest'}</option>
+            {versions.list.map((v) => (
+              <option key={v.id} value={v.id} title={v.note}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+          <span className="spacer" />
+          <span className="tc" title="Timecode, HH:MM:SS:FF">
+            {timecode(time, fps, { hours: true })}
           </span>
-        )}
-        {live.armed && <LiveTrim lights={live.state.lights ?? []} />}
-        <RigPicker armed={live.armed} onChanged={rereadRig} />
-        <button
-          className={'toggle' + (overlays.calm ? ' on' : '')}
-          onClick={() => setOverlays((o) => ({ ...o, calm: !o.calm }))}
-          title={
-            score?.calm?.length
-              ? 'Where the analysis decided to leave the film alone'
-              : 'This score records no calm regions — rebuild it to get them'
-          }
-          disabled={!score?.calm?.length}
-        >
-          calm
-        </button>
-        <button
-          className={'toggle' + (overlays.latency ? ' on' : '')}
-          onClick={() => setOverlays((o) => ({ ...o, latency: !o.latency }))}
-          title="When the conductor actually fires, against when the effect lands"
-        >
-          lead
-        </button>
-        {edit.selected.size > 0 && <span className="chip">{edit.selected.size} selected</span>}
-        <button
-          onClick={() => {
-            if (history.undo()) onView();
-          }}
-          disabled={!history.canUndo}
-          title={history.undoLabel ? 'Undo ' + history.undoLabel : 'Nothing to undo'}
-        >
-          Undo
-        </button>
-        <button
-          onClick={() => {
-            if (history.redo()) onView();
-          }}
-          disabled={!history.canRedo}
-          title={history.redoLabel ? 'Redo ' + history.redoLabel : 'Nothing to redo'}
-        >
-          Redo
-        </button>
-        <button onClick={() => void save()} disabled={!history.dirty}>
-          {saving ?? (history.dirty ? 'Save' : 'Saved')}
-        </button>
-      </header>
+          <span className="dim small">{fps} fps</span>
+          <span className="dim small">{Math.round(view.fraction * 100)}% shown</span>
+          <Tip say="The room preview">
+            <button
+              className={'toggle' + (split.room ? ' on' : '')}
+              onClick={() => views.setRoom(!split.room)}
+            >
+              room
+            </button>
+          </Tip>
+          <Tip
+            say={
+              split.room
+                ? 'The sliders that force one effect on, whatever the score says'
+                : 'The sliders live in the room pane, which is hidden'
+            }
+          >
+            {/* aria-disabled rather than disabled, so it stays focusable and
+              can say why it is unavailable. That sentence is the whole
+              point of it, and a disabled button cannot show a tooltip. */}
+            <button
+              className={'toggle' + (split.force ? ' on' : '')}
+              onClick={() => split.room && views.setForce(!split.force)}
+              aria-disabled={!split.room}
+            >
+              sliders
+            </button>
+          </Tip>
+          <Viewports
+            viewport={split}
+            saved={views.saved}
+            onSave={views.save}
+            onApply={views.apply}
+            onRemove={views.remove}
+            onReset={views.reset}
+          />
+          <button
+            className={'toggle live' + (live.armed ? ' on' : '')}
+            onClick={() => (live.armed ? live.disarm() : live.arm())}
+            title={
+              live.armed
+                ? 'Driving the rig from this playhead. Click to stop.'
+                : 'Drive the real rig from this playhead, through the same clock ' +
+                  'and safety supervisor a show uses'
+            }
+          >
+            {live.armed ? 'live' : 'go live'}
+          </button>
+          {live.armed && (
+            <span
+              className={'chip' + (live.state.real === 0 ? ' warn' : '')}
+              title={
+                live.state.real === 0
+                  ? 'Every instrument in this rig is virtual, so nothing physical ' +
+                    'will move. The conductor is logging what it would have sent.'
+                  : live.state.cues +
+                    ' cues and ' +
+                    live.state.curves +
+                    ' curve updates sent, ' +
+                    Math.round(live.state.precision * 1000) +
+                    'ms precision'
+              }
+            >
+              {live.state.real === 0 ? 'all virtual' : live.state.real + ' live'}
+            </span>
+          )}
+          {live.armed && <LiveTrim lights={live.state.lights ?? []} />}
+          <RigPicker armed={live.armed} onChanged={rereadRig} />
+          <button
+            className={'toggle' + (overlays.calm ? ' on' : '')}
+            onClick={() => setOverlays((o) => ({ ...o, calm: !o.calm }))}
+            title={
+              score?.calm?.length
+                ? 'Where the analysis decided to leave the film alone'
+                : 'This score records no calm regions — rebuild it to get them'
+            }
+            disabled={!score?.calm?.length}
+          >
+            calm
+          </button>
+          <button
+            className={'toggle' + (overlays.latency ? ' on' : '')}
+            onClick={() => setOverlays((o) => ({ ...o, latency: !o.latency }))}
+            title="When the conductor actually fires, against when the effect lands"
+          >
+            lead
+          </button>
+          {edit.selected.size > 0 && <span className="chip">{edit.selected.size} selected</span>}
+          <Tip say={history.undoLabel ? 'Undo ' + history.undoLabel : 'Nothing to undo'}>
+            <button
+              onClick={() => {
+                if (history.undo()) onView();
+              }}
+              aria-disabled={!history.canUndo}
+            >
+              Undo
+            </button>
+          </Tip>
+          <Tip say={history.redoLabel ? 'Redo ' + history.redoLabel : 'Nothing to redo'}>
+            <button
+              onClick={() => {
+                if (history.redo()) onView();
+              }}
+              aria-disabled={!history.canRedo}
+            >
+              Redo
+            </button>
+          </Tip>
+          <button onClick={() => void save()} disabled={!history.dirty}>
+            {saving ?? (history.dirty ? 'Save' : 'Saved')}
+          </button>
+        </header>
 
-      {error && <p className="warn">{error}</p>}
+        {error && <p className="warn">{error}</p>}
 
-      <div
-        className="stage"
-        ref={stage}
-        style={{
-          height: split.height,
-          gridTemplateColumns: split.room
-            ? `${split.columns}fr 10px ${COLUMNS - split.columns}fr`
-            : '1fr',
-        }}
-      >
-        <div className="stage-film">
-          {playable ? (
-            <video
-              ref={holdVideo}
-              src={'/media?file=' + encodeURIComponent(film)}
-              controls
-              preload="metadata"
-              data-testid="film"
-              /* Only while stopped. Playing, the frame clock owns the
+        <div
+          className="stage"
+          ref={stage}
+          style={{
+            height: split.height,
+            gridTemplateColumns: split.room
+              ? `${split.columns}fr 10px ${COLUMNS - split.columns}fr`
+              : '1fr',
+          }}
+        >
+          <div className="stage-film">
+            {playable ? (
+              <video
+                ref={holdVideo}
+                src={'/media?file=' + encodeURIComponent(film)}
+                controls
+                preload="metadata"
+                data-testid="film"
+                /* Only while stopped. Playing, the frame clock owns the
                playhead, and `currentTime` is a slightly later number than the
                presented frame's own — interleaving the two makes a playhead
                that steps backwards several times a second. */
-              onTimeUpdate={(e) => {
-                if (e.currentTarget.paused) follow(e.currentTarget.currentTime);
-              }}
-              onSeeked={(e) => follow(e.currentTarget.currentTime)}
-              onLoadedMetadata={(e) => follow(e.currentTarget.currentTime)}
-              onPlay={() => {
-                setPlaying(true);
-                live.follow(time, true);
-              }}
-              onPause={() => {
-                setPlaying(false);
-                live.follow(video.current?.currentTime ?? time, false);
-              }}
-              onEnded={() => {
-                setPlaying(false);
-                live.follow(video.current?.currentTime ?? time, false);
-              }}
+                onTimeUpdate={(e) => {
+                  if (e.currentTarget.paused) follow(e.currentTarget.currentTime);
+                }}
+                onSeeked={(e) => follow(e.currentTarget.currentTime)}
+                onLoadedMetadata={(e) => follow(e.currentTarget.currentTime)}
+                onPlay={() => {
+                  setPlaying(true);
+                  live.follow(time, true);
+                }}
+                onPause={() => {
+                  setPlaying(false);
+                  live.follow(video.current?.currentTime ?? time, false);
+                }}
+                onEnded={() => {
+                  setPlaying(false);
+                  live.follow(video.current?.currentTime ?? time, false);
+                }}
+              />
+            ) : (
+              <p className="dim small hint">
+                Pick a film to scrub against the picture. The timeline works without one.
+              </p>
+            )}
+          </div>
+
+          {split.room && (
+            <div
+              className="split-v"
+              onPointerDown={dragSplit}
+              onDoubleClick={views.reset}
+              onKeyDown={splitKeys('x', split.columns, views.setColumns, [2, 10], 1)}
+              tabIndex={0}
+              role="separator"
+              aria-label="Resize the picture and the room"
+              aria-valuenow={split.columns}
+              aria-valuemin={2}
+              aria-valuemax={10}
+              title={`${split.columns} of ${COLUMNS} columns — drag or use the arrow keys, double click or Enter for half and half`}
             />
-          ) : (
-            <p className="dim small hint">
-              Pick a film to scrub against the picture. The timeline works without one.
-            </p>
           )}
-        </div>
 
-        {split.room && (
-          <div
-            className="split-v"
-            onPointerDown={dragSplit}
-            onDoubleClick={views.reset}
-            onKeyDown={splitKeys('x', split.columns, views.setColumns, [2, 10], 1)}
-            tabIndex={0}
-            role="separator"
-            aria-label="Resize the picture and the room"
-            aria-valuenow={split.columns}
-            aria-valuemin={2}
-            aria-valuemax={10}
-            title={`${split.columns} of ${COLUMNS} columns — drag or use the arrow keys, double click or Enter for half and half`}
-          />
-        )}
-
-        {split.room && (
-          <div className="stage-room">
-            <div className="room-bar">
-              <span className="dim small">Room</span>
-              <label
-                className="lumen"
-                title="How brightly the room is lit. Only the fill lighting moves: the lamps a cue drives stay where the score put them, so turning this down makes an effect the brightest thing in the picture rather than dimming it."
-              >
-                <span className="dim small">light</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={brightness}
-                  onChange={(e) => setBrightness(Number(e.target.value))}
-                />
-              </label>
-              <label
-                className="lumen"
-                title="How strong the soft ambient wash is — the two LED strips in the ceiling, carrying whatever colour the score is holding. It is a hint of the scene's colour rather than a light to see by, so it sits well below the room lighting."
-              >
-                <span className="dim small">wash</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={wash}
-                  onChange={(e) => setWash(Number(e.target.value))}
-                />
-              </label>
-              <label
-                className="room-toggle"
-                title="Show the film itself on the television in the room, instead of the ambient colour it is driving. The glow behind the panel keeps showing the ambient layer either way."
-              >
-                <input
-                  type="checkbox"
-                  checked={onScreen}
-                  onChange={(e) => setOnScreen(e.target.checked)}
-                />
-                <span className="dim small">picture</span>
-              </label>
-              <label
-                className="room-toggle"
-                title="Throw the film into the room from the television, so it lands on the floor, the rug and the couch. A television does not really do this — it spills light rather than projecting an image — so it is off unless you want to look at it."
-              >
-                <input
-                  type="checkbox"
-                  checked={projecting}
-                  onChange={(e) => setProjecting(e.target.checked)}
-                />
-                <span className="dim small">project</span>
-              </label>
-            </div>
-            {/* Eight columns of room against four of controls, side by side.
+          {split.room && (
+            <div className="stage-room">
+              <div className="room-bar">
+                <span className="dim small">Room</span>
+                <label
+                  className="lumen"
+                  title="How brightly the room is lit. Only the fill lighting moves: the lamps a cue drives stay where the score put them, so turning this down makes an effect the brightest thing in the picture rather than dimming it."
+                >
+                  <span className="dim small">light</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={brightness}
+                    onChange={(e) => setBrightness(Number(e.target.value))}
+                  />
+                </label>
+                <label
+                  className="lumen"
+                  title="How strong the soft ambient wash is — the two LED strips in the ceiling, carrying whatever colour the score is holding. It is a hint of the scene's colour rather than a light to see by, so it sits well below the room lighting."
+                >
+                  <span className="dim small">wash</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={wash}
+                    onChange={(e) => setWash(Number(e.target.value))}
+                  />
+                </label>
+                <label
+                  className="room-toggle"
+                  title="Show the film itself on the television in the room, instead of the ambient colour it is driving. The glow behind the panel keeps showing the ambient layer either way."
+                >
+                  <input
+                    type="checkbox"
+                    checked={onScreen}
+                    onChange={(e) => setOnScreen(e.target.checked)}
+                  />
+                  <span className="dim small">picture</span>
+                </label>
+                <label
+                  className="room-toggle"
+                  title="Throw the film into the room from the television, so it lands on the floor, the rug and the couch. A television does not really do this — it spills light rather than projecting an image — so it is off unless you want to look at it."
+                >
+                  <input
+                    type="checkbox"
+                    checked={projecting}
+                    onChange={(e) => setProjecting(e.target.checked)}
+                  />
+                  <span className="dim small">project</span>
+                </label>
+              </div>
+              {/* Eight columns of room against four of controls, side by side.
                 Stacked, the panels pushed the room up and everything scrolled
                 against everything else; beside it, each has a column of its
                 own and neither moves when the other grows. */}
-            <div className={'room-split' + (split.force ? '' : ' alone')}>
-              <div className="room-view">
-                <Room
-                  score={score}
-                  rig={rig}
-                  time={time}
-                  muted={NO_MUTES}
-                  forced={forced}
-                  brightness={brightness}
-                  wash={wash}
-                  view={views.camera}
-                  onView={views.onCamera}
-                  revision={history.version}
-                  picture={onScreen ? picture : null}
-                  projection={projecting ? picture : null}
-                />
-              </div>
-              {split.force && (
-                <aside className="room-side">
-                  <Effects
-                    instrument={target?.instrument ?? null}
-                    kind={targetKind}
-                    holds={target?.type === 'cue' ? 'cue' : 'curve'}
-                    at={time}
-                    fps={fps}
-                    canInsert={!!target}
-                    onInsert={insert}
-                    onPreview={preview}
+              <div className={'room-split' + (split.force ? '' : ' alone')}>
+                <div className="room-view">
+                  <Room
+                    score={score}
+                    rig={rig}
+                    time={time}
+                    muted={NO_MUTES}
+                    forced={forced}
+                    brightness={brightness}
+                    wash={wash}
+                    view={views.camera}
+                    onView={views.onCamera}
+                    revision={history.version}
+                    picture={onScreen ? picture : null}
+                    projection={projecting ? picture : null}
                   />
-                  <Force rig={rig} forced={forced} onChange={setForced} />
-                </aside>
-              )}
+                </div>
+                {split.force && (
+                  <aside className="room-side">
+                    <Effects
+                      instrument={target?.instrument ?? null}
+                      kind={targetKind}
+                      holds={target?.type === 'cue' ? 'cue' : 'curve'}
+                      at={time}
+                      fps={fps}
+                      canInsert={!!target}
+                      onInsert={insert}
+                      onPreview={preview}
+                    />
+                    <Force rig={rig} forced={forced} onChange={setForced} />
+                  </aside>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div
-        className="split-h"
-        onPointerDown={dragHeight}
-        onDoubleClick={views.reset}
-        onKeyDown={splitKeys('y', split.height, views.setHeight, [160, 900], 20)}
-        tabIndex={0}
-        role="separator"
-        aria-label="Resize the height of the picture and the room"
-        title="Drag to resize, double click to reset"
-      />
+        <div
+          className="split-h"
+          onPointerDown={dragHeight}
+          onDoubleClick={views.reset}
+          onKeyDown={splitKeys('y', split.height, views.setHeight, [160, 900], 20)}
+          tabIndex={0}
+          role="separator"
+          aria-label="Resize the height of the picture and the room"
+          title="Drag to resize, double click to reset"
+        />
 
-      <section className="tl">
-        {/* The lanes and the editor, side by side. The editor is a column
+        <section className="tl">
+          {/* The lanes and the editor, side by side. The editor is a column
             rather than a panel that appears over the corner: it is drawn even
             with nothing selected, so the lanes keep one width and the place to
             edit is somewhere you look rather than somewhere you wait for. */}
-        <div className="tl-split">
-          <div className="tl-lanes">
-            <div className="tl-body">
-              <TrackHeads
-                score={score}
-                rig={rig}
-                collapsed={collapsed}
-                order={order}
-                onToggleCollapse={toggleCollapse}
-                onMove={move}
-                onMoveTo={moveTo}
-                revision={history.version}
-                onAddTrack={
-                  missingInstruments(score, rig).length
-                    ? (e) => setAddMenu({ x: e.clientX, y: e.clientY })
-                    : null
-                }
-              />
-              <Timeline
-                score={score}
-                rig={rig}
-                view={view}
-                time={time}
-                collapsed={collapsed}
-                order={order}
-                onSeek={seek}
-                onView={onView}
-                edit={edit}
-                revision={history.version}
-                overlays={overlays}
-              />
-            </div>
-            {/* Indented to sit under the lanes rather than under the whole panel,
+          <div className="tl-split">
+            <div className="tl-lanes">
+              <div className="tl-body">
+                <TrackHeads
+                  score={score}
+                  rig={rig}
+                  collapsed={collapsed}
+                  order={order}
+                  onToggleCollapse={toggleCollapse}
+                  onMove={move}
+                  onMoveTo={moveTo}
+                  revision={history.version}
+                  onAddTrack={
+                    missingInstruments(score, rig).length
+                      ? (e) => setAddMenu({ x: e.clientX, y: e.clientY })
+                      : null
+                  }
+                />
+                <Timeline
+                  score={score}
+                  rig={rig}
+                  view={view}
+                  time={time}
+                  collapsed={collapsed}
+                  order={order}
+                  onSeek={seek}
+                  onView={onView}
+                  edit={edit}
+                  revision={history.version}
+                  overlays={overlays}
+                />
+              </div>
+              {/* Indented to sit under the lanes rather than under the whole panel,
             so the window box lines up with the time it represents. */}
-            <div className="tl-under">
-              <Overview score={score} rig={rig} view={view} time={time} onView={onView} />
+              <div className="tl-under">
+                <Overview score={score} rig={rig} view={view} time={time} onView={onView} />
+              </div>
             </div>
-          </div>
-          {addMenu && (
-            <Menu
-              x={addMenu.x}
-              y={addMenu.y}
-              onClose={() => setAddMenu(null)}
-              items={[
-                { label: 'Add a track', why: 'instruments the rig has that this score does not' },
-                { separator: true },
-                ...missingInstruments(score, rig).map((inst) => ({
-                  label: inst.id,
-                  key: inst.kind,
-                  run: () => {
-                    history.run(addTrack(score, inst));
-                    history.seal();
+            {addMenu && (
+              <Menu
+                x={addMenu.x}
+                y={addMenu.y}
+                onClose={() => setAddMenu(null)}
+                items={[
+                  { label: 'Add a track', why: 'instruments the rig has that this score does not' },
+                  { separator: true },
+                  ...missingInstruments(score, rig).map((inst) => ({
+                    label: inst.id,
+                    key: inst.kind,
+                    run: () => {
+                      history.run(addTrack(score, inst));
+                      history.seal();
+                      onView();
+                    },
+                  })),
+                ]}
+              />
+            )}
+            {edit.menu && (
+              <Menu
+                x={edit.menu.x}
+                y={edit.menu.y}
+                onClose={edit.closeMenu}
+                items={menuFor({
+                  hit: edit.menu.hit,
+                  score,
+                  rig,
+                  history,
+                  time,
+                  fps,
+                  selected: edit.selected,
+                  clipboard,
+                  setClipboard,
+                  setSelected: (s: Set<Cue | Point>) => edit.setSelected(s),
+                  changed: onView,
+                  seek,
+                  zoomTo: (a, b) => {
+                    view.zoomTo(a, b);
                     onView();
                   },
-                })),
-              ]}
+                  toggleCollapse,
+                  canCollapse: (t) => canCollapse(t, rig),
+                })}
+              />
+            )}
+            <Inspector
+              score={score}
+              history={history}
+              fps={fps}
+              selection={
+                edit.focus
+                  ? {
+                      track: score.tracks[edit.focus.track],
+                      cue: edit.focus.cue,
+                      point: edit.focus.point,
+                      channel: edit.focus.channel,
+                    }
+                  : null
+              }
+              onChanged={onView}
+              onSeek={seek}
+              onClose={edit.clearFocus}
             />
-          )}
-          {edit.menu && (
-            <Menu
-              x={edit.menu.x}
-              y={edit.menu.y}
-              onClose={edit.closeMenu}
-              items={menuFor({
-                hit: edit.menu.hit,
-                score,
-                rig,
-                history,
-                time,
-                fps,
-                selected: edit.selected,
-                clipboard,
-                setClipboard,
-                setSelected: (s: Set<Cue | Point>) => edit.setSelected(s),
-                changed: onView,
-                seek,
-                zoomTo: (a, b) => {
-                  view.zoomTo(a, b);
-                  onView();
-                },
-                toggleCollapse,
-                canCollapse: (t) => canCollapse(t, rig),
-              })}
-            />
-          )}
-          <Inspector
-            score={score}
-            history={history}
-            fps={fps}
-            selection={
-              edit.focus
-                ? {
-                    track: score.tracks[edit.focus.track],
-                    cue: edit.focus.cue,
-                    point: edit.focus.point,
-                    channel: edit.focus.channel,
-                  }
-                : null
-            }
-            onChanged={onView}
-            onSeek={seek}
-            onClose={edit.clearFocus}
-          />
-        </div>
-        <p className="legend dim small">
-          wheel scrolls · ⇧/⌘ wheel zooms · drag the ruler to scrub · drag the strip below to move ·{' '}
-          <kbd>←</kbd>
-          <kbd>→</kbd> frame · <kbd>F</kbd> fit
-          <br />
-          drag an event to move it, its edges to trim · double click a lane to add a point, a point
-          to remove it · drag empty space to select a range · <kbd>⌥</kbd> suspends snapping ·{' '}
-          <kbd>⇧</kbd> while dragging a point locks its time · <kbd>⌘Z</kbd> undo · <kbd>⌫</kbd>{' '}
-          delete · <kbd>⌘S</kbd> save
-          <br />
-          right click anything for what you can do to it · <kbd>J</kbd>
-          <kbd>K</kbd>
-          <kbd>L</kbd> shuttle · <kbd>S</kbd> split at the playhead · <kbd>,</kbd>
-          <kbd>.</kbd> nudge a frame · <kbd>⌘C</kbd>
-          <kbd>⌘X</kbd>
-          <kbd>⌘V</kbd> · <kbd>⌘D</kbd> duplicate
-          {shuttle !== 0 && (
-            <strong className="shuttle">
-              {' '}
-              shuttle {shuttle > 0 ? '▶' : '◀'} {Math.abs(shuttle)}×
-            </strong>
-          )}
-        </p>
-      </section>
-    </div>
+          </div>
+          <p className="legend dim small">
+            wheel scrolls · ⇧/⌘ wheel zooms · drag the ruler to scrub · drag the strip below to move
+            · <kbd>←</kbd>
+            <kbd>→</kbd> frame · <kbd>F</kbd> fit
+            <br />
+            drag an event to move it, its edges to trim · double click a lane to add a point, a
+            point to remove it · drag empty space to select a range · <kbd>⌥</kbd> suspends snapping
+            · <kbd>⇧</kbd> while dragging a point locks its time · <kbd>⌘Z</kbd> undo · <kbd>⌫</kbd>{' '}
+            delete · <kbd>⌘S</kbd> save
+            <br />
+            right click anything for what you can do to it · <kbd>J</kbd>
+            <kbd>K</kbd>
+            <kbd>L</kbd> shuttle · <kbd>S</kbd> split at the playhead · <kbd>,</kbd>
+            <kbd>.</kbd> nudge a frame · <kbd>⌘C</kbd>
+            <kbd>⌘X</kbd>
+            <kbd>⌘V</kbd> · <kbd>⌘D</kbd> duplicate
+            {shuttle !== 0 && (
+              <strong className="shuttle">
+                {' '}
+                shuttle {shuttle > 0 ? '▶' : '◀'} {Math.abs(shuttle)}×
+              </strong>
+            )}
+          </p>
+        </section>
+      </div>
+    </TooltipProvider>
   );
 }

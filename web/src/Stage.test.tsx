@@ -151,7 +151,9 @@ describe('the sliders toggle', () => {
     await open();
     fireEvent.click(button('room'));
     expect(document.querySelector('.stage-room')).toBeNull();
-    expect(button('sliders').disabled).toBe(true);
+    /* Off, and still reachable so that it can explain that the sliders
+     * live in the pane that is hidden. */
+    expect(button('sliders').getAttribute('aria-disabled')).toBe('true');
   });
 
   it('remembers being hidden across a reload', async () => {
