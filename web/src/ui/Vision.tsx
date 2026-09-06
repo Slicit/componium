@@ -176,6 +176,7 @@ export function Vision(props: {
               className="vis-find"
               value={query}
               placeholder="find a label, or a word the model used"
+              aria-label="Find a label, or a word the model used"
               onChange={(e) => setQuery(e.target.value)}
             />
 
