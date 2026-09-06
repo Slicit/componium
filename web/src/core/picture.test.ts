@@ -85,7 +85,12 @@ describe('the two ways a letterbox arrives', () => {
   });
 
   it('draws both at the shape they were shot', () => {
-    for (const [w, h] of [[1280, 720], [1920, 816], [1920, 1080], [1440, 1080]]) {
+    for (const [w, h] of [
+      [1280, 720],
+      [1920, 816],
+      [1920, 1080],
+      [1440, 1080],
+    ]) {
       const aspect = aspectOf({ videoWidth: w, videoHeight: h });
       const fit = containScale(SCREEN_ASPECT, aspect);
       expect((SCREEN_ASPECT * fit.x) / fit.y).toBeCloseTo(aspect, 5);

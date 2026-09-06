@@ -31,25 +31,37 @@ beforeEach(() => {
   body = trace;
   ok = true;
   saved.length = 0;
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    if (String(url).startsWith('/api/context')) {
-      saved.push(String(init?.body ?? ''));
-      return { ok: true, json: async () => ({ context: String(init?.body ?? '') }) } as Response;
-    }
-    return { ok, json: async () => body } as Response;
-  }));
-  vi.stubGlobal('confirm', vi.fn(() => true));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).startsWith('/api/context')) {
+        saved.push(String(init?.body ?? ''));
+        return { ok: true, json: async () => ({ context: String(init?.body ?? '') }) } as Response;
+      }
+      return { ok, json: async () => body } as Response;
+    }),
+  );
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 function show(over: Partial<Parameters<typeof Vision>[0]> = {}) {
   const onClose = vi.fn();
   const onLookAgain = vi.fn();
   render(
-    <Vision film="crab-rave.mp4" fps={25}
+    <Vision
+      film="crab-rave.mp4"
+      fps={25}
       onClose={over.onClose ?? onClose}
-      onLookAgain={over.onLookAgain ?? onLookAgain} />,
+      onLookAgain={over.onLookAgain ?? onLookAgain}
+    />,
   );
   return { onClose, onLookAgain };
 }
@@ -67,10 +79,10 @@ describe('the reading room', () => {
     // One dust in a film full of it is the shape of a film looked at too
     // thinly, and that reads off a tally where it does not off a list.
     show();
-    await waitFor(() => expect(document.querySelectorAll('.vis-chip').length)
-      .toBeGreaterThan(0));
-    const chips = Array.from(document.querySelectorAll('.vis-tally .vis-chip'))
-      .map((c) => c.textContent);
+    await waitFor(() => expect(document.querySelectorAll('.vis-chip').length).toBeGreaterThan(0));
+    const chips = Array.from(document.querySelectorAll('.vis-tally .vis-chip')).map(
+      (c) => c.textContent,
+    );
     expect(chips.some((c) => c?.startsWith('dust'))).toBe(true);
     expect(chips.some((c) => c?.startsWith('water'))).toBe(true);
   });
@@ -144,8 +156,9 @@ describe('asking the model to look again', () => {
   it('asks first, and says what is being thrown away', async () => {
     const { onLookAgain } = show();
     await waitFor(() => expect(said().length).toBe(3));
-    fireEvent.click(Array.from(document.querySelectorAll('button'))
-      .find((b) => b.textContent === 'Look again')!);
+    fireEvent.click(
+      Array.from(document.querySelectorAll('button')).find((b) => b.textContent === 'Look again')!,
+    );
     expect(window.confirm).toHaveBeenCalled();
     const asked = (window.confirm as unknown as { mock: { calls: string[][] } }).mock.calls[0][0];
     expect(asked).toContain('3 observations');
@@ -154,11 +167,15 @@ describe('asking the model to look again', () => {
   });
 
   it('does nothing at all if the answer is no', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     const { onLookAgain, onClose } = show();
     await waitFor(() => expect(said().length).toBe(3));
-    fireEvent.click(Array.from(document.querySelectorAll('button'))
-      .find((b) => b.textContent === 'Look again')!);
+    fireEvent.click(
+      Array.from(document.querySelectorAll('button')).find((b) => b.textContent === 'Look again')!,
+    );
     expect(onLookAgain).not.toHaveBeenCalled();
     /* And the panel stays, so a mis-click does not also lose the reading. */
     expect(onClose).not.toHaveBeenCalled();
@@ -185,8 +202,10 @@ describe('getting out again', () => {
 
 describe('telling the model what the film is', () => {
   const box = () => document.querySelector('#vis-about') as HTMLTextAreaElement;
-  const saveButton = () => Array.from(document.querySelectorAll('button'))
-    .find((b) => b.textContent === 'Save') as HTMLButtonElement;
+  const saveButton = () =>
+    Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Save',
+    ) as HTMLButtonElement;
 
   it('shows what has been said already', async () => {
     body = { ...trace, context: 'Space opera.' };

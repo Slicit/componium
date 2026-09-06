@@ -51,9 +51,15 @@ export function LiveTrim({ lights }: { lights: string[] }) {
     let live = true;
     void fetch('/api/live/trim')
       .then((r) => (r.ok ? r.json() : null))
-      .then((got) => { if (live && got?.trim) setTrims(got.trim); })
-      .catch(() => { /* the sliders still work, they just start at zero */ });
-    return () => { live = false; };
+      .then((got) => {
+        if (live && got?.trim) setTrims(got.trim);
+      })
+      .catch(() => {
+        /* the sliders still work, they just start at zero */
+      });
+    return () => {
+      live = false;
+    };
   }, []);
 
   const send = useCallback((instrument: string, next: Trim) => {
@@ -71,17 +77,18 @@ export function LiveTrim({ lights }: { lights: string[] }) {
         })
           .then((r) => (r.ok ? r.json() : null))
           .then((said) => setUnsaved(said?.unsaved ?? null))
-          .catch(() => { /* the next drag sends it again */ });
+          .catch(() => {
+            /* the next drag sends it again */
+          });
       }
     }, SEND_MS);
   }, []);
 
-  const move = (id: string, what: keyof Trim) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = { ...(trims[id] ?? NONE), [what]: Number(e.target.value) };
-      setTrims((was) => ({ ...was, [id]: next }));
-      send(id, next);
-    };
+  const move = (id: string, what: keyof Trim) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = { ...(trims[id] ?? NONE), [what]: Number(e.target.value) };
+    setTrims((was) => ({ ...was, [id]: next }));
+    send(id, next);
+  };
 
   const reset = (id: string) => {
     setTrims((was) => ({ ...was, [id]: NONE }));
@@ -101,47 +108,60 @@ export function LiveTrim({ lights }: { lights: string[] }) {
       <button
         className={'toggle' + (anyTouched ? ' on' : '')}
         onClick={() => setOpen((o) => !o)}
-        title={anyTouched
-          ? 'Some lights are being adjusted away from what the score says'
-          : 'Adjust brightness and saturation per light, without changing the score'}
+        title={
+          anyTouched
+            ? 'Some lights are being adjusted away from what the score says'
+            : 'Adjust brightness and saturation per light, without changing the score'
+        }
         aria-expanded={open}
-      >trim{anyTouched ? ' •' : ''}</button>
+      >
+        trim{anyTouched ? ' •' : ''}
+      </button>
 
       {open && (
         <div className="trim-panel" role="group" aria-label="Live colour trim">
           {unsaved && <p className="trim-unsaved">{unsaved}</p>}
           <p className="trim-why">
-            Added to what the score asks for, on the way out. Nothing here
-            changes the score. Kept in the rig, so a show gets it too and it
-            survives a restart.
+            Added to what the score asks for, on the way out. Nothing here changes the score. Kept
+            in the rig, so a show gets it too and it survives a restart.
           </p>
           {lights.map((id) => {
             const t = trims[id] ?? NONE;
             return (
               <div className="trim-row" key={id}>
-                <span className="trim-who" title={id}>{id}</span>
+                <span className="trim-who" title={id}>
+                  {id}
+                </span>
                 <label>
                   <span className="trim-name">bright</span>
                   <input
-                    type="range" min={-100} max={100} step={1}
+                    type="range"
+                    min={-100}
+                    max={100}
+                    step={1}
                     value={t.brightness}
                     onChange={move(id, 'brightness')}
                     aria-label={'Brightness trim for ' + id + ', percent'}
                   />
                   <output className={t.brightness ? 'trim-value on' : 'trim-value'}>
-                    {t.brightness > 0 ? '+' : ''}{t.brightness}
+                    {t.brightness > 0 ? '+' : ''}
+                    {t.brightness}
                   </output>
                 </label>
                 <label>
                   <span className="trim-name">colour</span>
                   <input
-                    type="range" min={-100} max={100} step={1}
+                    type="range"
+                    min={-100}
+                    max={100}
+                    step={1}
                     value={t.saturation}
                     onChange={move(id, 'saturation')}
                     aria-label={'Saturation trim for ' + id + ', percent'}
                   />
                   <output className={t.saturation ? 'trim-value on' : 'trim-value'}>
-                    {t.saturation > 0 ? '+' : ''}{t.saturation}
+                    {t.saturation > 0 ? '+' : ''}
+                    {t.saturation}
                   </output>
                 </label>
                 <button
@@ -150,7 +170,9 @@ export function LiveTrim({ lights }: { lights: string[] }) {
                   disabled={!touched(id)}
                   title={'Back to the score as written for ' + id}
                   aria-label={'Reset trim for ' + id}
-                >reset</button>
+                >
+                  reset
+                </button>
               </div>
             );
           })}

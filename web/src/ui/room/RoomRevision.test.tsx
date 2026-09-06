@@ -31,13 +31,21 @@ vi.mock('./Room3D.js', () => {
     setBrightness() {}
     setWash() {}
     onView() {}
-    getView() { return { pos: [0, 0, 0], target: [0, 0, 0] }; }
+    getView() {
+      return { pos: [0, 0, 0], target: [0, 0, 0] };
+    }
     setView() {}
-    update(state: unknown) { updates.push(state); }
+    update(state: unknown) {
+      updates.push(state);
+    }
     onMeter() {}
     dispose() {}
   }
-  return { Room3D: FakeRoom, webglAvailable: () => true, HOME_VIEW: { pos: [0, 0, 0], target: [0, 0, 0] } };
+  return {
+    Room3D: FakeRoom,
+    webglAvailable: () => true,
+    HOME_VIEW: { pos: [0, 0, 0], target: [0, 0, 0] },
+  };
 });
 
 const rig = {
@@ -47,13 +55,18 @@ const rig = {
 
 function scoreWithFog(): Score {
   return {
-    title: 'demo', duration: 100,
+    title: 'demo',
+    duration: 100,
     tracks: [{ instrument: 'fog.left', type: 'cue', cues: [] }],
   } as unknown as Score;
 }
 
-beforeEach(() => { updates.length = 0; });
-afterEach(() => { cleanup(); });
+beforeEach(() => {
+  updates.length = 0;
+});
+afterEach(() => {
+  cleanup();
+});
 
 /* Stable across renders on purpose. A fresh Set or Map per render is itself a
  * changed dependency, which would make the effect re-run for a reason that has
@@ -65,9 +78,13 @@ const NO_FORCES = new Map<string, number>();
 function draw(score: Score, revision: number, time = 10) {
   return (
     <Room
-      score={score} rig={rig} time={time}
-      muted={NO_MUTES} forced={NO_FORCES}
-      brightness={60} revision={revision}
+      score={score}
+      rig={rig}
+      time={time}
+      muted={NO_MUTES}
+      forced={NO_FORCES}
+      brightness={60}
+      revision={revision}
     />
   );
 }
@@ -81,8 +98,12 @@ describe('the room and an edit', () => {
 
     /* Exactly what a command does: reach into the score and change it, leaving
      * the object identity alone. */
-    (score.tracks[0] as { cues: unknown[] }).cues.push(
-      { t: 10, action: 'burst', params: { output: 0.6 }, duration: 4 });
+    (score.tracks[0] as { cues: unknown[] }).cues.push({
+      t: 10,
+      action: 'burst',
+      params: { output: 0.6 },
+      duration: 4,
+    });
     rerender(draw(score, 2));
 
     await waitFor(() => expect(updates.length).toBeGreaterThan(before));
@@ -96,8 +117,12 @@ describe('the room and an edit', () => {
     const idle = updates[updates.length - 1] as Record<string, { active: boolean }>;
     expect(idle['fog.left'].active).toBe(false);
 
-    (score.tracks[0] as { cues: unknown[] }).cues.push(
-      { t: 10, action: 'burst', params: { output: 0.6 }, duration: 4 });
+    (score.tracks[0] as { cues: unknown[] }).cues.push({
+      t: 10,
+      action: 'burst',
+      params: { output: 0.6 },
+      duration: 4,
+    });
     rerender(draw(score, 2));
 
     await waitFor(() => {

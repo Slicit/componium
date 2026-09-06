@@ -3,7 +3,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SETTINGS, settingOf, writeSetting, clearSetting } from './settings';
 
-beforeEach(() => { localStorage.clear(); });
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('settings', () => {
   it('answers the default when nobody has said', () => {
@@ -44,7 +46,9 @@ describe('settings', () => {
     const store = globalThis.localStorage;
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
-      get() { throw new Error('denied'); },
+      get() {
+        throw new Error('denied');
+      },
     });
     try {
       expect(settingOf('roomLight')).toBe(15);

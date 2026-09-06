@@ -20,15 +20,19 @@ let held: Record<string, unknown> = {};
 beforeEach(() => {
   sent = [];
   held = {};
-  vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => {
-    if (!init || init.method !== 'POST') {
-      return Promise.resolve({
-        ok: true, json: () => Promise.resolve({ trim: held }),
-      } as Response);
-    }
-    sent.push(JSON.parse(String(init.body)));
-    return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_url: string, init?: RequestInit) => {
+      if (!init || init.method !== 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ trim: held }),
+        } as Response);
+      }
+      sent.push(JSON.parse(String(init.body)));
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+    }),
+  );
   vi.useFakeTimers({ shouldAdvanceTime: true });
 });
 
@@ -61,7 +65,9 @@ describe('the live colour trim', () => {
     // Flushed, because the component still asks the server what it holds
     // before deciding it has nothing to show, and a state update landing
     // after the test body is how a suite starts warning and later flaking.
-    await act(async () => { render(<LiveTrim lights={[]} />); });
+    await act(async () => {
+      render(<LiveTrim lights={[]} />);
+    });
     expect(screen.queryByText(/^trim/)).toBeNull();
   });
 
@@ -70,9 +76,7 @@ describe('the live colour trim', () => {
     fireEvent.change(slider('Saturation', 'light.ambient'), { target: { value: '40' } });
     await vi.advanceTimersByTimeAsync(200);
 
-    expect(sent).toEqual([
-      { instrument: 'light.ambient', brightness: 0, saturation: 40 },
-    ]);
+    expect(sent).toEqual([{ instrument: 'light.ambient', brightness: 0, saturation: 40 }]);
     // The neighbour did not move with it, which is the whole reason this is
     // per instrument.
     expect(slider('Saturation', 'light.event').value).toBe('0');
@@ -111,8 +115,7 @@ describe('the live colour trim', () => {
     await vi.advanceTimersByTimeAsync(200);
 
     expect(sent.length).toBeLessThan(5);
-    expect(sent.at(-1)).toEqual(
-      { instrument: 'light.ambient', brightness: 0, saturation: 30 });
+    expect(sent.at(-1)).toEqual({ instrument: 'light.ambient', brightness: 0, saturation: 30 });
     // And the handle followed the finger the whole way rather than waiting.
     expect(slider('Saturation', 'light.ambient').value).toBe('30');
   });
@@ -126,8 +129,7 @@ describe('the live colour trim', () => {
     fireEvent.click(screen.getByLabelText('Reset trim for light.ambient'));
     await vi.advanceTimersByTimeAsync(200);
 
-    expect(sent.at(-1)).toEqual(
-      { instrument: 'light.ambient', brightness: 0, saturation: 0 });
+    expect(sent.at(-1)).toEqual({ instrument: 'light.ambient', brightness: 0, saturation: 0 });
     expect(slider('Brightness', 'light.ambient').value).toBe('0');
     expect(slider('Brightness', 'light.event').value).toBe('20');
   });

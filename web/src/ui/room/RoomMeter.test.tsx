@@ -25,13 +25,21 @@ vi.mock('./Room3D.js', () => {
     setBrightness() {}
     setWash() {}
     onView() {}
-    getView() { return { pos: [0, 0, 0], target: [0, 0, 0] }; }
+    getView() {
+      return { pos: [0, 0, 0], target: [0, 0, 0] };
+    }
     setView() {}
     update() {}
-    onMeter(fn: (reading: { rate: number; cost: number }) => void) { report = fn; }
+    onMeter(fn: (reading: { rate: number; cost: number }) => void) {
+      report = fn;
+    }
     dispose() {}
   }
-  return { Room3D: FakeRoom, webglAvailable: () => true, HOME_VIEW: { pos: [0, 0, 0], target: [0, 0, 0] } };
+  return {
+    Room3D: FakeRoom,
+    webglAvailable: () => true,
+    HOME_VIEW: { pos: [0, 0, 0], target: [0, 0, 0] },
+  };
 });
 
 const rig = { name: 'demo', instruments: [] } as unknown as Rig;
@@ -41,12 +49,24 @@ const forced = new Map<string, number>();
 
 function show() {
   return render(
-    <Room score={score} rig={rig} time={0} muted={muted} forced={forced}
-          brightness={15} view={null} onView={() => {}} revision={0} />,
+    <Room
+      score={score}
+      rig={rig}
+      time={0}
+      muted={muted}
+      forced={forced}
+      brightness={15}
+      view={null}
+      onView={() => {}}
+      revision={0}
+    />,
   );
 }
 
-afterEach(() => { cleanup(); report = null; });
+afterEach(() => {
+  cleanup();
+  report = null;
+});
 
 describe('the frame counter', () => {
   it('says nothing until the renderer has measured something', async () => {
@@ -58,7 +78,9 @@ describe('the frame counter', () => {
   it('shows the rate and what a frame cost', async () => {
     show();
     await waitFor(() => expect(report).not.toBeNull());
-    act(() => { report!({ rate: 59.6, cost: 3.24 }); });
+    act(() => {
+      report!({ rate: 59.6, cost: 3.24 });
+    });
     expect(screen.getByText('60 fps')).toBeTruthy();
     expect(screen.getByText('3.2 ms')).toBeTruthy();
   });
@@ -66,8 +88,12 @@ describe('the frame counter', () => {
   it('keeps reporting as the reading moves', async () => {
     show();
     await waitFor(() => expect(report).not.toBeNull());
-    act(() => { report!({ rate: 60, cost: 3 }); });
-    act(() => { report!({ rate: 4, cost: 3 }); });
+    act(() => {
+      report!({ rate: 60, cost: 3 });
+    });
+    act(() => {
+      report!({ rate: 4, cost: 3 });
+    });
     /* Four drawn frames a second beside a three millisecond frame is the
      * shape of a room being asked for frames slowly rather than one that
      * cannot keep up, which is the entire reason both numbers are shown. */

@@ -39,7 +39,9 @@ export interface SnapResult {
  * place and read as the timeline being frozen.
  */
 export function snapTargets(
-  score: Score, playhead: Seconds, exclude: Set<object> = new Set(),
+  score: Score,
+  playhead: Seconds,
+  exclude: Set<object> = new Set(),
 ): SnapTargets {
   const events: Seconds[] = [];
   for (const track of score.tracks ?? []) {
@@ -66,8 +68,12 @@ export function snapTargets(
  * drag can never produce a time between two frames.
  */
 export function snap(
-  t: Seconds, view: TimeView, width: number, targets: SnapTargets,
-  fps: number, enabled = true,
+  t: Seconds,
+  view: TimeView,
+  width: number,
+  targets: SnapTargets,
+  fps: number,
+  enabled = true,
 ): SnapResult {
   if (!enabled) return { t, to: null, kind: null };
 
@@ -107,7 +113,8 @@ function nearest(sorted: Seconds[], t: Seconds): Seconds[] {
   let hi = sorted.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (sorted[mid] < t) lo = mid + 1; else hi = mid;
+    if (sorted[mid] < t) lo = mid + 1;
+    else hi = mid;
   }
   const out: Seconds[] = [];
   if (lo > 0) out.push(sorted[lo - 1]);

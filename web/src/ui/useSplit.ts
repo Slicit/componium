@@ -8,13 +8,18 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  COLUMNS, DEFAULT_COLUMNS, DEFAULT_HEIGHT, clampHeight, columnsAt,
-} from '../core/split';
+import { COLUMNS, DEFAULT_COLUMNS, DEFAULT_HEIGHT, clampHeight, columnsAt } from '../core/split';
 
 export {
-  COLUMNS, MIN_COLUMNS, MAX_COLUMNS, MIN_HEIGHT, MAX_HEIGHT,
-  DEFAULT_COLUMNS, DEFAULT_HEIGHT, columnsAt, clampHeight,
+  COLUMNS,
+  MIN_COLUMNS,
+  MAX_COLUMNS,
+  MIN_HEIGHT,
+  MAX_HEIGHT,
+  DEFAULT_COLUMNS,
+  DEFAULT_HEIGHT,
+  columnsAt,
+  clampHeight,
 } from '../core/split';
 
 function remembered(key: string, fallback: number, clamp: (v: number) => number): number {
@@ -42,15 +47,25 @@ export interface Split {
 /** The remembered split, and the two setters that keep it remembered. */
 export function useSplit(): Split {
   const [columns, setCols] = useState(() =>
-    remembered('componium.split', DEFAULT_COLUMNS, (v) => columnsAt(v / COLUMNS)));
+    remembered('componium.split', DEFAULT_COLUMNS, (v) => columnsAt(v / COLUMNS)),
+  );
   const [height, setH] = useState(() =>
-    remembered('componium.stageHeight', DEFAULT_HEIGHT, clampHeight));
+    remembered('componium.stageHeight', DEFAULT_HEIGHT, clampHeight),
+  );
 
   useEffect(() => {
-    try { localStorage.setItem('componium.split', String(columns)); } catch { /* private mode */ }
+    try {
+      localStorage.setItem('componium.split', String(columns));
+    } catch {
+      /* private mode */
+    }
   }, [columns]);
   useEffect(() => {
-    try { localStorage.setItem('componium.stageHeight', String(height)); } catch { /* private mode */ }
+    try {
+      localStorage.setItem('componium.stageHeight', String(height));
+    } catch {
+      /* private mode */
+    }
   }, [height]);
 
   const setColumns = useCallback((n: number) => setCols(columnsAt(n / COLUMNS)), []);
@@ -70,27 +85,36 @@ export function useSplit(): Split {
  * than the browser repaints drops the pointer outside the handle and the drag
  * simply stops halfway, which reads as the handle being sticky.
  */
-export function useDrag(
-  onMove: (e: PointerEvent) => void,
-): (e: React.PointerEvent) => void {
-  return useCallback((e: React.PointerEvent) => {
-    if (e.button !== 0) return;
-    /* Deliberately no preventDefault(). It suppresses the compatibility mouse
-     * events the browser synthesises from pointer events, which means the
-     * double click that resets the split never fires — the drag works
-     * perfectly and the reset silently does not, so nothing looks broken.
-     * Selection and scrolling are prevented in the stylesheet instead, which
-     * is what those properties are for. */
-    const el = e.currentTarget as HTMLElement;
-    try { el.setPointerCapture(e.pointerId); } catch { /* not captured */ }
+export function useDrag(onMove: (e: PointerEvent) => void): (e: React.PointerEvent) => void {
+  return useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      /* Deliberately no preventDefault(). It suppresses the compatibility mouse
+       * events the browser synthesises from pointer events, which means the
+       * double click that resets the split never fires — the drag works
+       * perfectly and the reset silently does not, so nothing looks broken.
+       * Selection and scrolling are prevented in the stylesheet instead, which
+       * is what those properties are for. */
+      const el = e.currentTarget as HTMLElement;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* not captured */
+      }
 
-    const move = (ev: PointerEvent) => onMove(ev);
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      try { el.releasePointerCapture(e.pointerId); } catch { /* already gone */ }
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  }, [onMove]);
+      const move = (ev: PointerEvent) => onMove(ev);
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch {
+          /* already gone */
+        }
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    },
+    [onMove],
+  );
 }

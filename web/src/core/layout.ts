@@ -86,8 +86,13 @@ export function layout(tracks: Track[], opts: LayoutOptions): Layout {
 
     if (track.type !== 'curve') {
       rows.push({
-        track: ti, instrument: track.instrument, head: true,
-        draw: 'cues', editable: true, y, h: ROW_CUE,
+        track: ti,
+        instrument: track.instrument,
+        head: true,
+        draw: 'cues',
+        editable: true,
+        y,
+        h: ROW_CUE,
       });
       y += ROW_CUE;
       continue;
@@ -100,8 +105,14 @@ export function layout(tracks: Track[], opts: LayoutOptions): Layout {
      * changes the row height and nothing else. */
     if (channels.length < 2) {
       rows.push({
-        track: ti, instrument: track.instrument, channel: channels[0],
-        head: true, draw: 'curve', editable: true, y, h: ROW_CHANNEL,
+        track: ti,
+        instrument: track.instrument,
+        channel: channels[0],
+        head: true,
+        draw: 'curve',
+        editable: true,
+        y,
+        h: ROW_CHANNEL,
       });
       y += ROW_CHANNEL;
       continue;
@@ -110,11 +121,16 @@ export function layout(tracks: Track[], opts: LayoutOptions): Layout {
     /* A colour track's compound view is the colour it actually makes, which
      * says more about a look than three value graphs do. Everything else
      * compounds to its amplitude envelope. */
-    const summary = isColourTrack(track, channels) ? 'ribbon' as const : 'envelope' as const;
+    const summary = isColourTrack(track, channels) ? ('ribbon' as const) : ('envelope' as const);
 
     rows.push({
-      track: ti, instrument: track.instrument, head: true,
-      draw: summary, editable: false, y, h: ROW_COLLAPSED,
+      track: ti,
+      instrument: track.instrument,
+      head: true,
+      draw: summary,
+      editable: false,
+      y,
+      h: ROW_COLLAPSED,
     });
     y += ROW_COLLAPSED;
 
@@ -126,8 +142,14 @@ export function layout(tracks: Track[], opts: LayoutOptions): Layout {
 
     for (const channel of channels) {
       rows.push({
-        track: ti, instrument: track.instrument, channel,
-        head: false, draw: 'curve', editable: true, y, h: ROW_CHANNEL,
+        track: ti,
+        instrument: track.instrument,
+        channel,
+        head: false,
+        draw: 'curve',
+        editable: true,
+        y,
+        h: ROW_CHANNEL,
       });
       y += ROW_CHANNEL;
     }

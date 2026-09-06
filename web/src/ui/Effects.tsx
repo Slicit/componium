@@ -44,7 +44,9 @@ function Shape(props: { preset: Preset; width?: number; height?: number }) {
   const y = (v: number) => pad + (1 - (v - low) / span) * (h - pad * 2);
 
   const d = props.preset.shape
-    .map(([f, v], i) => `${i ? 'L' : 'M'}${(pad + f * (w - pad * 2)).toFixed(2)},${y(v).toFixed(2)}`)
+    .map(
+      ([f, v], i) => `${i ? 'L' : 'M'}${(pad + f * (w - pad * 2)).toFixed(2)},${y(v).toFixed(2)}`,
+    )
     .join(' ');
 
   return (
@@ -111,12 +113,18 @@ export function Effects(props: {
     };
   }, [playing, chosen, instrument, loops, onPreview]);
 
-  useEffect(() => { if (!playing) setPass(0); }, [playing]);
+  useEffect(() => {
+    if (!playing) setPass(0);
+  }, [playing]);
 
   /* A different preset, or a different track, means the preview that was
    * running was of something else. */
-  useEffect(() => { setPlaying(false); }, [chosen, instrument]);
-  useEffect(() => { setChosen(null); }, [instrument]);
+  useEffect(() => {
+    setPlaying(false);
+  }, [chosen, instrument]);
+  useEffect(() => {
+    setChosen(null);
+  }, [instrument]);
 
   if (!instrument) {
     return (
@@ -129,7 +137,9 @@ export function Effects(props: {
   return (
     <div className="fx">
       <div className="fx-head">
-        <span className="dim small">Effects for <strong>{instrument}</strong></span>
+        <span className="dim small">
+          Effects for <strong>{instrument}</strong>
+        </span>
         <span className="dim small fx-at">at {timecode(at, fps, { hours: true })}</span>
       </div>
 
@@ -160,10 +170,10 @@ export function Effects(props: {
             className="icon-btn fx-play"
             onClick={() => (playing ? stop() : setPlaying(true))}
             aria-label={playing ? 'Stop the preview' : 'Preview in the room'}
-            title={playing
-              ? 'Stop the preview'
-              : `Play ${chosen.name} in the room ${loops} times`}
-          ><Icon name={playing ? 'stop' : 'play'} /></button>
+            title={playing ? 'Stop the preview' : `Play ${chosen.name} in the room ${loops} times`}
+          >
+            <Icon name={playing ? 'stop' : 'play'} />
+          </button>
 
           <span className="dim small fx-hint">
             {playing ? `Previewing — pass ${pass} of ${loops}` : chosen.hint}
@@ -173,10 +183,14 @@ export function Effects(props: {
             className="fx-insert"
             disabled={!canInsert}
             onClick={() => onInsert(chosen)}
-            title={canInsert
-              ? `Insert ${chosen.name} at the playhead`
-              : 'Pick a track that can take this effect'}
-          >Insert at playhead</button>
+            title={
+              canInsert
+                ? `Insert ${chosen.name} at the playhead`
+                : 'Pick a track that can take this effect'
+            }
+          >
+            Insert at playhead
+          </button>
         </div>
       )}
     </div>

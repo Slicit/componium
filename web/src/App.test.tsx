@@ -24,11 +24,13 @@ const score = {
   fps: 24,
   tracks: [
     {
-      instrument: 'wind.main', type: 'cue',
+      instrument: 'wind.main',
+      type: 'cue',
       cues: [{ t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 4 }],
     },
     {
-      instrument: 'light.ambient', type: 'curve',
+      instrument: 'light.ambient',
+      type: 'curve',
       points: [
         { t: 0, value: { r: 0, g: 0, b: 0 } },
         { t: 20, value: { r: 1, g: 0.5, b: 0 } },
@@ -41,24 +43,38 @@ const rig = { name: 'test', instruments: [{ id: 'wind.main', kind: 'wind', laten
 const media = [{ name: 'sintel.mp4', size: 100 }];
 
 beforeEach(() => {
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-    const body = url.startsWith('/api/score') ? score
-      : url.startsWith('/api/rig') ? rig
-        : url.startsWith('/api/media') ? media
-          : {};
-    return { ok: true, json: async () => body, text: async () => JSON.stringify(body) } as Response;
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      const body = url.startsWith('/api/score')
+        ? score
+        : url.startsWith('/api/rig')
+          ? rig
+          : url.startsWith('/api/media')
+            ? media
+            : {};
+      return {
+        ok: true,
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      } as Response;
+    }),
+  );
   /* jsdom has no media pipeline: currentTime is a plain property and duration
    * is NaN unless we say otherwise. Both matter — the code checks duration is
    * finite before touching the element. */
   Object.defineProperty(HTMLMediaElement.prototype, 'duration', {
-    configurable: true, get: () => 120,
+    configurable: true,
+    get: () => 120,
   });
   HTMLMediaElement.prototype.play = vi.fn(async () => {});
   HTMLMediaElement.prototype.pause = vi.fn();
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const timecode = () => document.querySelector('.tc')!.textContent;
 
@@ -107,7 +123,11 @@ describe('the playhead follows the film', () => {
 
   it('keeps following on the next update, not only the first', async () => {
     const video = await openFilm();
-    for (const [at, want] of [[10, '00:00:10:00'], [20.5, '00:00:20:12'], [3, '00:00:03:00']] as const) {
+    for (const [at, want] of [
+      [10, '00:00:10:00'],
+      [20.5, '00:00:20:12'],
+      [3, '00:00:03:00'],
+    ] as const) {
       video.currentTime = at;
       fireEvent.timeUpdate(video);
       await waitFor(() => expect(timecode()).toBe(want));
@@ -212,26 +232,35 @@ describe('driving the room from the studio', () => {
   function armable() {
     const posts: { url: string; body: unknown }[] = [];
     const state = {
-      armed: false, real: 2, silent: false, media: 0, precision: 0.004,
-      cues: 0, curves: 0, rig: 'bench.toml',
+      armed: false,
+      real: 2,
+      silent: false,
+      media: 0,
+      precision: 0.004,
+      cues: 0,
+      curves: 0,
+      rig: 'bench.toml',
     };
     const real = globalThis.fetch;
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-      if (url === '/api/live' && init?.method === 'POST') {
-        const body = JSON.parse(init.body as string);
-        posts.push({ url, body });
-        state.armed = body.armed;
-        return { ok: true, json: async () => ({ ...state }) } as Response;
-      }
-      if (url === '/api/live') {
-        return { ok: true, json: async () => ({ ...state }) } as Response;
-      }
-      if (url === '/api/live/at') {
-        posts.push({ url, body: JSON.parse(init!.body as string) });
-        return { ok: true, status: 204, json: async () => ({}) } as unknown as Response;
-      }
-      return (real as typeof fetch)(url, init);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url === '/api/live' && init?.method === 'POST') {
+          const body = JSON.parse(init.body as string);
+          posts.push({ url, body });
+          state.armed = body.armed;
+          return { ok: true, json: async () => ({ ...state }) } as Response;
+        }
+        if (url === '/api/live') {
+          return { ok: true, json: async () => ({ ...state }) } as Response;
+        }
+        if (url === '/api/live/at') {
+          posts.push({ url, body: JSON.parse(init!.body as string) });
+          return { ok: true, status: 204, json: async () => ({}) } as unknown as Response;
+        }
+        return (real as typeof fetch)(url, init);
+      }),
+    );
     return { posts, state };
   }
 
@@ -279,8 +308,10 @@ describe('driving the room from the studio', () => {
     await waitFor(() => expect(armButton().textContent).toBe('live'));
     fireEvent.click(armButton());
     await waitFor(() => expect(armButton().textContent).toBe('go live'));
-    expect(posts.filter((p) => p.url === '/api/live').map((p) => p.body))
-      .toEqual([{ armed: true }, { armed: false }]);
+    expect(posts.filter((p) => p.url === '/api/live').map((p) => p.body)).toEqual([
+      { armed: true },
+      { armed: false },
+    ]);
   });
 
   it('says why it would not arm, where somebody will read it', async () => {
@@ -291,24 +322,46 @@ describe('driving the room from the studio', () => {
     /* A refusal the server can still produce. The one this used to quote was
      * removed with the rule behind it, and a fixture citing a message nothing
      * emits any more proves only that the page can render a string. */
-    const why = 'rig: 192.168.1.145:5570 has no instrument "light.ambient"; it announced [wind.main]';
+    const why =
+      'rig: 192.168.1.145:5570 has no instrument "light.ambient"; it announced [wind.main]';
     /* Everything that is not about live still has to work, or the studio
      * cannot even open a film to press the button in. */
     const rest = globalThis.fetch;
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-      if (url === '/api/live' && init?.method === 'POST') {
-        return {
-          ok: false,
-          json: async () => ({ armed: false, problem: why, real: 0, silent: true,
-                               media: 0, precision: 0, cues: 0, curves: 0 }),
-        } as Response;
-      }
-      if (url === '/api/live') {
-        return { ok: true, json: async () => ({ armed: false, real: 0, silent: true,
-                 media: 0, precision: 0, cues: 0, curves: 0 }) } as Response;
-      }
-      return (rest as typeof fetch)(url, init);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url === '/api/live' && init?.method === 'POST') {
+          return {
+            ok: false,
+            json: async () => ({
+              armed: false,
+              problem: why,
+              real: 0,
+              silent: true,
+              media: 0,
+              precision: 0,
+              cues: 0,
+              curves: 0,
+            }),
+          } as Response;
+        }
+        if (url === '/api/live') {
+          return {
+            ok: true,
+            json: async () => ({
+              armed: false,
+              real: 0,
+              silent: true,
+              media: 0,
+              precision: 0,
+              cues: 0,
+              curves: 0,
+            }),
+          } as Response;
+        }
+        return (rest as typeof fetch)(url, init);
+      }),
+    );
     await openFilm();
     fireEvent.click(screen.getByRole('button', { name: /go live/ }));
     await waitFor(() => expect(screen.getByText(new RegExp('has no instrument'))).toBeTruthy());
@@ -354,12 +407,20 @@ describe('the playhead follows the film frame by frame', () => {
         cb = fn;
         return 1;
       },
-      cancelVideoFrameCallback() { cancelled++; },
+      cancelVideoFrameCallback() {
+        cancelled++;
+      },
     });
     return {
-      frame(t: number) { cb?.(0, { mediaTime: t }); },
-      get wired() { return cb !== null; },
-      get cancelled() { return cancelled; },
+      frame(t: number) {
+        cb?.(0, { mediaTime: t });
+      },
+      get wired() {
+        return cb !== null;
+      },
+      get cancelled() {
+        return cancelled;
+      },
     };
   }
 
@@ -386,7 +447,11 @@ describe('the playhead follows the film frame by frame', () => {
     fireEvent.play(video);
     await waitFor(() => expect(film.wired).toBe(true));
 
-    for (const [at, want] of [[1, '00:00:01:00'], [2.5, '00:00:02:12'], [4, '00:00:04:00']] as const) {
+    for (const [at, want] of [
+      [1, '00:00:01:00'],
+      [2.5, '00:00:02:12'],
+      [4, '00:00:04:00'],
+    ] as const) {
       film.frame(at);
       await waitFor(() => expect(timecode()).toBe(want));
     }
@@ -478,9 +543,11 @@ describe('the timeline itself', () => {
 
   it('starts with nothing to undo and nothing to save', async () => {
     render(<App />);
-    const undo = await screen.findByRole('button', { name: 'Undo' }) as HTMLButtonElement;
+    const undo = (await screen.findByRole('button', { name: 'Undo' })) as HTMLButtonElement;
     expect(undo.disabled).toBe(true);
-    expect((screen.getByRole('button', { name: 'Saved' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Saved' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
   });
 });
 
@@ -494,7 +561,15 @@ describe('the inspector', () => {
     const surface = document.querySelector('.tl-surface') as HTMLElement;
     Object.defineProperty(surface, 'clientWidth', { configurable: true, value: 1000 });
     surface.getBoundingClientRect = () => ({
-      left: 0, top: 0, width: 1000, height: 300, right: 1000, bottom: 300, x: 0, y: 0, toJSON: () => ({}),
+      left: 0,
+      top: 0,
+      width: 1000,
+      height: 300,
+      right: 1000,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     });
 
     /* The gust runs 10s to 14s of a 120s film, on the first lane, which the
@@ -529,7 +604,15 @@ describe('the inspector', () => {
     const surface = document.querySelector('.tl-surface') as HTMLElement;
     Object.defineProperty(surface, 'clientWidth', { configurable: true, value: 1000 });
     surface.getBoundingClientRect = () => ({
-      left: 0, top: 0, width: 1000, height: 300, right: 1000, bottom: 300, x: 0, y: 0, toJSON: () => ({}),
+      left: 0,
+      top: 0,
+      width: 1000,
+      height: 300,
+      right: 1000,
+      bottom: 300,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     });
     fireEvent.keyDown(window, { key: 'f' });
     fireEvent.pointerDown(surface, { clientX: 100, clientY: 46, button: 0 });
@@ -557,7 +640,12 @@ describe('arranging the tracks', () => {
     const heads = document.querySelectorAll('.tl-head.is-head');
     const wind = heads[0];
     const light = heads[1];
-    const data = { effectAllowed: '', dropEffect: '', setData: () => {}, getData: () => 'wind.main' };
+    const data = {
+      effectAllowed: '',
+      dropEffect: '',
+      setData: () => {},
+      getData: () => 'wind.main',
+    };
 
     fireEvent.dragStart(wind, { dataTransfer: data });
     fireEvent.dragOver(light, { dataTransfer: data });
@@ -570,16 +658,25 @@ describe('arranging the tracks', () => {
     render(<App />);
     await waitFor(() => expect(document.querySelectorAll('.tl-name').length).toBe(2));
     const heads = document.querySelectorAll('.tl-head.is-head');
-    const data = { effectAllowed: '', dropEffect: '', setData: () => {}, getData: () => 'wind.main' };
+    const data = {
+      effectAllowed: '',
+      dropEffect: '',
+      setData: () => {},
+      getData: () => 'wind.main',
+    };
     fireEvent.dragStart(heads[0], { dataTransfer: data });
     fireEvent.drop(heads[1], { dataTransfer: data });
 
-    await waitFor(() => {
-      const puts = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls
-        .filter((c) => c[0] === '/api/layout' && (c[1] as RequestInit | undefined)?.method === 'PUT');
-      expect(puts.length).toBeGreaterThan(0);
-      const body = JSON.parse((puts[0][1] as RequestInit).body as string);
-      expect(body.order).toEqual(['light.ambient', 'wind.main']);
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        const puts = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(
+          (c) => c[0] === '/api/layout' && (c[1] as RequestInit | undefined)?.method === 'PUT',
+        );
+        expect(puts.length).toBeGreaterThan(0);
+        const body = JSON.parse((puts[0][1] as RequestInit).body as string);
+        expect(body.order).toEqual(['light.ambient', 'wind.main']);
+      },
+      { timeout: 2000 },
+    );
   });
 });

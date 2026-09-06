@@ -6,10 +6,33 @@
  * are, and rules are testable in node.
  */
 
-import { batch, insertCues, insertPoints, movePoints, moveCues, removeCues, removePoints, resizeCues, type Command } from './history';
+import {
+  batch,
+  insertCues,
+  insertPoints,
+  movePoints,
+  moveCues,
+  removeCues,
+  removePoints,
+  resizeCues,
+  type Command,
+} from './history';
 import { actionForKind, build, levelKey, type Preset } from './presets';
 import { clamp, clamp01, round3, type Seconds } from './time';
-import { cueEnd, isHSI, isSpan, kindOf, valueAt, channelsOf, type Cue, type Instrument, type Point, type Rig, type Score, type Track } from './score';
+import {
+  cueEnd,
+  isHSI,
+  isSpan,
+  kindOf,
+  valueAt,
+  channelsOf,
+  type Cue,
+  type Instrument,
+  type Point,
+  type Rig,
+  type Score,
+  type Track,
+} from './score';
 
 /** The shortest a split can leave either half. Below this it is not a span. */
 const MIN_PIECE = 0.04;
@@ -31,11 +54,13 @@ export function splitCue(track: Track, cue: Cue, at: Seconds): Command | null {
   if (at <= cue.t + MIN_PIECE || at >= end - MIN_PIECE) return null;
 
   const left: Cue = { ...cue, params: { ...cue.params }, t: cue.t, duration: round3(at - cue.t) };
-  const right: Cue = { ...cue, params: { ...cue.params }, t: round3(at), duration: round3(end - at) };
-  return batch('Split event', [
-    removeCues(track, [cue]),
-    insertCues(track, [left, right]),
-  ]);
+  const right: Cue = {
+    ...cue,
+    params: { ...cue.params },
+    t: round3(at),
+    duration: round3(end - at),
+  };
+  return batch('Split event', [removeCues(track, [cue]), insertCues(track, [left, right])]);
 }
 
 /**
@@ -51,29 +76,48 @@ export function duplicateCues(track: Track, cues: Cue[]): Command | null {
   const finish = Math.max(...cues.map(cueEnd));
   const shift = Math.max(finish - start, MIN_PIECE);
   const copies = cues.map((c) => ({
-    ...c, params: { ...c.params }, t: round3(c.t + shift),
+    ...c,
+    params: { ...c.params },
+    t: round3(c.t + shift),
   }));
-  return batch(cues.length > 1 ? `Duplicate ${cues.length} events` : 'Duplicate event',
-    [insertCues(track, copies)]);
+  return batch(cues.length > 1 ? `Duplicate ${cues.length} events` : 'Duplicate event', [
+    insertCues(track, copies),
+  ]);
 }
 
 /** Move a selection by a fixed amount of time — the nudge keys. */
 export function nudge(
-  score: Score, selected: ReadonlySet<Cue | Point>, dt: Seconds,
+  score: Score,
+  selected: ReadonlySet<Cue | Point>,
+  dt: Seconds,
 ): Command | null {
   const cmds: Command[] = [];
   for (const track of score.tracks ?? []) {
     const cues = (track.cues ?? []).filter((c) => selected.has(c));
     if (cues.length) {
-      cmds.push(moveCues(cues.map((cue) => ({
-        track, cue, from: cue.t, to: clamp(cue.t + dt, 0, score.duration),
-      }))));
+      cmds.push(
+        moveCues(
+          cues.map((cue) => ({
+            track,
+            cue,
+            from: cue.t,
+            to: clamp(cue.t + dt, 0, score.duration),
+          })),
+        ),
+      );
     }
     const points = (track.points ?? []).filter((p) => selected.has(p));
     if (points.length) {
-      cmds.push(movePoints(points.map((point) => ({
-        track, point, fromT: point.t, toT: clamp(point.t + dt, 0, score.duration),
-      }))));
+      cmds.push(
+        movePoints(
+          points.map((point) => ({
+            track,
+            point,
+            fromT: point.t,
+            toT: clamp(point.t + dt, 0, score.duration),
+          })),
+        ),
+      );
     }
   }
   if (!cmds.length) return null;
@@ -89,18 +133,28 @@ export function nudge(
  * the thing worth preserving.
  */
 export function scaleAmplitude(
-  score: Score, selected: ReadonlySet<Cue | Point>, factor: number,
+  score: Score,
+  selected: ReadonlySet<Cue | Point>,
+  factor: number,
 ): Command | null {
   const cmds: Command[] = [];
   for (const track of score.tracks ?? []) {
     const points = (track.points ?? []).filter((p) => selected.has(p));
     for (const point of points) {
       for (const channel of Object.keys(point.value ?? {})) {
-        cmds.push(movePoints([{
-          track, point, channel,
-          fromT: point.t, toT: point.t,
-          fromV: point.value[channel], toV: clamp01(point.value[channel] * factor),
-        }]));
+        cmds.push(
+          movePoints([
+            {
+              track,
+              point,
+              channel,
+              fromT: point.t,
+              toT: point.t,
+              fromV: point.value[channel],
+              toV: clamp01(point.value[channel] * factor),
+            },
+          ]),
+        );
       }
     }
   }
@@ -130,11 +184,19 @@ export function smoothPoints(track: Track, points: Point[]): Command | null {
       const b = all[i + 1].value?.[channel];
       if (typeof a !== 'number' || typeof b !== 'number') continue;
       const to = clamp01((a + p.value[channel] * 2 + b) / 4);
-      cmds.push(movePoints([{
-        track, point: p, channel,
-        fromT: p.t, toT: p.t,
-        fromV: p.value[channel], toV: to,
-      }]));
+      cmds.push(
+        movePoints([
+          {
+            track,
+            point: p,
+            channel,
+            fromT: p.t,
+            toT: p.t,
+            fromV: p.value[channel],
+            toV: to,
+          },
+        ]),
+      );
     }
   }
   if (!cmds.length) return null;
@@ -241,7 +303,11 @@ export function copy(score: Score, selected: ReadonlySet<Cue | Point>): Clip | n
  * something the parser rejects at save time, long after the mistake.
  */
 export function paste(
-  clip: Clip, track: Track, at: Seconds, score: Score, rig?: Rig | null,
+  clip: Clip,
+  track: Track,
+  at: Seconds,
+  score: Score,
+  rig?: Rig | null,
 ): Command | null {
   const wantsCurve = track.type === 'curve';
   if (wantsCurve && !clip.points.length) return null;
@@ -262,7 +328,9 @@ export function paste(
   }
 
   const cues: Cue[] = clip.cues.map((c) => ({
-    ...c.cue, params: { ...c.cue.params }, t: cap(c.t),
+    ...c.cue,
+    params: { ...c.cue.params },
+    t: cap(c.t),
   }));
   return batch(`Paste ${cues.length} events`, [insertCues(track, cues)]);
 }
@@ -310,10 +378,12 @@ export function insertPreset(
    * hue. Only those — a base under the level itself would quietly turn every
    * insert into a blend with the curve it is replacing. */
   const level = levelKey(channels);
-  const base = level && track.points?.length
-    ? Object.fromEntries(Object.entries(valueAt(track.points, at, [...channels]))
-        .filter(([c]) => c !== level))
-    : undefined;
+  const base =
+    level && track.points?.length
+      ? Object.fromEntries(
+          Object.entries(valueAt(track.points, at, [...channels])).filter(([c]) => c !== level),
+        )
+      : undefined;
   const made = build(preset, at, channels, {
     base,
     ...opts,

@@ -32,16 +32,21 @@ describe('repeating a material without distorting it', () => {
   });
 
   it('holds the shape whatever the wall is', () => {
-    for (const [w, h] of [[5, 3], [4, 2.4], [8, 3], [2, 4]]) {
+    for (const [w, h] of [
+      [5, 3],
+      [4, 2.4],
+      [8, 3],
+      [2, 4],
+    ]) {
       const r = repeatForAspect(w, h, PANEL_W, PANEL_H);
-      expect((w / r.x) / (h / r.y)).toBeCloseTo(PANEL_W / PANEL_H, 6);
+      expect(w / r.x / (h / r.y)).toBeCloseTo(PANEL_W / PANEL_H, 6);
     }
   });
 
   it('stacks when asked, and still holds the shape', () => {
     const r = repeatForAspect(WALL_W, WALL_H, 512, 512, 3);
     expect(r.y).toBe(3);
-    expect((WALL_W / r.x) / (WALL_H / r.y)).toBeCloseTo(1, 6);
+    expect(WALL_W / r.x / (WALL_H / r.y)).toBeCloseTo(1, 6);
   });
 
   it('refuses to guess from nonsense', () => {

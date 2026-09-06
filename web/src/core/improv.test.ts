@@ -42,7 +42,10 @@ function sdkEnums(): Record<string, Record<string, number>> {
 
 /** The #defines, read out of the firmware. */
 function firmwareDefines(): Record<string, number> {
-  const src = readFileSync(new URL('../../../firmware/esp32/main/improv.c', import.meta.url), 'utf8');
+  const src = readFileSync(
+    new URL('../../../firmware/esp32/main/improv.c', import.meta.url),
+    'utf8',
+  );
   const out: Record<string, number> = {};
   /* Trailing comments are ordinary in this file, so a value ends where the hex
    * ends rather than where the line does. */
@@ -98,11 +101,16 @@ describe('the firmware and the flasher agree on the protocol', () => {
      * answer is a step in the dialog that silently does not appear, which is
      * the exact shape of the bug this file exists for. */
     const src = readFileSync(
-      new URL('../../../firmware/esp32/main/improv.c', import.meta.url), 'utf8');
-    for (const name of ['CMD_WIFI_SETTINGS', 'CMD_REQUEST_STATE',
-                        'CMD_REQUEST_INFO', 'CMD_REQUEST_SCAN']) {
-      expect(src, name + ' is defined but never handled')
-        .toContain('case ' + name + ':');
+      new URL('../../../firmware/esp32/main/improv.c', import.meta.url),
+      'utf8',
+    );
+    for (const name of [
+      'CMD_WIFI_SETTINGS',
+      'CMD_REQUEST_STATE',
+      'CMD_REQUEST_INFO',
+      'CMD_REQUEST_SCAN',
+    ]) {
+      expect(src, name + ' is defined but never handled').toContain('case ' + name + ':');
     }
   });
 });

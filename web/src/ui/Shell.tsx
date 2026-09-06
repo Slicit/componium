@@ -28,8 +28,10 @@ export function Shell() {
     <div className="shell">
       <Nav route={route} />
       <div className="shell-body">
-        <div className={studio ? 'shell-here' : 'shell-away'}
-             aria-hidden={studio ? undefined : true}>
+        <div
+          className={studio ? 'shell-here' : 'shell-away'}
+          aria-hidden={studio ? undefined : true}
+        >
           <App active={studio} open={wanted} onOpened={() => setWanted(null)} />
         </div>
         {route.section === 'library' && <LibraryPage onOpen={setWanted} />}

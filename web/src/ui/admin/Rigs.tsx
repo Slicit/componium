@@ -43,50 +43,57 @@ export function Rigs() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   /** Every change goes through here, so a refusal is reported the same way. */
-  const send = useCallback(async (
-    path: string, body: string | object | null, said: string,
-  ) => {
-    setBusy(true);
-    setError(null);
-    setNote(null);
-    try {
-      const res = await fetch(path, {
-        method: 'POST',
-        headers: typeof body === 'string'
-          ? { 'Content-Type': 'text/plain' }
-          : { 'Content-Type': 'application/json' },
-        body: typeof body === 'string' ? body : JSON.stringify(body ?? {}),
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        setError(text.trim() || 'that did not work');
-        return false;
-      }
+  const send = useCallback(
+    async (path: string, body: string | object | null, said: string) => {
+      setBusy(true);
+      setError(null);
+      setNote(null);
       try {
-        setShelf(JSON.parse(text));
-      } catch {
-        void load();
+        const res = await fetch(path, {
+          method: 'POST',
+          headers:
+            typeof body === 'string'
+              ? { 'Content-Type': 'text/plain' }
+              : { 'Content-Type': 'application/json' },
+          body: typeof body === 'string' ? body : JSON.stringify(body ?? {}),
+        });
+        const text = await res.text();
+        if (!res.ok) {
+          setError(text.trim() || 'that did not work');
+          return false;
+        }
+        try {
+          setShelf(JSON.parse(text));
+        } catch {
+          void load();
+        }
+        setNote(said);
+        return true;
+      } catch (e) {
+        setError(String((e as Error).message || e));
+        return false;
+      } finally {
+        setBusy(false);
       }
-      setNote(said);
-      return true;
-    } catch (e) {
-      setError(String((e as Error).message || e));
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [load]);
+    },
+    [load],
+  );
 
   const forget = (name: string) => {
     /* Confirmed, because a rig describes what is wired to the mains and there
        is no copy of it anywhere else unless somebody exported one. */
-    if (!window.confirm(
-      `Remove ${name}?\n\nThis deletes the file. If you have not exported it, `
-      + `everything it says about addresses, pins and positions is gone.`
-    )) return;
+    if (
+      !window.confirm(
+        `Remove ${name}?\n\nThis deletes the file. If you have not exported it, ` +
+          `everything it says about addresses, pins and positions is gone.`,
+      )
+    )
+      return;
     void send('/api/rigs/delete', { name: plain(name) }, name + ' removed');
   };
 
@@ -97,22 +104,26 @@ export function Rigs() {
     const was = plain(file);
     const to = window.prompt('Rename ' + was + ' to what?', was);
     if (to === null || to.trim() === was || to.trim() === '') return;
-    void send('/api/rigs/rename', { name: was, to: to.trim() },
-      was + ' is now ' + to.trim());
+    void send('/api/rigs/rename', { name: was, to: to.trim() }, was + ' is now ' + to.trim());
   };
 
   const bring = async (chosen: File) => {
     const text = await chosen.text();
     const name = plain(chosen.name);
     const already = shelf.rigs.some((r) => plain(r) === name);
-    if (already && !window.confirm(
-      `${name} is already on this shelf.\n\nReplace it with the file you just `
-      + `chose? What is there now will be gone.`
-    )) return;
+    if (
+      already &&
+      !window.confirm(
+        `${name} is already on this shelf.\n\nReplace it with the file you just ` +
+          `chose? What is there now will be gone.`,
+      )
+    )
+      return;
     await send(
-      '/api/rigs/import?name=' + encodeURIComponent(name)
-      + (already ? '&replace=yes' : ''),
-      text, name + ' imported');
+      '/api/rigs/import?name=' + encodeURIComponent(name) + (already ? '&replace=yes' : ''),
+      text,
+      name + ' imported',
+    );
   };
 
   if (!shelf.shelf) {
@@ -120,10 +131,9 @@ export function Rigs() {
       <section className="adm-card">
         <h2>Rigs</h2>
         <p className="dim small">
-          This studio was started with <code>-rig</code> pointing at a single
-          file rather than a directory, so there is no shelf to manage. Point it
-          at a directory and every rig in it can be chosen, copied and swapped
-          from here.
+          This studio was started with <code>-rig</code> pointing at a single file rather than a
+          directory, so there is no shelf to manage. Point it at a directory and every rig in it can
+          be chosen, copied and swapped from here.
         </p>
         <p>
           <a className="adm-link" href="/api/rigs/export" download>
@@ -139,16 +149,19 @@ export function Rigs() {
       <div className="adm-row">
         <h2>Rigs</h2>
         <span className="spacer" />
-        <button onClick={() => file.current?.click()} disabled={busy}>Import</button>
+        <button onClick={() => file.current?.click()} disabled={busy}>
+          Import
+        </button>
         {!adding && (
-          <button onClick={() => setAdding({ name: '', from: shelf.current })}>
-            New rig
-          </button>
+          <button onClick={() => setAdding({ name: '', from: shelf.current })}>New rig</button>
         )}
       </div>
 
       <input
-        ref={file} type="file" accept=".toml,text/plain" hidden
+        ref={file}
+        type="file"
+        accept=".toml,text/plain"
+        hidden
         aria-label="Import a rig file"
         onChange={(e) => {
           const chosen = e.target.files?.[0];
@@ -158,8 +171,8 @@ export function Rigs() {
       />
 
       <p className="dim small">
-        The one in use is what a show plays. The choice is a file on the shelf,
-        so a conductor reading the same directory follows it without being told.
+        The one in use is what a show plays. The choice is a file on the shelf, so a conductor
+        reading the same directory follows it without being told.
       </p>
 
       {error && <p className="adm-warn">{error}</p>}
@@ -168,7 +181,11 @@ export function Rigs() {
       <div className="adm-scroll">
         <table className="adm-table">
           <thead>
-            <tr><th /><th>Rig</th><th /></tr>
+            <tr>
+              <th />
+              <th>Rig</th>
+              <th />
+            </tr>
           </thead>
           <tbody>
             {shelf.rigs.map((r) => {
@@ -177,7 +194,10 @@ export function Rigs() {
                 <tr key={r} className={current ? 'is-current' : undefined}>
                   <td>
                     <input
-                      type="radio" name="rig" checked={current} disabled={busy}
+                      type="radio"
+                      name="rig"
+                      checked={current}
+                      disabled={busy}
                       aria-label={'Use ' + plain(r)}
                       onChange={() => void send('/api/rigs', { rig: r }, 'now using ' + plain(r))}
                     />
@@ -187,30 +207,42 @@ export function Rigs() {
                     {current && <span className="dim small"> in use</span>}
                   </td>
                   <td className="adm-actions">
-                    <a className="adm-link" download
-                       href={'/api/rigs/export?rig=' + encodeURIComponent(plain(r))}
-                    >export</a>
+                    <a
+                      className="adm-link"
+                      download
+                      href={'/api/rigs/export?rig=' + encodeURIComponent(plain(r))}
+                    >
+                      export
+                    </a>
                     <button
                       disabled={busy}
                       title={'Rename ' + plain(r) + '. The name inside the file is left alone.'}
                       aria-label={'Rename ' + plain(r)}
                       onClick={() => rename(r)}
-                    >rename</button>
+                    >
+                      rename
+                    </button>
                     <button
                       disabled={busy}
                       title={'Start a new rig from ' + plain(r)}
                       onClick={() => setAdding({ name: '', from: r })}
-                    >copy</button>
+                    >
+                      copy
+                    </button>
                     <button
                       className="adm-remove"
                       disabled={busy || shelf.rigs.length <= 1}
-                      title={shelf.rigs.length <= 1
-                        ? 'The only rig on the shelf. A shelf with nothing on it '
-                          + 'is a studio that will not open.'
-                        : 'Remove ' + plain(r)}
+                      title={
+                        shelf.rigs.length <= 1
+                          ? 'The only rig on the shelf. A shelf with nothing on it ' +
+                            'is a studio that will not open.'
+                          : 'Remove ' + plain(r)
+                      }
                       aria-label={'Remove ' + plain(r)}
                       onClick={() => forget(r)}
-                    >remove</button>
+                    >
+                      remove
+                    </button>
                   </td>
                 </tr>
               );
@@ -223,8 +255,11 @@ export function Rigs() {
         <div className="adm-card adm-inset">
           <div className="adm-row">
             <input
-              type="text" value={adding.name} placeholder="the-room"
-              aria-label="New rig name" autoFocus
+              type="text"
+              value={adding.name}
+              placeholder="the-room"
+              aria-label="New rig name"
+              autoFocus
               onChange={(e) => setAdding({ ...adding, name: e.target.value })}
             />
             <label className="dim small">
@@ -236,25 +271,43 @@ export function Rigs() {
               >
                 <option value="">nothing</option>
                 {shelf.rigs.map((r) => (
-                  <option key={r} value={r}>{plain(r)}</option>
+                  <option key={r} value={r}>
+                    {plain(r)}
+                  </option>
                 ))}
               </select>
             </label>
             <button
-              className="adm-go" disabled={busy || !adding.name.trim()}
+              className="adm-go"
+              disabled={busy || !adding.name.trim()}
               onClick={async () => {
-                const ok = await send('/api/rigs/new', {
-                  name: adding.name.trim(), from: adding.from, select: false,
-                }, adding.name.trim() + ' added');
+                const ok = await send(
+                  '/api/rigs/new',
+                  {
+                    name: adding.name.trim(),
+                    from: adding.from,
+                    select: false,
+                  },
+                  adding.name.trim() + ' added',
+                );
                 if (ok) setAdding(null);
               }}
-            >Create</button>
-            <button onClick={() => { setAdding(null); setError(null); }}>Cancel</button>
+            >
+              Create
+            </button>
+            <button
+              onClick={() => {
+                setAdding(null);
+                setError(null);
+              }}
+            >
+              Cancel
+            </button>
           </div>
           <p className="dim small">
-            Copying is how a second rig usually starts: the room as it stands,
-            plus one change. From nothing gives you one virtual light to build
-            on, because a rig with nothing in it cannot be opened.
+            Copying is how a second rig usually starts: the room as it stands, plus one change. From
+            nothing gives you one virtual light to build on, because a rig with nothing in it cannot
+            be opened.
           </p>
         </div>
       )}

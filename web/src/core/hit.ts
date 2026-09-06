@@ -53,8 +53,12 @@ export function hitTest(ctx: HitContext, x: number, y: number): Hit {
   return { k: 'lane', row, t: view.fromX(x, width) };
 }
 
-function hitCue(cues: Cue[], view: TimeView, width: number, x: number):
-  { cue: Cue; part: 'body' | 'start' | 'end' } | null {
+function hitCue(
+  cues: Cue[],
+  view: TimeView,
+  width: number,
+  x: number,
+): { cue: Cue; part: 'body' | 'start' | 'end' } | null {
   /* Backwards, so the topmost of two overlapping events wins — the same one
    * the renderer drew last. */
   for (let i = cues.length - 1; i >= 0; i--) {
@@ -80,8 +84,13 @@ function hitCue(cues: Cue[], view: TimeView, width: number, x: number):
 }
 
 function hitPoint(
-  points: Point[], channel: string, view: TimeView, width: number,
-  rowH: number, x: number, localY: number,
+  points: Point[],
+  channel: string,
+  view: TimeView,
+  width: number,
+  rowH: number,
+  x: number,
+  localY: number,
 ): Point | null {
   const pad = 3;
   const bottom = rowH - pad;
@@ -98,15 +107,25 @@ function hitPoint(
     if (Math.abs(dx) > GRAB) continue;
     const dy = yOf(v) - localY;
     const d = dx * dx + dy * dy;
-    if (d <= bestD) { bestD = d; best = p; }
+    if (d <= bestD) {
+      bestD = d;
+      best = p;
+    }
   }
   return best;
 }
 
 /** Everything inside a rubber band, for box selection. */
 export function hitRange(
-  ctx: HitContext, x1: number, y1: number, x2: number, y2: number,
-): { cues: Array<{ row: Row; cue: Cue }>; points: Array<{ row: Row; point: Point; channel: string }> } {
+  ctx: HitContext,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): {
+  cues: Array<{ row: Row; cue: Cue }>;
+  points: Array<{ row: Row; point: Point; channel: string }>;
+} {
   const lo = Math.min(x1, x2);
   const hi = Math.max(x1, x2);
   const top = Math.min(y1, y2) - ctx.rulerH;
@@ -141,9 +160,13 @@ export function hitRange(
 /** The pointer shape for a hit, so the cursor says what will happen. */
 export function cursorFor(hit: Hit): string {
   switch (hit.k) {
-    case 'ruler': return 'ew-resize';
-    case 'cue': return hit.part === 'body' ? 'grab' : 'col-resize';
-    case 'point': return 'ns-resize';
-    default: return 'crosshair';
+    case 'ruler':
+      return 'ew-resize';
+    case 'cue':
+      return hit.part === 'body' ? 'grab' : 'col-resize';
+    case 'point':
+      return 'ns-resize';
+    default:
+      return 'crosshair';
   }
 }

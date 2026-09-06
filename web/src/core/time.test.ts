@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-  frameAt, frameStart, snapToFrame, stepFrames, timecode, clockMs,
-  parseTime, durationLabel, fpsOf, DEFAULT_FPS,
+  frameAt,
+  frameStart,
+  snapToFrame,
+  stepFrames,
+  timecode,
+  clockMs,
+  parseTime,
+  durationLabel,
+  fpsOf,
+  DEFAULT_FPS,
 } from './time';
 
 const FPS = 24;
@@ -51,7 +59,11 @@ describe('timecode', () => {
 
   it('never shows a frame number equal to the frame rate', () => {
     for (let n = 0; n < 200; n++) {
-      const ff = Number(timecode(n / FPS, FPS).split(':').pop());
+      const ff = Number(
+        timecode(n / FPS, FPS)
+          .split(':')
+          .pop(),
+      );
       expect(ff).toBeLessThan(FPS);
     }
   });

@@ -79,10 +79,16 @@ function withDriverDefaults(d: Device, driver: string): Device {
 
 function blank(kind: string, drivers: string[]): Device {
   const driver = drivers[0] ?? 'virtual';
-  return withDriverDefaults({
-    id: kind + '.new', kind, driver,
-    latency: 0, position: [0, 1, 1],
-  }, driver);
+  return withDriverDefaults(
+    {
+      id: kind + '.new',
+      kind,
+      driver,
+      latency: 0,
+      position: [0, 1, 1],
+    },
+    driver,
+  );
 }
 
 /* An address, chosen from the boards this installation has.
@@ -97,7 +103,13 @@ function blank(kind: string, drivers: string[]): Device {
  * any list. An address that matches no board selects that option on its own, so
  * a rig written before any of this still shows what it says.
  */
-export function BoardPicker({ boards, value, disabled, label, onChange }: {
+export function BoardPicker({
+  boards,
+  value,
+  disabled,
+  label,
+  onChange,
+}: {
   boards: { name: string; addr: string }[];
   value: string;
   disabled: boolean;
@@ -110,7 +122,9 @@ export function BoardPicker({ boards, value, disabled, label, onChange }: {
   if (boards.length === 0) {
     return (
       <input
-        type="text" value={value} disabled={disabled}
+        type="text"
+        value={value}
+        disabled={disabled}
         placeholder="192.168.1.90:5570"
         aria-label={label + ' address'}
         onChange={(e) => onChange(e.target.value)}
@@ -135,12 +149,16 @@ export function BoardPicker({ boards, value, disabled, label, onChange }: {
       >
         <option value="">an address not on the list</option>
         {boards.map((b) => (
-          <option key={b.name} value={b.addr}>{b.name} &middot; {b.addr}</option>
+          <option key={b.name} value={b.addr}>
+            {b.name} &middot; {b.addr}
+          </option>
         ))}
       </select>
       {(typing || (!known && value !== '')) && (
         <input
-          type="text" value={value} disabled={disabled}
+          type="text"
+          value={value}
+          disabled={disabled}
           placeholder="192.168.1.90:5570"
           aria-label={label + ' address'}
           onChange={(e) => onChange(e.target.value)}
@@ -183,7 +201,9 @@ export function Devices() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   useEffect(() => {
     let live = true;
@@ -192,16 +212,22 @@ export function Devices() {
       .then((got: { boards?: { name: string; addr: string }[] }) => {
         if (live) setBoards(got.boards ?? []);
       })
-      .catch(() => { /* The page still works; the address stays typed. */ });
-    return () => { live = false; };
+      .catch(() => {
+        /* The page still works; the address stays typed. */
+      });
+    return () => {
+      live = false;
+    };
   }, []);
 
   const change = (i: number, patch: Partial<Device>) => {
-    setDevices((was) => was.map((d, n) => {
-      if (n !== i) return d;
-      const next = { ...d, ...patch };
-      return patch.driver !== undefined ? withDriverDefaults(next, patch.driver) : next;
-    }));
+    setDevices((was) =>
+      was.map((d, n) => {
+        if (n !== i) return d;
+        const next = { ...d, ...patch };
+        return patch.driver !== undefined ? withDriverDefaults(next, patch.driver) : next;
+      }),
+    );
     setDirty(true);
     setSaved(false);
   };
@@ -214,7 +240,7 @@ export function Devices() {
   const changeKind = (i: number, kind: string) => {
     const allowed = driversFor(kind);
     const keep = allowed.includes(devices[i].driver) ? devices[i].driver : allowed[0];
-    change(i, { kind, driver: keep });   // change() fills in what `keep` needs
+    change(i, { kind, driver: keep }); // change() fills in what `keep` needs
   };
 
   const save = async () => {
@@ -238,9 +264,14 @@ export function Devices() {
     const said = await res.text().catch(() => '');
     try {
       const body = JSON.parse(said);
-      if (Array.isArray(body?.problems)) { setProblems(body.problems); return; }
-    } catch { /* not JSON, so it is a plain message and shown as one */ }
-    setError(said.trim() || ('the studio refused it, with status ' + res.status));
+      if (Array.isArray(body?.problems)) {
+        setProblems(body.problems);
+        return;
+      }
+    } catch {
+      /* not JSON, so it is a plain message and shown as one */
+    }
+    setError(said.trim() || 'the studio refused it, with status ' + res.status);
   };
 
   const choose = async (name: string) => {
@@ -266,18 +297,17 @@ export function Devices() {
     <div className="adm-page adm-wide">
       <h2>Devices</h2>
       <p className="dim">
-        This is the rig file, not a copy of it. Edit it here or in a text editor;
-        both write the same place, which is what keeps the studio and the
-        conductor agreeing about what is on the end of every wire.
+        This is the rig file, not a copy of it. Edit it here or in a text editor; both write the
+        same place, which is what keeps the studio and the conductor agreeing about what is on the
+        end of every wire.
       </p>
 
       {error && <p className="adm-warn">{error}</p>}
 
       {rig && !editable && (
         <p className="adm-warn">
-          Read only: this studio was started without <code>-rig</code>, so what
-          you see below was inferred from the score and there is no file to
-          write it to.
+          Read only: this studio was started without <code>-rig</code>, so what you see below was
+          inferred from the score and there is no file to write it to.
         </p>
       )}
 
@@ -294,17 +324,22 @@ export function Devices() {
                 value={shelf.current}
                 onChange={(e) => void choose(e.target.value)}
                 disabled={dirty}
-                title={dirty
-                  ? 'Save or reload first: switching now would lose the edits'
-                  : 'Which rig this installation is using'}
+                title={
+                  dirty
+                    ? 'Save or reload first: switching now would lose the edits'
+                    : 'Which rig this installation is using'
+                }
               >
-                {shelf.rigs.map((f) => <option key={f} value={f}>{f}</option>)}
+                {shelf.rigs.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
               </select>
               <p className="dim small">
-                The choice is a file on the shelf, not a setting in this browser,
-                so a conductor pointed at the same directory plays whichever rig
-                is picked here. It reads it when it starts, so a running show
-                keeps the one it opened with.
+                The choice is a file on the shelf, not a setting in this browser, so a conductor
+                pointed at the same directory plays whichever rig is picked here. It reads it when
+                it starts, so a running show keeps the one it opened with.
               </p>
             </section>
           )}
@@ -313,13 +348,20 @@ export function Devices() {
             <div className="adm-set-head">
               <label htmlFor="rig-name">Rig name</label>
               <span className="dim small">
-                {devices.length} instrument{devices.length === 1 ? '' : 's'},
-                {' '}{real} on real hardware
+                {devices.length} instrument{devices.length === 1 ? '' : 's'}, {real} on real
+                hardware
               </span>
             </div>
             <input
-              id="rig-name" type="text" value={name} disabled={!editable}
-              onChange={(e) => { setName(e.target.value); setDirty(true); setSaved(false); }}
+              id="rig-name"
+              type="text"
+              value={name}
+              disabled={!editable}
+              onChange={(e) => {
+                setName(e.target.value);
+                setDirty(true);
+                setSaved(false);
+              }}
             />
           </section>
 
@@ -328,12 +370,22 @@ export function Devices() {
               <table className="adm-table adm-edit">
                 <thead>
                   <tr>
-                    <th>Instrument</th><th>Kind</th><th>Driver</th>
-                    <th>Where</th><th className="num">Latency</th>
-                    <th className="num" title={
-                      'Added to what the score asks for, on the way out, for this fixture only. ' +
-                      'Two strips with the same part number reach the same numbers differently. ' +
-                      'Blank for anything that is not a light.'}>Trim</th><th />
+                    <th>Instrument</th>
+                    <th>Kind</th>
+                    <th>Driver</th>
+                    <th>Where</th>
+                    <th className="num">Latency</th>
+                    <th
+                      className="num"
+                      title={
+                        'Added to what the score asks for, on the way out, for this fixture only. ' +
+                        'Two strips with the same part number reach the same numbers differently. ' +
+                        'Blank for anything that is not a light.'
+                      }
+                    >
+                      Trim
+                    </th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -341,30 +393,38 @@ export function Devices() {
                     <tr key={i}>
                       <td>
                         <input
-                          type="text" value={d.id} disabled={!editable}
+                          type="text"
+                          value={d.id}
+                          disabled={!editable}
                           aria-label={'Instrument ' + (i + 1) + ' id'}
                           onChange={(e) => change(i, { id: e.target.value })}
                         />
                       </td>
                       <td>
                         <select
-                          value={d.kind} disabled={!editable}
+                          value={d.kind}
+                          disabled={!editable}
                           aria-label={'Instrument ' + (i + 1) + ' kind'}
                           onChange={(e) => changeKind(i, e.target.value)}
                         >
                           {options?.kinds.map((k) => (
-                            <option key={k.kind} value={k.kind}>{k.kind}</option>
+                            <option key={k.kind} value={k.kind}>
+                              {k.kind}
+                            </option>
                           ))}
                         </select>
                       </td>
                       <td>
                         <select
-                          value={d.driver || 'virtual'} disabled={!editable}
+                          value={d.driver || 'virtual'}
+                          disabled={!editable}
                           aria-label={'Instrument ' + (i + 1) + ' driver'}
                           onChange={(e) => change(i, { driver: e.target.value })}
                         >
                           {driversFor(d.kind).map((v) => (
-                            <option key={v} value={v}>{v}</option>
+                            <option key={v} value={v}>
+                              {v}
+                            </option>
                           ))}
                         </select>
                       </td>
@@ -381,30 +441,41 @@ export function Devices() {
                         {wantsUniverse(d.driver) && (
                           <span className="adm-dmx">
                             <input
-                              type="text" value={d.addr ?? ''} disabled={!editable}
+                              type="text"
+                              value={d.addr ?? ''}
+                              disabled={!editable}
                               placeholder="192.168.1.90:5568"
                               aria-label={'Instrument ' + (i + 1) + ' address'}
                               onChange={(e) => change(i, { addr: e.target.value })}
                             />
                             <input
-                              type="number" min={1} max={63999} value={d.universe ?? ''}
+                              type="number"
+                              min={1}
+                              max={63999}
+                              value={d.universe ?? ''}
                               disabled={!editable}
                               aria-label={'Instrument ' + (i + 1) + ' universe'}
                               onChange={(e) => change(i, { universe: Number(e.target.value) })}
                             />
                             <input
-                              type="number" min={1} max={512} value={d.start ?? ''}
+                              type="number"
+                              min={1}
+                              max={512}
+                              value={d.start ?? ''}
                               disabled={!editable}
                               aria-label={'Instrument ' + (i + 1) + ' DMX address'}
                               onChange={(e) => change(i, { start: Number(e.target.value) })}
                             />
                             <select
-                              value={d.mode ?? ''} disabled={!editable}
+                              value={d.mode ?? ''}
+                              disabled={!editable}
                               aria-label={'Instrument ' + (i + 1) + ' mode'}
                               onChange={(e) => change(i, { mode: e.target.value })}
                             >
                               {(options?.modes ?? []).map((m) => (
-                                <option key={m} value={m}>{m}</option>
+                                <option key={m} value={m}>
+                                  {m}
+                                </option>
                               ))}
                             </select>
                           </span>
@@ -415,8 +486,12 @@ export function Devices() {
                       </td>
                       <td className="num">
                         <input
-                          type="number" min={0} max={10} step={0.01}
-                          value={d.latency ?? 0} disabled={!editable}
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={0.01}
+                          value={d.latency ?? 0}
+                          disabled={!editable}
                           aria-label={'Instrument ' + (i + 1) + ' latency'}
                           onChange={(e) => change(i, { latency: Number(e.target.value) })}
                         />
@@ -425,40 +500,57 @@ export function Devices() {
                         {d.kind === 'light' ? (
                           <span className="dev-trim">
                             <input
-                              type="number" min={-100} max={100} step={1}
-                              value={d.brightness ?? 0} disabled={!editable}
+                              type="number"
+                              min={-100}
+                              max={100}
+                              step={1}
+                              value={d.brightness ?? 0}
+                              disabled={!editable}
                               aria-label={d.id + ' brightness trim, percent'}
                               title="Brightness"
                               onChange={(e) => change(i, { brightness: Number(e.target.value) })}
                             />
                             <input
-                              type="number" min={-100} max={100} step={1}
-                              value={d.saturation ?? 0} disabled={!editable}
+                              type="number"
+                              min={-100}
+                              max={100}
+                              step={1}
+                              value={d.saturation ?? 0}
+                              disabled={!editable}
                               aria-label={d.id + ' saturation trim, percent'}
                               title="Saturation"
                               onChange={(e) => change(i, { saturation: Number(e.target.value) })}
                             />
                             {((d.brightness ?? 0) !== 0 || (d.saturation ?? 0) !== 0) && (
                               <button
-                                className="adm-remove" disabled={!editable}
+                                className="adm-remove"
+                                disabled={!editable}
                                 title={'Put ' + d.id + ' back to what the score says'}
                                 aria-label={'Reset trim for ' + d.id}
                                 onClick={() => change(i, { brightness: 0, saturation: 0 })}
-                              >reset</button>
+                              >
+                                reset
+                              </button>
                             )}
                           </span>
-                        ) : <span className="dim small">not a light</span>}
+                        ) : (
+                          <span className="dim small">not a light</span>
+                        )}
                       </td>
                       <td>
                         <button
-                          className="adm-remove" disabled={!editable}
+                          className="adm-remove"
+                          disabled={!editable}
                           title={'Remove ' + d.id}
                           aria-label={'Remove ' + d.id}
                           onClick={() => {
                             setDevices((was) => was.filter((_, n) => n !== i));
-                            setDirty(true); setSaved(false);
+                            setDirty(true);
+                            setSaved(false);
                           }}
-                        >remove</button>
+                        >
+                          remove
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -472,9 +564,12 @@ export function Devices() {
                   onClick={() => {
                     const kind = options?.kinds[0]?.kind ?? 'light';
                     setDevices((was) => [...was, blank(kind, driversFor(kind))]);
-                    setDirty(true); setSaved(false);
+                    setDirty(true);
+                    setSaved(false);
                   }}
-                >Add a device</button>
+                >
+                  Add a device
+                </button>
                 <span className="spacer" />
                 {problems.length === 0 && saved && <span className="dim small">saved</span>}
                 {dirty && <span className="dim small">unsaved</span>}
@@ -489,14 +584,16 @@ export function Devices() {
             <section className="adm-card">
               <h3>Not saved</h3>
               <ul className="adm-problems">
-                {problems.map((p) => <li key={p}>{p}</li>)}
+                {problems.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
               </ul>
             </section>
           )}
 
           <p className="dim small">
-            The conductor reads the rig when it starts. Saving here changes what
-            the next show does, not what a running one is doing.
+            The conductor reads the rig when it starts. Saving here changes what the next show does,
+            not what a running one is doing.
           </p>
         </>
       )}

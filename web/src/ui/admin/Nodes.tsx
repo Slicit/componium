@@ -87,8 +87,14 @@ function blank(type: Attached['type']): Attached {
       return { id: 'fog.left', type, gpio: 21, kind: 'fog', active: 'high', latencyMs: 2000 };
     default:
       return {
-        id: 'wind.main', type, gpio: 18, kind: 'wind', freqHz: 25000,
-        latencyMs: 1200, rampUpMs: 1800, rampDownMs: 3000,
+        id: 'wind.main',
+        type,
+        gpio: 18,
+        kind: 'wind',
+        freqHz: 25000,
+        latencyMs: 1200,
+        rampUpMs: 1800,
+        rampDownMs: 3000,
       };
   }
 }
@@ -151,50 +157,59 @@ export function Nodes() {
       .then((o: { kinds?: { kind: string }[] }) => {
         if (live) setKinds((o.kinds ?? []).map((k) => k.kind));
       })
-      .catch(() => { /* The page still works; the kind stays what it was. */ });
-    return () => { live = false; };
+      .catch(() => {
+        /* The page still works; the kind stays what it was. */
+      });
+    return () => {
+      live = false;
+    };
   }, []);
 
   /* `pick` overrides the board in state, because a click has to ask about the
    * board that was just clicked and setBoard has not landed by then. */
-  const ask = useCallback(async (configure: boolean, pick?: string) => {
-    const named = pick ?? picked;
-    setBusy(true);
-    setError(null);
-    setSaved(false);
-    try {
-      const res = await fetch('/api/node', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: named
-          ? JSON.stringify({ board: named, configure, devices })
-          : JSON.stringify({ addr, secret, configure, devices }),
-      });
-      const said = await res.text();
-      if (!res.ok) {
-        setError(said.trim() || 'the board did not answer');
-        return;
+  const ask = useCallback(
+    async (configure: boolean, pick?: string) => {
+      const named = pick ?? picked;
+      setBusy(true);
+      setError(null);
+      setSaved(false);
+      try {
+        const res = await fetch('/api/node', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: named
+            ? JSON.stringify({ board: named, configure, devices })
+            : JSON.stringify({ addr, secret, configure, devices }),
+        });
+        const said = await res.text();
+        if (!res.ok) {
+          setError(said.trim() || 'the board did not answer');
+          return;
+        }
+        const got: Board = JSON.parse(said);
+        setBoard(got);
+        if (configure) setSaved(true);
+      } catch (e) {
+        setError(String((e as Error).message || e));
+      } finally {
+        setBusy(false);
       }
-      const got: Board = JSON.parse(said);
-      setBoard(got);
-      if (configure) setSaved(true);
-    } catch (e) {
-      setError(String((e as Error).message || e));
-    } finally {
-      setBusy(false);
-    }
-  }, [addr, secret, picked, devices]);
+    },
+    [addr, secret, picked, devices],
+  );
 
   const change = (i: number, patch: Partial<Attached>) => {
-    setDevices((was) => was.map((d, n) => {
-      if (n !== i) return d;
-      // Changing the type changes which fields mean anything, so it starts
-      // from that type's defaults and keeps the name and pin somebody chose.
-      if (patch.type && patch.type !== d.type) {
-        return { ...blank(patch.type), id: d.id, gpio: d.gpio, kind: d.kind };
-      }
-      return { ...d, ...patch };
-    }));
+    setDevices((was) =>
+      was.map((d, n) => {
+        if (n !== i) return d;
+        // Changing the type changes which fields mean anything, so it starts
+        // from that type's defaults and keeps the name and pin somebody chose.
+        if (patch.type && patch.type !== d.type) {
+          return { ...blank(patch.type), id: d.id, gpio: d.gpio, kind: d.kind };
+        }
+        return { ...d, ...patch };
+      }),
+    );
     setSaved(false);
   };
 
@@ -202,9 +217,9 @@ export function Nodes() {
     <div className="adm-page adm-wide">
       <h2>Boards</h2>
       <p className="dim">
-        What is physically wired to one ESP32. Separate from the rig, which says
-        what instruments the show has: a rig entry names an instrument, and the
-        board decides whether that instrument exists.
+        What is physically wired to one ESP32. Separate from the rig, which says what instruments
+        the show has: a rig entry names an instrument, and the board decides whether that instrument
+        exists.
       </p>
 
       <Boards
@@ -224,12 +239,16 @@ export function Nodes() {
         <h3>A board that is not on the list yet</h3>
         <div className="adm-row">
           <input
-            type="text" value={addr} placeholder="192.168.1.145"
+            type="text"
+            value={addr}
+            placeholder="192.168.1.145"
             aria-label="Board address"
             onChange={(e) => setAddr(e.target.value)}
           />
           <input
-            type="password" value={secret} placeholder="shared secret"
+            type="password"
+            value={secret}
+            placeholder="shared secret"
             aria-label="Shared secret"
             onChange={(e) => setSecret(e.target.value)}
           />
@@ -238,9 +257,9 @@ export function Nodes() {
           </button>
         </div>
         <p className="dim small">
-          The secret is used for this exchange and not kept. A board that accepts
-          configuration ignores anyone who does not have it, so a wrong one looks
-          exactly like a board that is not there.
+          The secret is used for this exchange and not kept. A board that accepts configuration
+          ignores anyone who does not have it, so a wrong one looks exactly like a board that is not
+          there.
         </p>
       </section>
 
@@ -251,8 +270,10 @@ export function Nodes() {
           <section className="adm-card">
             <h3>{board.name || 'this board'}</h3>
             <dl className="adm-facts">
-              <dt>firmware</dt><dd>{board.firmware || 'unknown'}</dd>
-              <dt>chip</dt><dd>{board.chip || 'unknown'}</dd>
+              <dt>firmware</dt>
+              <dd>{board.firmware || 'unknown'}</dd>
+              <dt>chip</dt>
+              <dd>{board.chip || 'unknown'}</dd>
               <dt>attached</dt>
               <dd>
                 {board.instruments.length === 0
@@ -262,16 +283,18 @@ export function Nodes() {
             </dl>
             {board.instruments.length > 0 && !saysHowItIsWired(board) && (
               <p className="dim small">
-                This board reports what it is carrying but not how it is wired,
-                which means firmware older than this page. The pins below are
-                defaults, not what is on the board: check them before writing.
+                This board reports what it is carrying but not how it is wired, which means firmware
+                older than this page. The pins below are defaults, not what is on the board: check
+                them before writing.
               </p>
             )}
             {board.instruments.length > 0 && (
               <button
                 className="adm-reset"
                 onClick={() => setDevices(board.instruments.map(fromBoard))}
-              >Fetch the board's current configuration</button>
+              >
+                Fetch the board's current configuration
+              </button>
             )}
           </section>
 
@@ -281,8 +304,13 @@ export function Nodes() {
               <table className="adm-table adm-edit">
                 <thead>
                   <tr>
-                    <th>Name</th><th>Type</th><th className="num">GPIO</th>
-                    <th>Kind</th><th className="num">Latency</th><th /><th />
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th className="num">GPIO</th>
+                    <th>Kind</th>
+                    <th className="num">Latency</th>
+                    <th />
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -290,7 +318,8 @@ export function Nodes() {
                     <tr key={i}>
                       <td>
                         <input
-                          type="text" value={d.id}
+                          type="text"
+                          value={d.id}
                           aria-label={'Device ' + (i + 1) + ' name'}
                           onChange={(e) => change(i, { id: e.target.value })}
                         />
@@ -302,13 +331,18 @@ export function Nodes() {
                           onChange={(e) => change(i, { type: e.target.value as Attached['type'] })}
                         >
                           {TYPES.map((t) => (
-                            <option key={t.id} value={t.id} title={t.hint}>{t.label}</option>
+                            <option key={t.id} value={t.id} title={t.hint}>
+                              {t.label}
+                            </option>
                           ))}
                         </select>
                       </td>
                       <td className="num">
                         <input
-                          type="number" min={0} max={39} value={d.gpio}
+                          type="number"
+                          min={0}
+                          max={39}
+                          value={d.gpio}
                           aria-label={'Device ' + (i + 1) + ' gpio'}
                           onChange={(e) => change(i, { gpio: Number(e.target.value) })}
                         />
@@ -321,13 +355,19 @@ export function Nodes() {
                         >
                           {/* Before the list arrives, at least what this
                               device already is, so the select is never empty. */}
-                          {(kinds.length ? kinds : [d.kind])
-                            .map((k) => <option key={k} value={k}>{k}</option>)}
+                          {(kinds.length ? kinds : [d.kind]).map((k) => (
+                            <option key={k} value={k}>
+                              {k}
+                            </option>
+                          ))}
                         </select>
                       </td>
                       <td className="num">
                         <input
-                          type="number" min={0} max={10000} step={10}
+                          type="number"
+                          min={0}
+                          max={10000}
+                          step={10}
                           value={d.latencyMs ?? 0}
                           aria-label={'Device ' + (i + 1) + ' latency'}
                           onChange={(e) => change(i, { latencyMs: Number(e.target.value) })}
@@ -338,7 +378,10 @@ export function Nodes() {
                           <label>
                             pixels{' '}
                             <input
-                              type="number" min={1} max={300} value={d.pixels ?? 30}
+                              type="number"
+                              min={1}
+                              max={300}
+                              value={d.pixels ?? 30}
                               aria-label={'Device ' + (i + 1) + ' pixels'}
                               onChange={(e) => change(i, { pixels: Number(e.target.value) })}
                             />
@@ -362,49 +405,70 @@ export function Nodes() {
                             <label>
                               Hz{' '}
                               <input
-                                type="number" min={100} max={40000} step={100}
+                                type="number"
+                                min={100}
+                                max={40000}
+                                step={100}
                                 value={d.freqHz ?? 25000}
                                 aria-label={'Device ' + (i + 1) + ' frequency'}
                                 onChange={(e) => change(i, { freqHz: Number(e.target.value) })}
                               />
                             </label>
-                            <label title={
-                              'Where this motor actually starts, as a fraction of full. '
-                              + 'A twelve volt fan does nothing below roughly 0.3, so a score '
-                              + 'ramping from zero spends its first third commanding silence. '
-                              + 'Anything above zero is mapped onto what is left above this. '
-                              + 'Zero still means off.'}>
+                            <label
+                              title={
+                                'Where this motor actually starts, as a fraction of full. ' +
+                                'A twelve volt fan does nothing below roughly 0.3, so a score ' +
+                                'ramping from zero spends its first third commanding silence. ' +
+                                'Anything above zero is mapped onto what is left above this. ' +
+                                'Zero still means off.'
+                              }
+                            >
                               min{' '}
                               <input
-                                type="number" min={0} max={0.9} step={0.05}
+                                type="number"
+                                min={0}
+                                max={0.9}
+                                step={0.05}
                                 value={d.minDuty ?? 0}
                                 aria-label={'Device ' + (i + 1) + ' minimum duty'}
                                 onChange={(e) => change(i, { minDuty: Number(e.target.value) })}
                               />
                             </label>
-                            <label title={
-                              'The duty that breaks this motor away from rest, which is '
-                              + 'higher than the duty it will keep turning at. Held for the '
-                              + 'kick below, and only just after a start. Measure it with '
-                              + 'hack/poke.py find. Zero means use full, which is what every '
-                              + 'board did before this existed.'}>
+                            <label
+                              title={
+                                'The duty that breaks this motor away from rest, which is ' +
+                                'higher than the duty it will keep turning at. Held for the ' +
+                                'kick below, and only just after a start. Measure it with ' +
+                                'hack/poke.py find. Zero means use full, which is what every ' +
+                                'board did before this existed.'
+                              }
+                            >
                               start{' '}
                               <input
-                                type="number" min={0} max={1} step={0.05}
+                                type="number"
+                                min={0}
+                                max={1}
+                                step={0.05}
                                 value={d.startDuty ?? 0}
                                 aria-label={'Device ' + (i + 1) + ' start duty'}
                                 onChange={(e) => change(i, { startDuty: Number(e.target.value) })}
                               />
                             </label>
-                            <label title={
-                              'How long to hold the start duty above, in milliseconds. '
-                              + 'It takes more to start a stopped fan than to keep a turning '
-                              + 'one going, so without this the minimum has to be set high '
-                              + 'enough to start it, which throws away every speed below. '
-                              + 'Try 250. Zero is off.'}>
+                            <label
+                              title={
+                                'How long to hold the start duty above, in milliseconds. ' +
+                                'It takes more to start a stopped fan than to keep a turning ' +
+                                'one going, so without this the minimum has to be set high ' +
+                                'enough to start it, which throws away every speed below. ' +
+                                'Try 250. Zero is off.'
+                              }
+                            >
                               kick{' '}
                               <input
-                                type="number" min={0} max={2000} step={50}
+                                type="number"
+                                min={0}
+                                max={2000}
+                                step={50}
                                 value={d.kickMs ?? 0}
                                 aria-label={'Device ' + (i + 1) + ' kick'}
                                 onChange={(e) => change(i, { kickMs: Number(e.target.value) })}
@@ -421,7 +485,9 @@ export function Nodes() {
                             setDevices((was) => was.filter((_, n) => n !== i));
                             setSaved(false);
                           }}
-                        >remove</button>
+                        >
+                          remove
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -430,7 +496,12 @@ export function Nodes() {
             </div>
 
             <div className="adm-row">
-              <button onClick={() => { setDevices((was) => [...was, blank('pwm')]); setSaved(false); }}>
+              <button
+                onClick={() => {
+                  setDevices((was) => [...was, blank('pwm')]);
+                  setSaved(false);
+                }}
+              >
                 Add a device
               </button>
               <span className="spacer" />
@@ -441,16 +512,14 @@ export function Nodes() {
             </div>
 
             <p className="dim small">
-              Latency is the number that matters and the one nobody can guess:
-              the conductor fires every cue that far early. Film your fan, drive
-              it from the sliders, count frames, and put the real number here.
-              Until this page existed it was compiled into the firmware, which is
-              why the one it shipped with has always been a guess.
+              Latency is the number that matters and the one nobody can guess: the conductor fires
+              every cue that far early. Film your fan, drive it from the sliders, count frames, and
+              put the real number here. Until this page existed it was compiled into the firmware,
+              which is why the one it shipped with has always been a guess.
             </p>
             <p className="dim small">
-              Not every pin can do this, and a configuration naming one that
-              cannot is refused whole with the reason. The table on the Firmware
-              page says which and why.
+              Not every pin can do this, and a configuration naming one that cannot is refused whole
+              with the reason. The table on the Firmware page says which and why.
             </p>
           </section>
         </>

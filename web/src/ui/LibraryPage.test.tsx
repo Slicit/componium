@@ -21,9 +21,13 @@ import { App } from '../App';
 
 function libraryOf(entries: unknown[]) {
   return {
-    scores: '/scores', free: 1024 * 1024 * 100,
-    canBuild: true, canUpload: true, canPrepare: true,
-    current: '', entries,
+    scores: '/scores',
+    free: 1024 * 1024 * 100,
+    canBuild: true,
+    canUpload: true,
+    canPrepare: true,
+    current: '',
+    entries,
   };
 }
 
@@ -37,15 +41,20 @@ function serve(media: unknown[] = []) {
     asked.push(String(url));
     const path = String(url).split('?')[0];
     if (path === '/api/library') {
-      return { ok: true, json: async () => libraryOf([
-        { film: 'ready.mp4', size: 1024, hasScore: true, preview: false },
-      ]) } as Response;
+      return {
+        ok: true,
+        json: async () =>
+          libraryOf([{ film: 'ready.mp4', size: 1024, hasScore: true, preview: false }]),
+      } as Response;
     }
     if (path === '/api/media') {
       return { ok: true, json: async () => media } as Response;
     }
     if (path === '/api/score') {
-      return { ok: true, json: async () => ({ title: 'a score', fps: 24, duration: 10, tracks: [] }) } as Response;
+      return {
+        ok: true,
+        json: async () => ({ title: 'a score', fps: 24, duration: 10, tracks: [] }),
+      } as Response;
     }
     return { ok: true, json: async () => ({}) } as Response;
   });
@@ -74,7 +83,9 @@ describe('the library has a page', () => {
 
   it('opens on its own route, with the studio put away rather than unmounted', async () => {
     render(<Shell />);
-    await act(async () => { window.location.hash = '#/library'; });
+    await act(async () => {
+      window.location.hash = '#/library';
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Library/ })).toBeTruthy();
@@ -90,10 +101,14 @@ describe('the library has a page', () => {
 
   it('opening a film takes you to the studio with it', async () => {
     render(<Shell />);
-    await act(async () => { window.location.hash = '#/library'; });
+    await act(async () => {
+      window.location.hash = '#/library';
+    });
 
     const open = await screen.findByRole('button', { name: 'Open' });
-    await act(async () => { fireEvent.click(open); });
+    await act(async () => {
+      fireEvent.click(open);
+    });
 
     /* Back on the studio, and the studio asked for that film's score. Both
      * halves matter: arriving without the film would be a navigation that
@@ -114,7 +129,9 @@ describe('the studio film list', () => {
     await waitFor(() => expect(asked.length).toBeGreaterThan(0));
     const before = asked.filter((u) => u.startsWith('/api/media')).length;
 
-    await act(async () => { rerender(<App active={true} />); });
+    await act(async () => {
+      rerender(<App active={true} />);
+    });
 
     await waitFor(() => {
       const after = asked.filter((u) => u.startsWith('/api/media')).length;
@@ -126,17 +143,25 @@ describe('the studio film list', () => {
     /* A selector that empties itself because one fetch failed is worse than a
      * slightly old one: the score stays open, the film it belongs to vanishes
      * from the list, and it looks like the film was deleted. */
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      asked.push(String(url));
-      if (String(url).startsWith('/api/media')) throw new Error('offline');
-      if (String(url).split('?')[0] === '/api/score') {
-        return { ok: true, json: async () => ({ title: 'a score', fps: 24, duration: 10, tracks: [] }) } as Response;
-      }
-      return { ok: true, json: async () => ({}) } as Response;
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        asked.push(String(url));
+        if (String(url).startsWith('/api/media')) throw new Error('offline');
+        if (String(url).split('?')[0] === '/api/score') {
+          return {
+            ok: true,
+            json: async () => ({ title: 'a score', fps: 24, duration: 10, tracks: [] }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      }),
+    );
 
     const { rerender } = render(<App active={false} />);
-    await act(async () => { rerender(<App active={true} />); });
+    await act(async () => {
+      rerender(<App active={true} />);
+    });
     /* The point is that nothing threw and the component is still there. */
     await waitFor(() => expect(asked.some((u) => u.startsWith('/api/media'))).toBe(true));
     expect(document.querySelector('.app, .loading, .fail')).toBeTruthy();

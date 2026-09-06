@@ -47,8 +47,7 @@ const track = (kind: string, type: 'cue' | 'curve'): Track =>
 /* --- what is offered is what can be built ------------------------------- */
 
 /** Whether a cue could carry this shape without losing what it is. */
-const carries = (preset: Preset) =>
-  !!preset.action || pulses(preset.shape).length > 1;
+const carries = (preset: Preset) => !!preset.action || pulses(preset.shape).length > 1;
 
 describe('the picker offers exactly what a track can hold faithfully', () => {
   for (const kind of KINDS) {
@@ -67,8 +66,9 @@ describe('the picker offers exactly what a track can hold faithfully', () => {
            * arrives as a single full-level block is not the shape that was
            * picked. */
           const want = holds === 'cue' ? !!built && carries(preset) : !!built;
-          expect(offered.has(preset.id),
-                 preset.id + ' on a ' + kind + ' ' + holds + ' track').toBe(want);
+          expect(offered.has(preset.id), preset.id + ' on a ' + kind + ' ' + holds + ' track').toBe(
+            want,
+          );
         }
       });
     }
@@ -92,13 +92,12 @@ describe('a level shape never arrives as a block', () => {
     }
   }
 
-  it('keeps the light presets that are events and drops the ones that are not',
-     () => {
-       const ids = presetsFor('light', 'cue').map((p) => p.id);
-       expect(ids).toEqual(['light-flash', 'light-strobe']);
-       /* And a dimmer still gets all seven. */
-       expect(presetsFor('light', 'curve')).toHaveLength(7);
-     });
+  it('keeps the light presets that are events and drops the ones that are not', () => {
+    const ids = presetsFor('light', 'cue').map((p) => p.id);
+    expect(ids).toEqual(['light-flash', 'light-strobe']);
+    /* And a dimmer still gets all seven. */
+    expect(presetsFor('light', 'curve')).toHaveLength(7);
+  });
 
   it('offers a fade only where a fade means something', () => {
     expect(presetsFor('light', 'curve').map((p) => p.id)).toContain('light-fade-in');
@@ -149,9 +148,10 @@ describe('an insert writes the channels the track is already written in', () => 
           const t = track(kind, holds);
           const want = [...channelsForKind(kind)].sort();
           run(insertPreset(t, preset, 10, channelsOf(t, rig), {}, rig));
-          const written = holds === 'cue'
-            ? t.cues!.map((c) => c.params ?? {})
-            : t.points!.map((p) => p.value ?? {});
+          const written =
+            holds === 'cue'
+              ? t.cues!.map((c) => c.params ?? {})
+              : t.points!.map((p) => p.value ?? {});
           for (const v of written) {
             expect(Object.keys(v).sort()).toEqual(want);
           }
@@ -167,7 +167,8 @@ describe('a cue track has channels, and they come from its cues', () => {
    * vocabulary nothing else in the track spoke, and the editor, which offers
    * the lanes the track uses, had no intensity to show. */
   const hsi = {
-    instrument: 'light.event', type: 'cue',
+    instrument: 'light.event',
+    type: 'cue',
     cues: [{ t: 1, action: 'flash', params: { h: 0.5, s: 0.2, i: 1 }, duration: 0.2 }],
   } as unknown as Track;
 
@@ -186,13 +187,16 @@ describe('a cue track has channels, and they come from its cues', () => {
 /* --- the number means a level, not a colour ----------------------------- */
 
 describe('a shape drives the level and leaves the colour alone', () => {
-  const ambient = (): Track => ({
-    instrument: 'light.ambient', type: 'curve', space: 'hsi',
-    points: [
-      { t: 0, value: { h: 0.6, s: 0.8, i: 0.2 } },
-      { t: 100, value: { h: 0.6, s: 0.8, i: 0.2 } },
-    ],
-  }) as unknown as Track;
+  const ambient = (): Track =>
+    ({
+      instrument: 'light.ambient',
+      type: 'curve',
+      space: 'hsi',
+      points: [
+        { t: 0, value: { h: 0.6, s: 0.8, i: 0.2 } },
+        { t: 100, value: { h: 0.6, s: 0.8, i: 0.2 } },
+      ],
+    }) as unknown as Track;
 
   it('a fade up brightens without changing hue', () => {
     const t = ambient();
@@ -209,7 +213,8 @@ describe('a shape drives the level and leaves the colour alone', () => {
 
   it('a flash on an h/s/i cue track is white rather than red', () => {
     const t = {
-      instrument: 'light.event', type: 'cue',
+      instrument: 'light.event',
+      type: 'cue',
       cues: [{ t: 1, action: 'flash', params: { h: 0.5, s: 0.2, i: 1 }, duration: 0.2 }],
     } as unknown as Track;
     run(insertPreset(t, presetById('light-flash')!, 10, channelsOf(t, rig), {}, rig));
@@ -243,20 +248,45 @@ describe('a strobe is twelve flashes', () => {
 
 describe('pulses', () => {
   it('counts a square wave', () => {
-    expect(pulses([[0, 0], [0.1, 1], [0.2, 0], [0.3, 1], [0.4, 0], [1, 0]]))
-      .toHaveLength(2);
+    expect(
+      pulses([
+        [0, 0],
+        [0.1, 1],
+        [0.2, 0],
+        [0.3, 1],
+        [0.4, 0],
+        [1, 0],
+      ]),
+    ).toHaveLength(2);
   });
 
   it('calls a shape that never rests one gesture', () => {
-    expect(pulses([[0, 0.2], [0.5, 1], [1, 0.2]])).toHaveLength(1);
+    expect(
+      pulses([
+        [0, 0.2],
+        [0.5, 1],
+        [1, 0.2],
+      ]),
+    ).toHaveLength(1);
   });
 
   it('opens at the edge before the rise, not at the peak', () => {
-    expect(pulses([[0, 0], [0.5, 1], [1, 0]])[0][0]).toBe(0);
+    expect(
+      pulses([
+        [0, 0],
+        [0.5, 1],
+        [1, 0],
+      ])[0][0],
+    ).toBe(0);
   });
 
   it('has nothing to say about a flat zero', () => {
-    expect(pulses([[0, 0], [1, 0]])).toEqual([]);
+    expect(
+      pulses([
+        [0, 0],
+        [1, 0],
+      ]),
+    ).toEqual([]);
   });
 });
 

@@ -32,10 +32,8 @@ function apply(cmd: ReturnType<typeof insertPreset>) {
   return h;
 }
 
-const curve = (instrument: string): Track =>
-  ({ instrument, type: 'curve', points: [] }) as Track;
-const cues = (instrument: string): Track =>
-  ({ instrument, type: 'cue', cues: [] }) as Track;
+const curve = (instrument: string): Track => ({ instrument, type: 'curve', points: [] }) as Track;
+const cues = (instrument: string): Track => ({ instrument, type: 'cue', cues: [] }) as Track;
 
 describe('the track decides what is built', () => {
   it('puts points on a curve track even when the preset is an event', () => {

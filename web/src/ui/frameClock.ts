@@ -24,9 +24,7 @@
 /** What this needs from a video element, so a test need not build one. */
 export interface Framed {
   currentTime: number;
-  requestVideoFrameCallback?: (
-    cb: (now: number, meta: { mediaTime: number }) => void,
-  ) => number;
+  requestVideoFrameCallback?: (cb: (now: number, meta: { mediaTime: number }) => void) => number;
   cancelVideoFrameCallback?: (handle: number) => void;
 }
 

@@ -15,9 +15,9 @@ describe('filmForScore', () => {
   it('handles a film whose name is full of dots', () => {
     /* The stem is everything up to the LAST dot, not the first, or every
      * release-named film in the library resolves to "Wanted". */
-    expect(filmForScore(
-      '/scores/Wanted.2008.MULTi.TRUEFRENCH.1080p.BluRay.x264-FiDO.componium', films,
-    )).toBe('Wanted.2008.MULTi.TRUEFRENCH.1080p.BluRay.x264-FiDO.mkv');
+    expect(
+      filmForScore('/scores/Wanted.2008.MULTi.TRUEFRENCH.1080p.BluRay.x264-FiDO.componium', films),
+    ).toBe('Wanted.2008.MULTi.TRUEFRENCH.1080p.BluRay.x264-FiDO.mkv');
   });
 
   it('answers empty when the film is not in the library', () => {

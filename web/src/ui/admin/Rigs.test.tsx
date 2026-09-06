@@ -19,21 +19,30 @@ beforeEach(() => {
   shelf = { shelf: true, current: 'demo-rig.toml', rigs: ['demo-rig.toml', 'bench.toml'] };
   sent = [];
   refuse = null;
-  vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
-    if (!init || init.method !== 'POST') {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
-    }
-    sent.push({ url, body: String(init.body) });
-    if (refuse) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init?: RequestInit) => {
+      if (!init || init.method !== 'POST') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
+      }
+      sent.push({ url, body: String(init.body) });
+      if (refuse) {
+        return Promise.resolve({
+          ok: false,
+          status: 409,
+          text: () => Promise.resolve(refuse as string),
+        } as Response);
+      }
       return Promise.resolve({
-        ok: false, status: 409, text: () => Promise.resolve(refuse as string),
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(shelf)),
       } as Response);
-    }
-    return Promise.resolve({
-      ok: true, text: () => Promise.resolve(JSON.stringify(shelf)),
-    } as Response);
-  }));
-  vi.stubGlobal('confirm', vi.fn(() => true));
+    }),
+  );
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
 });
 
 afterEach(() => {
@@ -76,7 +85,8 @@ describe('the shelf', () => {
     await waitFor(() => expect(sent.length).toBe(1));
     expect(sent[0].url).toBe('/api/rigs/new');
     expect(JSON.parse(sent[0].body)).toMatchObject({
-      name: 'experiment', from: 'bench.toml',
+      name: 'experiment',
+      from: 'bench.toml',
     });
   });
 
@@ -97,7 +107,10 @@ describe('the shelf', () => {
   });
 
   it('does not delete when the question is answered no', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     await open();
     fireEvent.click(screen.getByLabelText('Remove bench'));
     expect(sent.length).toBe(0);
@@ -128,25 +141,35 @@ describe('the shelf', () => {
     fireEvent.change(screen.getByLabelText('New rig name'), { target: { value: 'bench' } });
     fireEvent.click(screen.getByText('Create'));
     await waitFor(() =>
-      expect(screen.getByText('bench.toml is already on the shelf')).toBeTruthy());
+      expect(screen.getByText('bench.toml is already on the shelf')).toBeTruthy(),
+    );
   });
 
   it('renames a rig, and does not rename it to nothing', async () => {
     /* The file name, which is what the shelf lists. Cancelling the prompt or
        leaving the name alone must send nothing: a rename endpoint called with
        the same name on both sides is a write nobody asked for. */
-    vi.stubGlobal('prompt', vi.fn(() => 'esp32-rig'));
+    vi.stubGlobal(
+      'prompt',
+      vi.fn(() => 'esp32-rig'),
+    );
     await open();
     fireEvent.click(screen.getByLabelText('Rename demo-rig'));
     await waitFor(() => expect(sent.length).toBe(1));
     expect(sent[0].url).toBe('/api/rigs/rename');
     expect(JSON.parse(sent[0].body)).toEqual({ name: 'demo-rig', to: 'esp32-rig' });
 
-    vi.stubGlobal('prompt', vi.fn(() => null));
+    vi.stubGlobal(
+      'prompt',
+      vi.fn(() => null),
+    );
     fireEvent.click(screen.getByLabelText('Rename bench'));
     expect(sent.length).toBe(1);
 
-    vi.stubGlobal('prompt', vi.fn(() => '  bench  '));
+    vi.stubGlobal(
+      'prompt',
+      vi.fn(() => '  bench  '),
+    );
     fireEvent.click(screen.getByLabelText('Rename bench'));
     expect(sent.length).toBe(1);
   });
@@ -155,7 +178,9 @@ describe('the shelf', () => {
     /* Started with -rig pointing at a file. Showing an empty shelf would look
      * like the rigs had gone missing. */
     shelf = { shelf: false, current: 'demo-rig.toml', rigs: [] };
-    await act(async () => { render(<Rigs />); });
+    await act(async () => {
+      render(<Rigs />);
+    });
     expect(screen.queryByText('New rig')).toBeNull();
     expect(screen.getByText(/single\s+file/)).toBeTruthy();
   });

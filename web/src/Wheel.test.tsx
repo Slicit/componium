@@ -24,8 +24,12 @@ const score = {
   path: '/scores/demo.componium',
   tracks: [
     {
-      instrument: 'light.ambient', type: 'curve',
-      points: [{ t: 0, value: { r: 0, g: 0, b: 0 } }, { t: 60, value: { r: 1, g: 0, b: 0 } }],
+      instrument: 'light.ambient',
+      type: 'curve',
+      points: [
+        { t: 0, value: { r: 0, g: 0, b: 0 } },
+        { t: 60, value: { r: 1, g: 0, b: 0 } },
+      ],
     },
   ],
 };
@@ -34,17 +38,32 @@ const rig = { name: 'test', instruments: [{ id: 'wind.main', kind: 'wind', laten
 
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-    const body = url.startsWith('/api/score') ? score
-      : url.startsWith('/api/rig') ? rig
-        : url.startsWith('/api/versions') ? { versions: [] }
-          : url.startsWith('/api/library') ? { entries: [], scores: '', free: 0 }
-            : [];
-    return { ok: true, json: async () => body, text: async () => JSON.stringify(body) } as Response;
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      const body = url.startsWith('/api/score')
+        ? score
+        : url.startsWith('/api/rig')
+          ? rig
+          : url.startsWith('/api/versions')
+            ? { versions: [] }
+            : url.startsWith('/api/library')
+              ? { entries: [], scores: '', free: 0 }
+              : [];
+      return {
+        ok: true,
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      } as Response;
+    }),
+  );
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 async function surface(): Promise<HTMLElement> {
   render(<App />);
@@ -58,7 +77,12 @@ async function surface(): Promise<HTMLElement> {
 
 function wheelOver(el: HTMLElement, init: WheelEventInit = {}): WheelEvent {
   const e = new WheelEvent('wheel', {
-    bubbles: true, cancelable: true, clientX: 100, clientY: 60, deltaY: 120, ...init,
+    bubbles: true,
+    cancelable: true,
+    clientX: 100,
+    clientY: 60,
+    deltaY: 120,
+    ...init,
   });
   el.dispatchEvent(e);
   return e;

@@ -39,7 +39,13 @@ export interface LiveState {
 }
 
 const IDLE: LiveState = {
-  armed: false, real: 0, silent: true, media: 0, precision: 0, cues: 0, curves: 0,
+  armed: false,
+  real: 0,
+  silent: true,
+  media: 0,
+  precision: 0,
+  cues: 0,
+  curves: 0,
 };
 
 /** How often to speak while paused. Silence must mean gone, not still. */
@@ -78,11 +84,15 @@ export function useLive() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ at, playing }),
-    }).then((res) => {
-      /* The rig was put away while we were not looking, which happens after a
-       * stall long enough for the server to give up. Stop reporting at it. */
-      if (res.status === 409) setState((was) => ({ ...was, armed: false }));
-    }).catch(() => { /* a dropped report is the next one's problem */ });
+    })
+      .then((res) => {
+        /* The rig was put away while we were not looking, which happens after a
+         * stall long enough for the server to give up. Stop reporting at it. */
+        if (res.status === 409) setState((was) => ({ ...was, armed: false }));
+      })
+      .catch(() => {
+        /* a dropped report is the next one's problem */
+      });
   }, []);
 
   /* What the server thinks, for the readout: cues sent, curve updates, how
@@ -92,8 +102,12 @@ export function useLive() {
     const id = setInterval(() => {
       void fetch('/api/live')
         .then((r) => (r.ok ? r.json() : null))
-        .then((s) => { if (s) setState(s); })
-        .catch(() => { /* the readout can miss one */ });
+        .then((s) => {
+          if (s) setState(s);
+        })
+        .catch(() => {
+          /* the readout can miss one */
+        });
     }, POLL_MS);
     return () => clearInterval(id);
   }, [armed]);
@@ -108,11 +122,14 @@ export function useLive() {
     return () => clearInterval(id);
   }, [armed, report]);
 
-  const follow = useCallback((at: number, playing: boolean) => {
-    atRef.current = at;
-    playingRef.current = playing;
-    report(at, playing);
-  }, [report]);
+  const follow = useCallback(
+    (at: number, playing: boolean) => {
+      atRef.current = at;
+      playingRef.current = playing;
+      report(at, playing);
+    },
+    [report],
+  );
 
   /* Closing the tab puts the rig away now rather than in five seconds.
    * sendBeacon because an ordinary fetch is abandoned when the page unloads,
@@ -121,9 +138,13 @@ export function useLive() {
     if (!armed) return;
     const go = () => {
       try {
-        navigator.sendBeacon('/api/live',
-          new Blob([JSON.stringify({ armed: false })], { type: 'application/json' }));
-      } catch { /* the server's own timeout is the guarantee */ }
+        navigator.sendBeacon(
+          '/api/live',
+          new Blob([JSON.stringify({ armed: false })], { type: 'application/json' }),
+        );
+      } catch {
+        /* the server's own timeout is the guarantee */
+      }
     };
     window.addEventListener('pagehide', go);
     return () => window.removeEventListener('pagehide', go);

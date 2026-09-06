@@ -30,11 +30,16 @@ const saved = {
 const checked = {
   boards: [
     {
-      name: 'bench', addr: '192.168.1.145:5570', online: true, firmware: '0.3',
+      name: 'bench',
+      addr: '192.168.1.145:5570',
+      online: true,
+      firmware: '0.3',
       instruments: [{ index: 0, id: 'wind.main', kind: 'wind', latencyMs: 1200 }],
     },
     {
-      name: 'ceiling', addr: '192.168.1.146:5570', online: false,
+      name: 'ceiling',
+      addr: '192.168.1.146:5570',
+      online: false,
       why: 'cip: no hello from 192.168.1.146:5570 within 2s: i/o timeout',
     },
     { name: 'spare', addr: '192.168.1.147:5570', online: false, why: 'no secret is stored' },
@@ -47,31 +52,43 @@ let list = saved;
 beforeEach(() => {
   put = [];
   list = JSON.parse(JSON.stringify(saved));
-  vi.stubGlobal('confirm', vi.fn(() => true));
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    if (url === '/api/boards' && init?.method === 'PUT') {
-      const body = JSON.parse(init.body as string);
-      put.push(body);
-      /* Stateful, because the real one is: a save returns the shelf as it now
-       * stands, and a fixture that forgets would let a broken delete pass. */
-      list = {
-        editable: true,
-        boards: body.boards.map((b: { name: string; addr: string; note?: string }) => ({
-          name: b.name, addr: b.addr, note: b.note, hasSecret: true,
-        })),
-      };
-      return { ok: true, text: async () => JSON.stringify(list) } as Response;
-    }
-    if (url === '/api/boards') {
-      return { ok: true, json: async () => list } as Response;
-    }
-    if (url === '/api/boards/check') {
-      return { ok: true, json: async () => checked } as Response;
-    }
-    return { ok: false, text: async () => 'no' } as Response;
-  }));
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/boards' && init?.method === 'PUT') {
+        const body = JSON.parse(init.body as string);
+        put.push(body);
+        /* Stateful, because the real one is: a save returns the shelf as it now
+         * stands, and a fixture that forgets would let a broken delete pass. */
+        list = {
+          editable: true,
+          boards: body.boards.map((b: { name: string; addr: string; note?: string }) => ({
+            name: b.name,
+            addr: b.addr,
+            note: b.note,
+            hasSecret: true,
+          })),
+        };
+        return { ok: true, text: async () => JSON.stringify(list) } as Response;
+      }
+      if (url === '/api/boards') {
+        return { ok: true, json: async () => list } as Response;
+      }
+      if (url === '/api/boards/check') {
+        return { ok: true, json: async () => checked } as Response;
+      }
+      return { ok: false, text: async () => 'no' } as Response;
+    }),
+  );
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 async function shelf(onPick: (name: string) => void = () => {}) {
   render(<Boards onPick={onPick} picked="" />);
@@ -98,12 +115,20 @@ describe('the shelf', () => {
      * that is down, and drawing them the same way means the page opens on a
      * column of red for boards that are all working. */
     let release: (v: unknown) => void = () => {};
-    const hangs = new Promise((r) => { release = r; });
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url === '/api/boards') return { ok: true, json: async () => list } as Response;
-      if (url === '/api/boards/check') { await hangs; return { ok: true, json: async () => checked } as Response; }
-      return { ok: false, text: async () => 'no' } as Response;
-    }));
+    const hangs = new Promise((r) => {
+      release = r;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url === '/api/boards') return { ok: true, json: async () => list } as Response;
+        if (url === '/api/boards/check') {
+          await hangs;
+          return { ok: true, json: async () => checked } as Response;
+        }
+        return { ok: false, text: async () => 'no' } as Response;
+      }),
+    );
 
     render(<Boards onPick={() => {}} picked="" />);
     await waitFor(() => expect(screen.getByText('bench')).toBeTruthy());
@@ -112,7 +137,9 @@ describe('the shelf', () => {
     expect(dot.className).toContain('is-unknown');
     expect(dot.className).not.toContain('is-off');
 
-    await act(async () => { release(null); });
+    await act(async () => {
+      release(null);
+    });
     await waitFor(() => expect(screen.getByLabelText('bench is online')).toBeTruthy());
   });
 
@@ -132,7 +159,9 @@ describe('the shelf', () => {
     await shelf();
     fireEvent.click(screen.getByRole('button', { name: 'Attach a board' }));
     fireEvent.change(screen.getByLabelText('New board name'), { target: { value: 'new one' } });
-    fireEvent.change(screen.getByLabelText('New board address'), { target: { value: '192.168.1.9' } });
+    fireEvent.change(screen.getByLabelText('New board address'), {
+      target: { value: '192.168.1.9' },
+    });
     fireEvent.change(screen.getByLabelText('New board secret'), { target: { value: 'hunter2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
 
@@ -147,7 +176,9 @@ describe('the shelf', () => {
     await shelf();
     fireEvent.click(screen.getByRole('button', { name: 'Attach a board' }));
     fireEvent.change(screen.getByLabelText('New board name'), { target: { value: 'new one' } });
-    fireEvent.change(screen.getByLabelText('New board address'), { target: { value: '192.168.1.9' } });
+    fireEvent.change(screen.getByLabelText('New board address'), {
+      target: { value: '192.168.1.9' },
+    });
     const field = screen.getByLabelText('New board secret') as HTMLInputElement;
     expect(field.type).toBe('password');
     fireEvent.change(field, { target: { value: 'hunter2' } });
@@ -173,7 +204,10 @@ describe('the shelf', () => {
 
   it('keeps a board when the question is declined', async () => {
     await shelf();
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Forget bench' }));
     expect(put).toHaveLength(0);
     expect(screen.getByText('bench')).toBeTruthy();
@@ -199,7 +233,9 @@ describe('the shelf', () => {
 
   it('says when there is nowhere to remember them', async () => {
     list = { editable: false, boards: [] } as typeof saved;
-    await act(async () => { render(<Boards onPick={() => {}} picked="" />); });
+    await act(async () => {
+      render(<Boards onPick={() => {}} picked="" />);
+    });
     await waitFor(() => expect(screen.getByText(/cannot be remembered/)).toBeTruthy());
     expect(screen.queryByRole('button', { name: 'Attach a board' })).toBeNull();
   });

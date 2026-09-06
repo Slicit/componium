@@ -129,8 +129,9 @@ export function cleanName(raw: unknown): string {
 
 /** Same arrangement, ignoring the camera, which moves on its own. */
 export function sameLayout(a: Viewport, b: Viewport): boolean {
-  return a.columns === b.columns && a.height === b.height
-    && a.room === b.room && a.force === b.force;
+  return (
+    a.columns === b.columns && a.height === b.height && a.room === b.room && a.force === b.force
+  );
 }
 
 /**
@@ -140,7 +141,11 @@ export function sameLayout(a: Viewport, b: Viewport): boolean {
  * viewport a person has learned the position of does not jump to the end when
  * they adjust it.
  */
-export function put(list: readonly NamedViewport[], name: string, viewport: Viewport): NamedViewport[] {
+export function put(
+  list: readonly NamedViewport[],
+  name: string,
+  viewport: Viewport,
+): NamedViewport[] {
   const clean = cleanName(name);
   if (!clean) return [...list];
   const next = list.map((v) => (v.name === clean ? { name: clean, viewport } : v));

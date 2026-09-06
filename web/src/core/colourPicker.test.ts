@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import {
-  rgbToHSI, hsiToRGB, fromHex, toHex, hexOf, rgbOf, colourOf, writeColour,
-} from './score';
+import { rgbToHSI, hsiToRGB, fromHex, toHex, hexOf, rgbOf, colourOf, writeColour } from './score';
 
 describe('a colour, back into channels', () => {
   it('round trips the primaries', () => {
     for (const [h, s, i] of [
-      [0, 1, 1], [1 / 3, 1, 1], [2 / 3, 1, 1],
-      [1 / 6, 1, 1], [0.5, 1, 1], [5 / 6, 1, 1],
+      [0, 1, 1],
+      [1 / 3, 1, 1],
+      [2 / 3, 1, 1],
+      [1 / 6, 1, 1],
+      [0.5, 1, 1],
+      [5 / 6, 1, 1],
     ]) {
       const [r, g, b] = hsiToRGB(h, s, i);
       const back = rgbToHSI(r, g, b);
@@ -19,7 +21,9 @@ describe('a colour, back into channels', () => {
 
   it('round trips arbitrary colours', () => {
     for (const [h, s, i] of [
-      [0.07, 0.42, 0.9], [0.61, 0.15, 0.33], [0.88, 0.77, 0.51],
+      [0.07, 0.42, 0.9],
+      [0.61, 0.15, 0.33],
+      [0.88, 0.77, 0.51],
     ]) {
       const [r, g, b] = hsiToRGB(h, s, i);
       const back = rgbToHSI(r, g, b);

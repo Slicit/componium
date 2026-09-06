@@ -38,8 +38,9 @@ export function Admin({ route }: { route: Route }) {
             <li key={p.id}>
               <a
                 href={routeHash('admin', p.id)}
-                className={isCurrent(route, 'admin', p.id) || (!known && p.id === page)
-                  ? 'is-current' : ''}
+                className={
+                  isCurrent(route, 'admin', p.id) || (!known && p.id === page) ? 'is-current' : ''
+                }
                 aria-current={p.id === page ? 'page' : undefined}
                 title={p.hint}
               >

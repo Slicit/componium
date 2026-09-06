@@ -26,7 +26,9 @@ export function Viewports(props: {
    * be dismissed by the button that opened it is a panel people leave open. */
   useEffect(() => {
     if (!open) return;
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     const down = (e: PointerEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -56,14 +58,16 @@ export function Viewports(props: {
         onClick={() => setOpen((v) => !v)}
         title="Saved arrangements of the picture, the room and the sliders"
         aria-expanded={open}
-      >views{saved.length > 0 && <span className="count">{saved.length}</span>}</button>
+      >
+        views{saved.length > 0 && <span className="count">{saved.length}</span>}
+      </button>
 
       {open && (
         <div className="views-panel" role="dialog" aria-label="Saved viewports">
           {saved.length === 0 && (
             <p className="dim small views-empty">
-              No saved arrangements yet. Set the stage how you want it, name it, and it
-              will be here next time.
+              No saved arrangements yet. Set the stage how you want it, name it, and it will be here
+              next time.
             </p>
           )}
 
@@ -74,16 +78,23 @@ export function Viewports(props: {
             >
               <button
                 className="views-apply"
-                onClick={() => { onApply(v.name); setOpen(false); }}
+                onClick={() => {
+                  onApply(v.name);
+                  setOpen(false);
+                }}
                 title={describe(v.viewport)}
-              >{v.name}</button>
+              >
+                {v.name}
+              </button>
               <span className="dim small views-note">{describe(v.viewport)}</span>
               <button
                 className="danger views-del"
                 onClick={() => onRemove(v.name)}
                 title={'Delete ' + v.name}
                 aria-label={'Delete ' + v.name}
-              >×</button>
+              >
+                ×
+              </button>
             </div>
           ))}
 
@@ -91,7 +102,9 @@ export function Viewports(props: {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit();
+              }}
               placeholder="name this arrangement"
               aria-label="Name this arrangement"
               maxLength={40}
@@ -102,13 +115,18 @@ export function Viewports(props: {
           </div>
           {full && (
             <p className="dim small views-empty">
-              That is {MAX_VIEWPORTS} saved arrangements, which is the limit. Delete one
-              to make room, or reuse a name to replace it.
+              That is {MAX_VIEWPORTS} saved arrangements, which is the limit. Delete one to make
+              room, or reuse a name to replace it.
             </p>
           )}
 
           <div className="views-foot">
-            <button onClick={() => { onReset(); setOpen(false); }}>
+            <button
+              onClick={() => {
+                onReset();
+                setOpen(false);
+              }}
+            >
               Reset to default
             </button>
           </div>

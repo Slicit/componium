@@ -15,8 +15,7 @@ const rig: Rig = {
   ],
 } as Rig;
 
-const empty = (instrument: string): Track =>
-  ({ instrument, type: 'curve', points: [] }) as Track;
+const empty = (instrument: string): Track => ({ instrument, type: 'curve', points: [] }) as Track;
 
 describe('channelsForKind', () => {
   it('gives a fogger its output, not an intensity it has no use for', () => {
@@ -67,8 +66,12 @@ describe('channelsOf on a track with points', () => {
     // A score written before this table existed, or by hand, is still read as
     // it was written rather than corrected into the table's opinion.
     const track = {
-      instrument: 'fog.left', type: 'curve',
-      points: [{ t: 0, value: { intensity: 0.4 } }, { t: 1, value: { intensity: 0.6 } }],
+      instrument: 'fog.left',
+      type: 'curve',
+      points: [
+        { t: 0, value: { intensity: 0.4 } },
+        { t: 1, value: { intensity: 0.6 } },
+      ],
     } as Track;
     expect(channelsOf(track, rig)).toEqual(['intensity']);
   });

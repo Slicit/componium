@@ -26,22 +26,37 @@ let calls: string[];
 beforeEach(() => {
   localStorage.clear();
   calls = [];
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    calls.push((init?.method ?? 'GET') + ' ' + String(url));
-    return { ok: true, json: async () => body } as Response;
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push((init?.method ?? 'GET') + ' ' + String(url));
+      return { ok: true, json: async () => body } as Response;
+    }),
+  );
   /* Deliberately made to say yes. If anything still reached it, the film
    * would be deleted and the test asserting otherwise would fail loudly
    * rather than pass for the wrong reason. */
-  vi.stubGlobal('confirm', vi.fn(() => true));
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 async function show(entries: unknown[]) {
   body = {
-    scores: '/scores', free: 1024 * 1024 * 100,
-    canBuild: true, canUpload: true, canPrepare: true, current: '', entries,
+    scores: '/scores',
+    free: 1024 * 1024 * 100,
+    canBuild: true,
+    canUpload: true,
+    canPrepare: true,
+    current: '',
+    entries,
   };
   render(<Library onOpen={() => {}} fps={25} />);
   await waitFor(() => {
@@ -109,16 +124,21 @@ describe('starting an analysis again', () => {
   it('counts what would be thrown away before asking', async () => {
     /* A feature is tens of minutes of work per piece, so the number is the
      * whole question. */
-    await show([film('a.mp4', {
-      job: {
-        kind: 'feature', state: 'interrupted', progress: 0.5, label: 'stopped',
-        chunks: [
-          { index: 0, from: 0, to: 10, state: 'done' },
-          { index: 1, from: 10, to: 20, state: 'done' },
-          { index: 2, from: 20, to: 30, state: 'queued' },
-        ],
-      },
-    })]);
+    await show([
+      film('a.mp4', {
+        job: {
+          kind: 'feature',
+          state: 'interrupted',
+          progress: 0.5,
+          label: 'stopped',
+          chunks: [
+            { index: 0, from: 0, to: 10, state: 'done' },
+            { index: 1, from: 10, to: 20, state: 'done' },
+            { index: 2, from: 20, to: 30, state: 'queued' },
+          ],
+        },
+      }),
+    ]);
 
     const again = screen.getByRole('button', { name: /Reset|Restart|Again/i });
     fireEvent.click(again);

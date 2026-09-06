@@ -14,8 +14,15 @@ import { drawCalm, drawCues, drawCurve, drawLatency, drawRibbon, visibleRange } 
 import type { Track } from '../core/score';
 
 const theme = {
-  ink: '#fff', muted: '#888', line: '#333', grid: '#222',
-  event: '#d8a24a', eventSoft: '#333', playhead: '#fff', warn: '#f00', calm: '#1a2733',
+  ink: '#fff',
+  muted: '#888',
+  line: '#333',
+  grid: '#222',
+  event: '#d8a24a',
+  eventSoft: '#333',
+  playhead: '#fff',
+  warn: '#f00',
+  calm: '#1a2733',
   channel: { r: '#e37', g: '#7c7', b: '#69e', intensity: '#d8a24a' },
 };
 
@@ -48,12 +55,20 @@ describe('amplitude is visible — the defect this fixes', () => {
   it('draws duration as width, independently of amplitude', () => {
     const view = new TimeView(120, 24).fit();
     const list = new DrawList();
-    drawCues(list, {
-      instrument: 'w', type: 'cue', cues: [
-        { t: 10, action: 'a', params: { intensity: 0.5 }, duration: 2 },
-        { t: 30, action: 'b', params: { intensity: 0.5 }, duration: 8 },
-      ],
-    }, view, box, theme);
+    drawCues(
+      list,
+      {
+        instrument: 'w',
+        type: 'cue',
+        cues: [
+          { t: 10, action: 'a', params: { intensity: 0.5 }, duration: 2 },
+          { t: 30, action: 'b', params: { intensity: 0.5 }, duration: 8 },
+        ],
+      },
+      view,
+      box,
+      theme,
+    );
     const [short, long] = list.of('rect');
     expect(long.w).toBeCloseTo(short.w * 4, 0);
     expect(long.h).toBeCloseTo(short.h, 6);
@@ -73,10 +88,17 @@ describe('amplitude is visible — the defect this fixes', () => {
   it('gives an amplitude-less cue full height rather than none', () => {
     const view = new TimeView(120, 24).fit();
     const list = new DrawList();
-    drawCues(list, {
-      instrument: 'w', type: 'cue',
-      cues: [{ t: 10, action: 'stop', duration: 2 }],
-    }, view, box, theme);
+    drawCues(
+      list,
+      {
+        instrument: 'w',
+        type: 'cue',
+        cues: [{ t: 10, action: 'stop', duration: 2 }],
+      },
+      view,
+      box,
+      theme,
+    );
     const [r] = list.of('rect');
     expect(r.h).toBeGreaterThan(box.h * 0.6);
   });
@@ -84,25 +106,54 @@ describe('amplitude is visible — the defect this fixes', () => {
   it('takes the brightest colour channel, not the average', () => {
     const view = new TimeView(120, 24).fit();
     const red = new DrawList();
-    drawCues(red, {
-      instrument: 'l', type: 'cue',
-      cues: [{ t: 10, action: 'flash', params: { r: 1, g: 0, b: 0 }, duration: 2 }],
-    }, view, box, theme);
+    drawCues(
+      red,
+      {
+        instrument: 'l',
+        type: 'cue',
+        cues: [{ t: 10, action: 'flash', params: { r: 1, g: 0, b: 0 }, duration: 2 }],
+      },
+      view,
+      box,
+      theme,
+    );
     const white = new DrawList();
-    drawCues(white, {
-      instrument: 'l', type: 'cue',
-      cues: [{ t: 10, action: 'flash', params: { r: 1, g: 1, b: 1 }, duration: 2 }],
-    }, view, box, theme);
+    drawCues(
+      white,
+      {
+        instrument: 'l',
+        type: 'cue',
+        cues: [{ t: 10, action: 'flash', params: { r: 1, g: 1, b: 1 }, duration: 2 }],
+      },
+      view,
+      box,
+      theme,
+    );
     expect(red.of('rect')[0].h).toBeCloseTo(white.of('rect')[0].h, 6);
   });
 
   it('outlines a nominated event instead of filling it', () => {
     const view = new TimeView(120, 24).fit();
     const list = new DrawList();
-    drawCues(list, {
-      instrument: 'w', type: 'cue',
-      cues: [{ t: 10, action: 'splash', params: { intensity: 1 }, duration: 2, source: 'water:nominated' }],
-    }, view, box, theme);
+    drawCues(
+      list,
+      {
+        instrument: 'w',
+        type: 'cue',
+        cues: [
+          {
+            t: 10,
+            action: 'splash',
+            params: { intensity: 1 },
+            duration: 2,
+            source: 'water:nominated',
+          },
+        ],
+      },
+      view,
+      box,
+      theme,
+    );
     const [r] = list.of('rect');
     expect(r.fill).toBeUndefined();
     expect(r.stroke).toBeTruthy();
@@ -130,7 +181,8 @@ describe('nothing off screen is drawn', () => {
 
 describe('curves', () => {
   const ramp: Track = {
-    instrument: 'light.ambient', type: 'curve',
+    instrument: 'light.ambient',
+    type: 'curve',
     points: [
       { t: 0, value: { r: 0, g: 0, b: 0 } },
       { t: 20, value: { r: 1, g: 0.6, b: 0.2 } },
@@ -158,9 +210,11 @@ describe('curves', () => {
    * cost the width of the lane, not the length of the score. */
   it('switches to an envelope when points outnumber pixels', () => {
     const dense: Track = {
-      instrument: 'x', type: 'curve',
+      instrument: 'x',
+      type: 'curve',
       points: Array.from({ length: 45000 }, (_, i) => ({
-        t: i * 0.16, value: { r: Math.abs(Math.sin(i / 40)) },
+        t: i * 0.16,
+        value: { r: Math.abs(Math.sin(i / 40)) },
       })),
     };
     const view = new TimeView(7200, 24).fit();
@@ -178,13 +232,19 @@ describe('curves', () => {
     const view = new TimeView(120, 24).fit();
     const list = new DrawList();
     drawCurve(list, { instrument: 'x', type: 'curve', points: [] }, 'r', view, box, theme);
-    expect(list.of('text').map((t) => t.s).join(' ')).toContain('double click');
+    expect(
+      list
+        .of('text')
+        .map((t) => t.s)
+        .join(' '),
+    ).toContain('double click');
   });
 });
 
 describe('the collapsed colour ribbon', () => {
   const ramp: Track = {
-    instrument: 'light.ambient', type: 'curve',
+    instrument: 'light.ambient',
+    type: 'curve',
     points: [
       { t: 0, value: { r: 0, g: 0, b: 0 } },
       { t: 60, value: { r: 1, g: 0, b: 0 } },
@@ -203,7 +263,8 @@ describe('the collapsed colour ribbon', () => {
      * — so this asks for "essentially full red" rather than an exact string,
      * which would only be testing the sample count. */
     const mid = rib.stops.reduce((best, s) =>
-      Math.abs(s.at - 0.5) < Math.abs(best.at - 0.5) ? s : best);
+      Math.abs(s.at - 0.5) < Math.abs(best.at - 0.5) ? s : best,
+    );
     const [r, g, b] = mid.colour.match(/\d+/g)!.map(Number);
     expect(r).toBeGreaterThan(240);
     expect(g).toBe(0);
@@ -229,7 +290,8 @@ describe('the performance budget', () => {
    * reintroduces per-point drawing. */
   it('draws a two hour score in a bounded number of primitives', () => {
     const points = Array.from({ length: 45000 }, (_, i) => ({
-      t: i * 0.16, value: { r: Math.abs(Math.sin(i / 30)), g: 0.4, b: 0.2 },
+      t: i * 0.16,
+      value: { r: Math.abs(Math.sin(i / 30)), g: 0.4, b: 0.2 },
     }));
     const view = new TimeView(7200, 24);
     const list = new DrawList();
@@ -250,7 +312,16 @@ describe('what the score does not say on its own', () => {
   it('draws calm regions, and skips the ones off screen', () => {
     const view = new TimeView(120, 24).set(0, 30);
     const list = new DrawList();
-    drawCalm(list, [{ from: 5, to: 20 }, { from: 90, to: 110 }], view, box, theme);
+    drawCalm(
+      list,
+      [
+        { from: 5, to: 20 },
+        { from: 90, to: 110 },
+      ],
+      view,
+      box,
+      theme,
+    );
     const rects = list.of('rect');
     expect(rects.length).toBe(1);
     expect(list.culled).toBe(1);
@@ -292,7 +363,9 @@ describe('what the score does not say on its own', () => {
 
 describe('hue is an angle, not an amount', () => {
   const hsi: Track = {
-    instrument: 'light.ambient', type: 'curve', space: 'hsi',
+    instrument: 'light.ambient',
+    type: 'curve',
+    space: 'hsi',
     points: [
       { t: 0, value: { h: 0.1, s: 1, i: 0.5 } },
       { t: 40, value: { h: 0.6, s: 1, i: 0.5 } },

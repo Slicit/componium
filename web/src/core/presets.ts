@@ -58,15 +58,43 @@ export interface Preset {
 
 /* --- the shapes --------------------------------------------------------- */
 
-const RAMP_UP: Node[] = [[0, 0], [1, 1]];
-const RAMP_DOWN: Node[] = [[0, 1], [1, 0]];
-const HOLD: Node[] = [[0, 1], [1, 1]];
+const RAMP_UP: Node[] = [
+  [0, 0],
+  [1, 1],
+];
+const RAMP_DOWN: Node[] = [
+  [0, 1],
+  [1, 0],
+];
+const HOLD: Node[] = [
+  [0, 1],
+  [1, 1],
+];
 /* Fast in, slow out: the shape of almost everything physical that is struck. */
-const HIT: Node[] = [[0, 0], [0.04, 1], [1, 0]];
-const SWELL: Node[] = [[0, 0], [0.5, 1], [1, 0]];
+const HIT: Node[] = [
+  [0, 0],
+  [0.04, 1],
+  [1, 0],
+];
+const SWELL: Node[] = [
+  [0, 0],
+  [0.5, 1],
+  [1, 0],
+];
 /* A long tail rather than a symmetric one — smoke and dust hang about. */
-const PUFF: Node[] = [[0, 0], [0.08, 1], [0.35, 0.55], [1, 0]];
-const BREATHE: Node[] = [[0, 0.15], [0.25, 0.8], [0.5, 0.15], [0.75, 0.8], [1, 0.15]];
+const PUFF: Node[] = [
+  [0, 0],
+  [0.08, 1],
+  [0.35, 0.55],
+  [1, 0],
+];
+const BREATHE: Node[] = [
+  [0, 0.15],
+  [0.25, 0.8],
+  [0.5, 0.15],
+  [0.75, 0.8],
+  [1, 0.15],
+];
 
 /**
  * A square wave of n pulses, for stutters and strobes.
@@ -156,35 +184,79 @@ const MIN_CUE_SECONDS = 0.02;
 export const PRESETS: readonly Preset[] = [
   /* Fog and mist: dosed devices, so these insert cues. */
   {
-    id: 'fog-burst', name: 'Fog burst', kinds: ['fog'], seconds: 4, action: 'burst',
-    hint: 'A full burst, held for four seconds.', shape: HOLD,
+    id: 'fog-burst',
+    name: 'Fog burst',
+    kinds: ['fog'],
+    seconds: 4,
+    action: 'burst',
+    hint: 'A full burst, held for four seconds.',
+    shape: HOLD,
   },
   {
-    id: 'fog-fade', name: 'Fog, fading', kinds: ['fog'], seconds: 5, action: 'burst',
-    hint: 'Comes in at full and falls away over five seconds.', shape: decay(),
+    id: 'fog-fade',
+    name: 'Fog, fading',
+    kinds: ['fog'],
+    seconds: 5,
+    action: 'burst',
+    hint: 'Comes in at full and falls away over five seconds.',
+    shape: decay(),
   },
   {
-    id: 'fog-swell', name: 'Fog swell', kinds: ['fog'], seconds: 8, action: 'burst',
-    hint: 'Builds and clears — for a room filling rather than a blast.', shape: SWELL,
+    id: 'fog-swell',
+    name: 'Fog swell',
+    kinds: ['fog'],
+    seconds: 8,
+    action: 'burst',
+    hint: 'Builds and clears — for a room filling rather than a blast.',
+    shape: SWELL,
   },
   {
-    id: 'fog-puff', name: 'Dust puff', kinds: ['fog'], seconds: 3, action: 'burst',
-    hint: 'A sharp puff with a long hang, the way dust behaves.', shape: PUFF,
+    id: 'fog-puff',
+    name: 'Dust puff',
+    kinds: ['fog'],
+    seconds: 3,
+    action: 'burst',
+    hint: 'A sharp puff with a long hang, the way dust behaves.',
+    shape: PUFF,
   },
   {
-    id: 'mist-spray', name: 'Mist, three seconds', kinds: ['mist'], seconds: 3, action: 'spray',
-    hint: 'Rising from nothing to full over three seconds.', shape: RAMP_UP,
+    id: 'mist-spray',
+    name: 'Mist, three seconds',
+    kinds: ['mist'],
+    seconds: 3,
+    action: 'spray',
+    hint: 'Rising from nothing to full over three seconds.',
+    shape: RAMP_UP,
   },
   {
-    id: 'mist-splash', name: 'Splash', kinds: ['mist'], seconds: 1.5, action: 'spray',
-    hint: 'A short hard hit of water.', shape: HIT,
+    id: 'mist-splash',
+    name: 'Splash',
+    kinds: ['mist'],
+    seconds: 1.5,
+    action: 'spray',
+    hint: 'A short hard hit of water.',
+    shape: HIT,
   },
   {
-    id: 'mist-drizzle', name: 'Drizzle', kinds: ['mist'], seconds: 10, action: 'spray',
-    hint: 'A long, light fall.', shape: [[0, 0], [0.1, 0.35], [0.9, 0.35], [1, 0]],
+    id: 'mist-drizzle',
+    name: 'Drizzle',
+    kinds: ['mist'],
+    seconds: 10,
+    action: 'spray',
+    hint: 'A long, light fall.',
+    shape: [
+      [0, 0],
+      [0.1, 0.35],
+      [0.9, 0.35],
+      [1, 0],
+    ],
   },
   {
-    id: 'scent-puff', name: 'Scent puff', kinds: ['scent'], seconds: 1, action: 'puff',
+    id: 'scent-puff',
+    name: 'Scent puff',
+    kinds: ['scent'],
+    seconds: 1,
+    action: 'puff',
     hint: 'One dose. A smell cannot be taken back, so this stays short.',
     shape: HOLD,
   },
@@ -193,42 +265,85 @@ export const PRESETS: readonly Preset[] = [
      event. A gust is a thing that happens; a breeze building over twelve
      seconds is a level, and no cue can say that. */
   {
-    id: 'wind-gust', name: 'Gust', kinds: ['wind'], seconds: 4, action: 'gust',
-    hint: 'Up fast, down slowly.', shape: HIT,
+    id: 'wind-gust',
+    name: 'Gust',
+    kinds: ['wind'],
+    seconds: 4,
+    action: 'gust',
+    hint: 'Up fast, down slowly.',
+    shape: HIT,
   },
   {
-    id: 'wind-build', name: 'Building wind', kinds: ['wind'], seconds: 12,
-    hint: 'A slow rise to full, for weather closing in.', shape: RAMP_UP,
+    id: 'wind-build',
+    name: 'Building wind',
+    kinds: ['wind'],
+    seconds: 12,
+    hint: 'A slow rise to full, for weather closing in.',
+    shape: RAMP_UP,
   },
   {
-    id: 'wind-drop', name: 'Wind dropping', kinds: ['wind'], seconds: 8,
-    hint: 'Full to nothing, for a storm passing.', shape: RAMP_DOWN,
+    id: 'wind-drop',
+    name: 'Wind dropping',
+    kinds: ['wind'],
+    seconds: 8,
+    hint: 'Full to nothing, for a storm passing.',
+    shape: RAMP_DOWN,
   },
   {
-    id: 'wind-buffet', name: 'Buffeting', kinds: ['wind'], seconds: 10,
-    hint: 'Rising and falling, never settling.', shape: BREATHE,
+    id: 'wind-buffet',
+    name: 'Buffeting',
+    kinds: ['wind'],
+    seconds: 10,
+    hint: 'Rising and falling, never settling.',
+    shape: BREATHE,
   },
   {
-    id: 'wind-steady', name: 'Steady breeze', kinds: ['wind'], seconds: 15,
-    hint: 'Holds at full for as long as it lasts.', shape: HOLD,
+    id: 'wind-steady',
+    name: 'Steady breeze',
+    kinds: ['wind'],
+    seconds: 15,
+    hint: 'Holds at full for as long as it lasts.',
+    shape: HOLD,
   },
 
   /* Shake. */
   {
-    id: 'shake-hit', name: 'Impact', kinds: ['shake'], seconds: 1.2, action: 'hit',
-    hint: 'One jolt with a short ring-out.', shape: HIT,
+    id: 'shake-hit',
+    name: 'Impact',
+    kinds: ['shake'],
+    seconds: 1.2,
+    action: 'hit',
+    hint: 'One jolt with a short ring-out.',
+    shape: HIT,
   },
   {
-    id: 'shake-rumble', name: 'Rumble', kinds: ['shake'], seconds: 6,
-    hint: 'A sustained low shake that fades.', shape: [[0, 0], [0.12, 0.7], [0.7, 0.6], [1, 0]],
+    id: 'shake-rumble',
+    name: 'Rumble',
+    kinds: ['shake'],
+    seconds: 6,
+    hint: 'A sustained low shake that fades.',
+    shape: [
+      [0, 0],
+      [0.12, 0.7],
+      [0.7, 0.6],
+      [1, 0],
+    ],
   },
   {
-    id: 'shake-quake', name: 'Earthquake', kinds: ['shake'], seconds: 8,
-    hint: 'Builds, holds hard, then subsides.', shape: SWELL,
+    id: 'shake-quake',
+    name: 'Earthquake',
+    kinds: ['shake'],
+    seconds: 8,
+    hint: 'Builds, holds hard, then subsides.',
+    shape: SWELL,
   },
   {
-    id: 'shake-stutter', name: 'Stutter', kinds: ['shake'], seconds: 2,
-    hint: 'Six sharp knocks — footfalls, gunfire, machinery.', shape: stutter(6),
+    id: 'shake-stutter',
+    name: 'Stutter',
+    kinds: ['shake'],
+    seconds: 2,
+    hint: 'Six sharp knocks — footfalls, gunfire, machinery.',
+    shape: stutter(6),
   },
 
   /* Light. Shapes only: the colour is whatever the track already carries, so
@@ -239,61 +354,141 @@ export const PRESETS: readonly Preset[] = [
    * one instant and a strobe is twelve of them; a fade, a breath and a
    * flicker are shapes, and a cue cannot hold a shape. */
   {
-    id: 'light-flash', name: 'Flash', kinds: ['light'], seconds: 0.3, action: 'flash',
-    hint: 'One bright instant.', shape: HIT,
+    id: 'light-flash',
+    name: 'Flash',
+    kinds: ['light'],
+    seconds: 0.3,
+    action: 'flash',
+    hint: 'One bright instant.',
+    shape: HIT,
   },
   {
-    id: 'light-strobe', name: 'Strobe', kinds: ['light'], seconds: 2,
-    hint: 'Twelve hard pulses.', shape: stutter(12),
+    id: 'light-strobe',
+    name: 'Strobe',
+    kinds: ['light'],
+    seconds: 2,
+    hint: 'Twelve hard pulses.',
+    shape: stutter(12),
   },
   {
-    id: 'light-lightning', name: 'Lightning', kinds: ['light'], seconds: 1.4,
+    id: 'light-lightning',
+    name: 'Lightning',
+    kinds: ['light'],
+    seconds: 1.4,
     hint: 'A strike, a gap, and a weaker second flash.',
-    shape: [[0, 0], [0.02, 1], [0.09, 0.1], [0.14, 0.85], [0.22, 0.05], [0.45, 0], [1, 0]],
+    shape: [
+      [0, 0],
+      [0.02, 1],
+      [0.09, 0.1],
+      [0.14, 0.85],
+      [0.22, 0.05],
+      [0.45, 0],
+      [1, 0],
+    ],
   },
   {
-    id: 'light-fade-in', name: 'Fade up', kinds: ['light'], seconds: 3,
-    hint: 'Dark to full.', shape: RAMP_UP,
+    id: 'light-fade-in',
+    name: 'Fade up',
+    kinds: ['light'],
+    seconds: 3,
+    hint: 'Dark to full.',
+    shape: RAMP_UP,
   },
   {
-    id: 'light-fade-out', name: 'Fade down', kinds: ['light'], seconds: 3,
-    hint: 'Full to dark.', shape: RAMP_DOWN,
+    id: 'light-fade-out',
+    name: 'Fade down',
+    kinds: ['light'],
+    seconds: 3,
+    hint: 'Full to dark.',
+    shape: RAMP_DOWN,
   },
   {
-    id: 'light-pulse', name: 'Slow pulse', kinds: ['light'], seconds: 8,
-    hint: 'Breathing in and out, twice.', shape: BREATHE,
+    id: 'light-pulse',
+    name: 'Slow pulse',
+    kinds: ['light'],
+    seconds: 8,
+    hint: 'Breathing in and out, twice.',
+    shape: BREATHE,
   },
   {
-    id: 'light-firelight', name: 'Firelight', kinds: ['light'], seconds: 6,
+    id: 'light-firelight',
+    name: 'Firelight',
+    kinds: ['light'],
+    seconds: 6,
     hint: 'An uneven flicker that never settles.',
-    shape: [[0, 0.55], [0.08, 0.85], [0.16, 0.5], [0.27, 0.95], [0.36, 0.6],
-            [0.48, 0.8], [0.57, 0.45], [0.69, 0.9], [0.78, 0.55], [0.9, 0.75], [1, 0.6]],
+    shape: [
+      [0, 0.55],
+      [0.08, 0.85],
+      [0.16, 0.5],
+      [0.27, 0.95],
+      [0.36, 0.6],
+      [0.48, 0.8],
+      [0.57, 0.45],
+      [0.69, 0.9],
+      [0.78, 0.55],
+      [0.9, 0.75],
+      [1, 0.6],
+    ],
   },
 
   /* Motion: the envelope drives every axis the track carries, which is a
    * starting shape rather than a finished move. Shaping one axis against
    * another is what the editor is for. */
   {
-    id: 'motion-drop', name: 'Drop', kinds: ['motion'], seconds: 1.5,
-    hint: 'Falls and recovers.', shape: [[0, 0], [0.15, -1], [0.45, 0.25], [1, 0]],
+    id: 'motion-drop',
+    name: 'Drop',
+    kinds: ['motion'],
+    seconds: 1.5,
+    hint: 'Falls and recovers.',
+    shape: [
+      [0, 0],
+      [0.15, -1],
+      [0.45, 0.25],
+      [1, 0],
+    ],
   },
   {
-    id: 'motion-lurch', name: 'Lurch', kinds: ['motion'], seconds: 1,
-    hint: 'One hard throw back to rest.', shape: HIT,
+    id: 'motion-lurch',
+    name: 'Lurch',
+    kinds: ['motion'],
+    seconds: 1,
+    hint: 'One hard throw back to rest.',
+    shape: HIT,
   },
   {
-    id: 'motion-sway', name: 'Sway', kinds: ['motion'], seconds: 12,
+    id: 'motion-sway',
+    name: 'Sway',
+    kinds: ['motion'],
+    seconds: 12,
     hint: 'A long roll from side to side, for water or flight.',
-    shape: [[0, 0], [0.25, 1], [0.5, 0], [0.75, -1], [1, 0]],
+    shape: [
+      [0, 0],
+      [0.25, 1],
+      [0.5, 0],
+      [0.75, -1],
+      [1, 0],
+    ],
   },
   {
-    id: 'motion-climb', name: 'Climb', kinds: ['motion'], seconds: 6,
+    id: 'motion-climb',
+    name: 'Climb',
+    kinds: ['motion'],
+    seconds: 6,
     hint: 'Tilts back and holds, then levels.',
-    shape: [[0, 0], [0.2, 0.8], [0.8, 0.8], [1, 0]],
+    shape: [
+      [0, 0],
+      [0.2, 0.8],
+      [0.8, 0.8],
+      [1, 0],
+    ],
   },
   {
-    id: 'motion-settle', name: 'Settle', kinds: ['motion'], seconds: 4,
-    hint: 'Comes to rest from wherever it is.', shape: RAMP_DOWN,
+    id: 'motion-settle',
+    name: 'Settle',
+    kinds: ['motion'],
+    seconds: 4,
+    hint: 'Comes to rest from wherever it is.',
+    shape: RAMP_DOWN,
   },
 ];
 
@@ -397,7 +592,9 @@ export function build(
   at: Seconds,
   channels: readonly string[] = [],
   opts: {
-    seconds?: number; scale?: number; base?: Params;
+    seconds?: number;
+    scale?: number;
+    base?: Params;
     /**
      * What the target track holds, which is not the same question as what the
      * preset is naturally.
@@ -434,9 +631,10 @@ export function build(
     for (const [a, b, peak] of pulses(preset.shape)) {
       const params: Params = {};
       for (const c of channels) {
-        params[c] = level && c !== level
-          ? round3(opts.base?.[c] ?? NEUTRAL[c] ?? 0)
-          : round3(Math.min(1, peak * scale));
+        params[c] =
+          level && c !== level
+            ? round3(opts.base?.[c] ?? NEUTRAL[c] ?? 0)
+            : round3(Math.min(1, peak * scale));
       }
       made.push({
         t: round3(at + a * seconds),

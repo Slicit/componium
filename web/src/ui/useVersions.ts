@@ -72,10 +72,13 @@ export function useVersions(film: string, onOpen: (id: string) => void): Version
     void refresh();
   }, [film, refresh]);
 
-  const select = useCallback((id: string) => {
-    setCurrent(id);
-    onOpen(id);
-  }, [onOpen]);
+  const select = useCallback(
+    (id: string) => {
+      setCurrent(id);
+      onOpen(id);
+    },
+    [onOpen],
+  );
 
   return { list, current, select, refresh };
 }

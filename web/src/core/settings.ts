@@ -27,15 +27,23 @@ export interface Setting {
 export const SETTINGS = {
   roomLight: {
     label: 'Room light',
-    hint: 'How lit the preview room is. Nothing to do with the film on the '
-        + 'screen, which is always as bright as its source.',
-    min: 0, max: 100, value: 15, unit: '%',
+    hint:
+      'How lit the preview room is. Nothing to do with the film on the ' +
+      'screen, which is always as bright as its source.',
+    min: 0,
+    max: 100,
+    value: 15,
+    unit: '%',
   },
   roomWash: {
     label: 'Ambient wash',
-    hint: 'How strongly the two ceiling strips throw the score’s colour '
-        + 'into the room. A hint of the scene rather than a light to see by.',
-    min: 0, max: 100, value: 75, unit: '%',
+    hint:
+      'How strongly the two ceiling strips throw the score’s colour ' +
+      'into the room. A hint of the scene rather than a light to see by.',
+    min: 0,
+    max: 100,
+    value: 75,
+    unit: '%',
   },
 } as const satisfies Record<string, Setting>;
 
@@ -61,14 +69,22 @@ export function settingOf(name: SettingName): number {
     if (!Number.isFinite(n) || n < spec.min || n > spec.max) return spec.value;
     return n;
   } catch {
-    return spec.value;   /* private mode, or storage switched off */
+    return spec.value; /* private mode, or storage switched off */
   }
 }
 
 export function writeSetting(name: SettingName, value: number): void {
-  try { localStorage.setItem(KEYS[name], String(value)); } catch { /* private mode */ }
+  try {
+    localStorage.setItem(KEYS[name], String(value));
+  } catch {
+    /* private mode */
+  }
 }
 
 export function clearSetting(name: SettingName): void {
-  try { localStorage.removeItem(KEYS[name]); } catch { /* private mode */ }
+  try {
+    localStorage.removeItem(KEYS[name]);
+  } catch {
+    /* private mode */
+  }
 }

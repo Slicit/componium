@@ -130,7 +130,9 @@ export function clockMs(t: Seconds): string {
  * can leave the field alone instead of moving a cue somewhere arbitrary.
  */
 export function parseTime(input: string, fps: Fps): Seconds | null {
-  const raw = String(input ?? '').trim().toLowerCase();
+  const raw = String(input ?? '')
+    .trim()
+    .toLowerCase();
   if (!raw) return null;
 
   const frames = raw.match(/^(\d+)\s*f$/);

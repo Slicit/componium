@@ -91,9 +91,20 @@ export function Room(props: {
    */
   revision?: number;
 }) {
-  const { score, rig, time, muted, forced, brightness, wash, view, onView, revision, picture,
-    projection } =
-    props;
+  const {
+    score,
+    rig,
+    time,
+    muted,
+    forced,
+    brightness,
+    wash,
+    view,
+    onView,
+    revision,
+    picture,
+    projection,
+  } = props;
   const host = useRef<HTMLDivElement>(null);
   const room = useRef<RoomHandle | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
@@ -113,7 +124,10 @@ export function Room(props: {
     (async () => {
       const mod = await import('./Room3D.js');
       if (gone || !host.current) return;
-      if (!mod.webglAvailable()) { setStatus('unavailable'); return; }
+      if (!mod.webglAvailable()) {
+        setStatus('unavailable');
+        return;
+      }
       made = new mod.Room3D(host.current) as RoomHandle;
       room.current = made;
       setStatus('ready');
@@ -152,16 +166,26 @@ export function Room(props: {
     room.current?.onMeter((reading) => setMeter(reading));
   }, [status]);
 
-  useEffect(() => { room.current?.setPicture(picture ?? null); }, [picture, status]);
+  useEffect(() => {
+    room.current?.setPicture(picture ?? null);
+  }, [picture, status]);
 
   useEffect(() => {
     room.current?.setProjection(projection ?? null);
   }, [projection, status]);
 
-  useEffect(() => { room.current?.setMuted(muted); }, [muted, status]);
-  useEffect(() => { room.current?.setForced(forced); }, [forced, status]);
-  useEffect(() => { room.current?.setBrightness(brightness / 100); }, [brightness, status]);
-  useEffect(() => { room.current?.setWash((wash ?? WASH_DEFAULT) / 100); }, [wash, status]);
+  useEffect(() => {
+    room.current?.setMuted(muted);
+  }, [muted, status]);
+  useEffect(() => {
+    room.current?.setForced(forced);
+  }, [forced, status]);
+  useEffect(() => {
+    room.current?.setBrightness(brightness / 100);
+  }, [brightness, status]);
+  useEffect(() => {
+    room.current?.setWash((wash ?? WASH_DEFAULT) / 100);
+  }, [wash, status]);
 
   /* The room is told the time rather than reading a clock, the same way the
    * conductor is. One thing owns the playhead. */
@@ -173,11 +197,15 @@ export function Room(props: {
     <div className="room">
       <div className="room-host" ref={host}>
         {meter && status === 'ready' && (
-          <p className="room-meter"
-             title={'Frames drawn per second, and what one costs to build. The '
-                    + 'room draws only when something changed, so a low rate '
-                    + 'beside a small cost means it is being asked for frames '
-                    + 'slowly, not that it cannot keep up.'}>
+          <p
+            className="room-meter"
+            title={
+              'Frames drawn per second, and what one costs to build. The ' +
+              'room draws only when something changed, so a low rate ' +
+              'beside a small cost means it is being asked for frames ' +
+              'slowly, not that it cannot keep up.'
+            }
+          >
             <span>{Math.round(meter.rate)} fps</span>
             <span className="room-meter-cost">{meter.cost.toFixed(1)} ms</span>
           </p>

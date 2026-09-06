@@ -42,6 +42,6 @@ if (typeof window !== 'undefined' && typeof window.PointerEvent === 'undefined')
  * whole reason the renderer emits data instead of painting directly.
  */
 if (typeof HTMLCanvasElement !== 'undefined') {
-  HTMLCanvasElement.prototype.getContext = (() => null) as unknown as
-    HTMLCanvasElement['getContext'];
+  HTMLCanvasElement.prototype.getContext = (() =>
+    null) as unknown as HTMLCanvasElement['getContext'];
 }

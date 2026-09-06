@@ -40,7 +40,11 @@ beforeEach(() => {
   vi.spyOn(performance, 'now').mockImplementation(() => now);
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 function show(over: Partial<Parameters<typeof Effects>[0]> = {}) {
   return render(
@@ -52,7 +56,9 @@ function show(over: Partial<Parameters<typeof Effects>[0]> = {}) {
       fps={24}
       canInsert
       onInsert={() => {}}
-      onPreview={(id, level) => { previews.push([id, level]); }}
+      onPreview={(id, level) => {
+        previews.push([id, level]);
+      }}
       {...over}
     />,
   );

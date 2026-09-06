@@ -26,14 +26,22 @@ const washed: number[] = [];
 vi.mock('./Room3D.js', () => {
   class FakeRoom {
     setInstruments() {}
-    setPicture(video: HTMLVideoElement | null) { shown.push(video); }
-    setProjection(video: HTMLVideoElement | null) { thrown.push(video); }
+    setPicture(video: HTMLVideoElement | null) {
+      shown.push(video);
+    }
+    setProjection(video: HTMLVideoElement | null) {
+      thrown.push(video);
+    }
     setMuted() {}
     setForced() {}
     setBrightness() {}
-    setWash(v: number) { washed.push(v); }
+    setWash(v: number) {
+      washed.push(v);
+    }
     onView() {}
-    getView() { return { pos: [0, 0, 0], target: [0, 0, 0] }; }
+    getView() {
+      return { pos: [0, 0, 0], target: [0, 0, 0] };
+    }
     setView() {}
     update() {}
     onMeter() {}
@@ -52,11 +60,16 @@ const score = { title: 'demo', duration: 100, tracks: [] } as unknown as Score;
 const NO_MUTES = new Set<string>();
 const NO_FORCES = new Map<string, number>();
 
-beforeEach(() => { shown.length = 0; thrown.length = 0; washed.length = 0; });
-afterEach(() => { cleanup(); });
+beforeEach(() => {
+  shown.length = 0;
+  thrown.length = 0;
+  washed.length = 0;
+});
+afterEach(() => {
+  cleanup();
+});
 
-function show(picture: HTMLVideoElement | null,
-              projection: HTMLVideoElement | null = null) {
+function show(picture: HTMLVideoElement | null, projection: HTMLVideoElement | null = null) {
   return (
     <Room
       score={score}
@@ -171,8 +184,15 @@ describe('throwing the film into the room', () => {
 describe('how strong the wash is', () => {
   it('reaches the room as a fraction, not a percentage', async () => {
     render(
-      <Room score={score} rig={rig} time={0} muted={NO_MUTES} forced={NO_FORCES}
-            brightness={50} wash={60} />,
+      <Room
+        score={score}
+        rig={rig}
+        time={0}
+        muted={NO_MUTES}
+        forced={NO_FORCES}
+        brightness={50}
+        wash={60}
+      />,
     );
     await waitFor(() => expect(washed.length).toBeGreaterThan(0));
     expect(washed[washed.length - 1]).toBeCloseTo(0.6, 6);
@@ -182,8 +202,7 @@ describe('how strong the wash is', () => {
     // A room with no opinion about the wash still gets one, and it is the same
     // one the renderer holds, so the prop and its absence agree.
     render(
-      <Room score={score} rig={rig} time={0} muted={NO_MUTES} forced={NO_FORCES}
-            brightness={50} />,
+      <Room score={score} rig={rig} time={0} muted={NO_MUTES} forced={NO_FORCES} brightness={50} />,
     );
     await waitFor(() => expect(washed.length).toBeGreaterThan(0));
     expect(washed[washed.length - 1]).toBeCloseTo(0.75, 6);
@@ -191,13 +210,27 @@ describe('how strong the wash is', () => {
 
   it('follows the slider', async () => {
     const { rerender } = render(
-      <Room score={score} rig={rig} time={0} muted={NO_MUTES} forced={NO_FORCES}
-            brightness={50} wash={30} />,
+      <Room
+        score={score}
+        rig={rig}
+        time={0}
+        muted={NO_MUTES}
+        forced={NO_FORCES}
+        brightness={50}
+        wash={30}
+      />,
     );
     await waitFor(() => expect(washed.length).toBeGreaterThan(0));
     rerender(
-      <Room score={score} rig={rig} time={0} muted={NO_MUTES} forced={NO_FORCES}
-            brightness={50} wash={0} />,
+      <Room
+        score={score}
+        rig={rig}
+        time={0}
+        muted={NO_MUTES}
+        forced={NO_FORCES}
+        brightness={50}
+        wash={0}
+      />,
     );
     await waitFor(() => expect(washed[washed.length - 1]).toBe(0));
   });

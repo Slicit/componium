@@ -28,10 +28,25 @@ const rig = {
   name: 'bench',
   editable: true,
   instruments: [
-    { id: 'light.ambient', kind: 'light', driver: 'sacn', addr: '192.168.1.90:5568',
-      universe: 1, start: 1, mode: 'rgb', latency: 0.02, position: [0, 1.4, -0.1] },
-    { id: 'wind.main', kind: 'wind', driver: 'cip', addr: '192.168.1.91:5570',
-      latency: 1.2, position: [0, 1.6, 0.6] },
+    {
+      id: 'light.ambient',
+      kind: 'light',
+      driver: 'sacn',
+      addr: '192.168.1.90:5568',
+      universe: 1,
+      start: 1,
+      mode: 'rgb',
+      latency: 0.02,
+      position: [0, 1.4, -0.1],
+    },
+    {
+      id: 'wind.main',
+      kind: 'wind',
+      driver: 'cip',
+      addr: '192.168.1.91:5570',
+      latency: 1.2,
+      position: [0, 1.6, 0.6],
+    },
     { id: 'fog.left', kind: 'fog', driver: 'virtual', latency: 0, position: [-1.6, 0.15, 1] },
   ],
 };
@@ -76,35 +91,44 @@ beforeEach(() => {
   chosen.length = 0;
   shelf.current = 'bench.toml';
   attached = [];
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.startsWith('/api/boards')) {
-      return { ok: true, json: async () => ({ editable: true, boards: attached }) } as Response;
-    }
-    if (url.startsWith('/api/rigs')) {
-      if (init?.method === 'POST') {
-        const want = JSON.parse(init.body as string).rig;
-        chosen.push(want);
-        shelf.current = want;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.startsWith('/api/boards')) {
+        return { ok: true, json: async () => ({ editable: true, boards: attached }) } as Response;
       }
-      return { ok: true, json: async () => ({ ...shelf }) } as Response;
-    }
-    if (url.startsWith('/api/rig/options')) {
-      return { ok: true, json: async () => options } as Response;
-    }
-    if (url.startsWith('/api/rig')) {
-      if (init?.method === 'PUT') {
-        saves.push(JSON.parse(init.body as string));
-        return { ok: true, json: async () => ({ saved: true }) } as Response;
+      if (url.startsWith('/api/rigs')) {
+        if (init?.method === 'POST') {
+          const want = JSON.parse(init.body as string).rig;
+          chosen.push(want);
+          shelf.current = want;
+        }
+        return { ok: true, json: async () => ({ ...shelf }) } as Response;
       }
-      return { ok: true, json: async () => rig } as Response;
-    }
-    if (url.startsWith('/api/firmware')) {
-      return { ok: true, json: async () => ({ available: false, why: 'not built here' }) } as Response;
-    }
-    return { ok: false, json: async () => ({}) } as Response;
-  }));
+      if (url.startsWith('/api/rig/options')) {
+        return { ok: true, json: async () => options } as Response;
+      }
+      if (url.startsWith('/api/rig')) {
+        if (init?.method === 'PUT') {
+          saves.push(JSON.parse(init.body as string));
+          return { ok: true, json: async () => ({ saved: true }) } as Response;
+        }
+        return { ok: true, json: async () => rig } as Response;
+      }
+      if (url.startsWith('/api/firmware')) {
+        return {
+          ok: true,
+          json: async () => ({ available: false, why: 'not built here' }),
+        } as Response;
+      }
+      return { ok: false, json: async () => ({}) } as Response;
+    }),
+  );
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const show = (hash: string) => render(<Admin route={parseRoute(hash)} />);
 
@@ -168,13 +192,15 @@ describe('devices', () => {
   it('offers only the drivers that kind can be driven by', async () => {
     await devices();
     const forFog = screen.getByLabelText('Instrument 3 driver');
-    expect([...forFog.querySelectorAll('option')].map((o) => o.value))
-      .toEqual(['virtual', 'cip']);
+    expect([...forFog.querySelectorAll('option')].map((o) => o.value)).toEqual(['virtual', 'cip']);
     /* sACN builds a DMX light and nothing else, so offering it here would be
      * offering a rig that will not start. */
     const forLight = screen.getByLabelText('Instrument 1 driver');
-    expect([...forLight.querySelectorAll('option')].map((o) => o.value))
-      .toEqual(['virtual', 'sacn', 'cip']);
+    expect([...forLight.querySelectorAll('option')].map((o) => o.value)).toEqual([
+      'virtual',
+      'sacn',
+      'cip',
+    ]);
   });
 
   it('moves a driver its kind cannot use rather than stranding it', async () => {
@@ -224,8 +250,7 @@ describe('devices', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
     await waitFor(() => expect(saves).toHaveLength(1));
     const sent = saves[0] as { instruments: { id: string; addr?: string }[] };
-    expect(sent.instruments.find((x) => x.id === 'wind.main')?.addr)
-      .toBe('192.168.1.99:5570');
+    expect(sent.instruments.find((x) => x.id === 'wind.main')?.addr).toBe('192.168.1.99:5570');
   });
 
   it('still lets an address be typed when it is not a board on the list', async () => {
@@ -239,8 +264,9 @@ describe('devices', () => {
     // it rather than the page silently pointing the entry somewhere else.
     expect(value('Instrument 2 address')).toBe('192.168.1.91:5570');
 
-    fireEvent.change(screen.getByLabelText('Instrument 2 address'),
-      { target: { value: '10.0.0.5:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 2 address'), {
+      target: { value: '10.0.0.5:5570' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
     await waitFor(() => expect(saves).toHaveLength(1));
     const sent = saves[0] as { instruments: { id: string; addr?: string }[] };
@@ -255,14 +281,16 @@ describe('devices', () => {
     await devices();
     await waitFor(() => expect(screen.getByLabelText('Instrument 2 board')).toBeTruthy());
 
-    fireEvent.change(screen.getByLabelText('Instrument 2 board'),
-      { target: { value: '192.168.1.99:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 2 board'), {
+      target: { value: '192.168.1.99:5570' },
+    });
     // The third is virtual to begin with; make it a second CIP entry on the
     // same board, which is a fan and a strip on one ESP32.
     fireEvent.change(screen.getByLabelText('Instrument 3 driver'), { target: { value: 'cip' } });
     await waitFor(() => expect(screen.getByLabelText('Instrument 3 board')).toBeTruthy());
-    fireEvent.change(screen.getByLabelText('Instrument 3 board'),
-      { target: { value: '192.168.1.99:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 3 board'), {
+      target: { value: '192.168.1.99:5570' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
     await waitFor(() => expect(saves).toHaveLength(1));
@@ -273,14 +301,16 @@ describe('devices', () => {
 
   it('will not save until something changed', async () => {
     await devices();
-    expect((screen.getByRole('button', { name: 'Save the rig' }) as HTMLButtonElement).disabled)
-      .toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'Save the rig' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('sends the whole rig, including what it cannot edit', async () => {
     await devices();
-    fireEvent.change(screen.getByLabelText('Instrument 2 address'),
-                     { target: { value: '192.168.1.99:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 2 address'), {
+      target: { value: '192.168.1.99:5570' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
     await waitFor(() => expect(saves).toHaveLength(1));
     const sent = saves[0] as typeof rig;
@@ -293,40 +323,44 @@ describe('devices', () => {
 
   /** A refusal, shaped the way a real Response is: one body, read once. */
   function refusesWith(status: number, body: string) {
-    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.startsWith('/api/rig/options')) {
-        return { ok: true, json: async () => options } as Response;
-      }
-      if (init?.method === 'PUT') {
-        let read = false;
-        return {
-          ok: false,
-          status,
-          /* A body is a stream and can only be read once. The first version of
-           * this mock offered json() and no text(), which let the page get
-           * away with reading it twice; the real thing threw on the second
-           * read and turned every server message into "the studio refused
-           * it". A mock is only worth its accuracy. */
-          text: async () => {
-            if (read) throw new TypeError('body stream already read');
-            read = true;
-            return body;
-          },
-          json: async () => {
-            if (read) throw new TypeError('body stream already read');
-            read = true;
-            return JSON.parse(body);
-          },
-        } as unknown as Response;
-      }
-      return { ok: true, json: async () => rig } as Response;
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.startsWith('/api/rig/options')) {
+          return { ok: true, json: async () => options } as Response;
+        }
+        if (init?.method === 'PUT') {
+          let read = false;
+          return {
+            ok: false,
+            status,
+            /* A body is a stream and can only be read once. The first version of
+             * this mock offered json() and no text(), which let the page get
+             * away with reading it twice; the real thing threw on the second
+             * read and turned every server message into "the studio refused
+             * it". A mock is only worth its accuracy. */
+            text: async () => {
+              if (read) throw new TypeError('body stream already read');
+              read = true;
+              return body;
+            },
+            json: async () => {
+              if (read) throw new TypeError('body stream already read');
+              read = true;
+              return JSON.parse(body);
+            },
+          } as unknown as Response;
+        }
+        return { ok: true, json: async () => rig } as Response;
+      }),
+    );
   }
 
   async function tryToSave() {
     await devices();
-    fireEvent.change(screen.getByLabelText('Instrument 2 address'),
-                     { target: { value: '10.0.0.1:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 2 address'), {
+      target: { value: '10.0.0.1:5570' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
   }
 
@@ -353,12 +387,15 @@ describe('devices', () => {
   });
 
   it('is read only when there is no file to write', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url.startsWith('/api/rig/options')) {
-        return { ok: true, json: async () => ({ ...options, editable: false }) } as Response;
-      }
-      return { ok: true, json: async () => ({ ...rig, editable: false }) } as Response;
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.startsWith('/api/rig/options')) {
+          return { ok: true, json: async () => ({ ...options, editable: false }) } as Response;
+        }
+        return { ok: true, json: async () => ({ ...rig, editable: false }) } as Response;
+      }),
+    );
     show('#/admin/devices');
     await waitFor(() => expect(screen.getByText(/Read only/)).toBeTruthy());
     expect((screen.getByLabelText('Instrument 1 id') as HTMLInputElement).disabled).toBe(true);
@@ -378,8 +415,9 @@ describe('devices', () => {
     expect(value('Instrument 3 DMX address')).toBe('1');
     expect(value('Instrument 3 mode')).toBe('rgb');
 
-    fireEvent.change(screen.getByLabelText('Instrument 3 address'),
-                     { target: { value: '192.168.1.145' } });
+    fireEvent.change(screen.getByLabelText('Instrument 3 address'), {
+      target: { value: '192.168.1.145' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save the rig' }));
     await waitFor(() => expect(saves).toHaveLength(1));
 
@@ -401,8 +439,11 @@ describe('devices', () => {
   it('offers the rigs on the shelf, with the one in use selected', async () => {
     await devices();
     const picker = screen.getByLabelText('Rig in use') as HTMLSelectElement;
-    expect([...picker.querySelectorAll('option')].map((o) => o.value))
-      .toEqual(['bench.toml', 'demo.toml', 'room.toml']);
+    expect([...picker.querySelectorAll('option')].map((o) => o.value)).toEqual([
+      'bench.toml',
+      'demo.toml',
+      'room.toml',
+    ]);
     expect(picker.value).toBe('bench.toml');
   });
 
@@ -411,8 +452,8 @@ describe('devices', () => {
     fireEvent.change(screen.getByLabelText('Rig in use'), { target: { value: 'room.toml' } });
     await waitFor(() => expect(chosen).toEqual(['room.toml']));
     await waitFor(() =>
-      expect((screen.getByLabelText('Rig in use') as HTMLSelectElement).value)
-        .toBe('room.toml'));
+      expect((screen.getByLabelText('Rig in use') as HTMLSelectElement).value).toBe('room.toml'),
+    );
   });
 
   it('will not switch away from unsaved edits', async () => {
@@ -420,21 +461,28 @@ describe('devices', () => {
      * a word. Blocked rather than warned about: there is nowhere to put the
      * warning that is harder to miss than the control being unavailable. */
     await devices();
-    fireEvent.change(screen.getByLabelText('Instrument 2 address'),
-                     { target: { value: '10.0.0.5:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 2 address'), {
+      target: { value: '10.0.0.5:5570' },
+    });
     expect((screen.getByLabelText('Rig in use') as HTMLSelectElement).disabled).toBe(true);
   });
 
   it('has no picker when there is only one rig', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url.startsWith('/api/rigs')) {
-        return { ok: true, json: async () => ({ shelf: false, current: 'rig.toml', rigs: [] }) } as Response;
-      }
-      if (url.startsWith('/api/rig/options')) {
-        return { ok: true, json: async () => options } as Response;
-      }
-      return { ok: true, json: async () => rig } as Response;
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.startsWith('/api/rigs')) {
+          return {
+            ok: true,
+            json: async () => ({ shelf: false, current: 'rig.toml', rigs: [] }),
+          } as Response;
+        }
+        if (url.startsWith('/api/rig/options')) {
+          return { ok: true, json: async () => options } as Response;
+        }
+        return { ok: true, json: async () => rig } as Response;
+      }),
+    );
     await devices();
     expect(screen.queryByLabelText('Rig in use')).toBeNull();
   });
@@ -488,7 +536,9 @@ describe('the top bar', () => {
     render(<Nav route={parseRoute('#/admin/firmware')} />);
     const admin = screen.getByRole('link', { name: 'Admin' });
     expect(admin.classList.contains('is-current')).toBe(true);
-    expect(screen.getByRole('link', { name: 'Studio' }).classList.contains('is-current')).toBe(false);
+    expect(screen.getByRole('link', { name: 'Studio' }).classList.contains('is-current')).toBe(
+      false,
+    );
   });
 
   it('gets back to the studio with a hash the router reads as home', () => {

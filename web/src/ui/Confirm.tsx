@@ -14,8 +14,14 @@
 
 import { useCallback, useState } from 'react';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from './shad/alert-dialog';
 
 export interface Asking {
@@ -41,20 +47,22 @@ export function Confirm({ asking, close }: { asking: Asking | null; close: () =>
   return (
     <AlertDialog
       open={asking !== null}
-      onOpenChange={(open) => { if (!open) close(); }}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
     >
       {asking && (
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{asking.title}</AlertDialogTitle>
-            {asking.detail && (
-              <AlertDialogDescription>{asking.detail}</AlertDialogDescription>
-            )}
+            {asking.detail && <AlertDialogDescription>{asking.detail}</AlertDialogDescription>}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { void asking.go(); }}
+              onClick={() => {
+                void asking.go();
+              }}
             >
               {asking.verb}
             </AlertDialogAction>

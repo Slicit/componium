@@ -56,8 +56,11 @@ const done = (job?: Job) => (job?.chunks ?? []).filter((c) => c.state === 'done'
 
 /** Is there finished work here worth continuing from. */
 const resumable = (job?: Job) =>
-  !!job && job.state !== 'running' && job.state !== 'queued' && done(job) > 0
-  && done(job) < (job.chunks?.length ?? 0);
+  !!job &&
+  job.state !== 'running' &&
+  job.state !== 'queued' &&
+  done(job) > 0 &&
+  done(job) < (job.chunks?.length ?? 0);
 
 interface Entry {
   film: string;
@@ -93,8 +96,7 @@ const busy = (e: Entry) =>
 
 const megabytes = (b: number) => (b / (1024 * 1024)).toFixed(0) + ' MB';
 
-const clock = (s: number) =>
-  Math.floor(s / 60) + 'm' + String(Math.round(s % 60)).padStart(2, '0');
+const clock = (s: number) => Math.floor(s / 60) + 'm' + String(Math.round(s % 60)).padStart(2, '0');
 
 export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
   const [data, setData] = useState<View | null>(null);
@@ -127,7 +129,11 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
     }
   });
   useEffect(() => {
-    try { localStorage.setItem('componium.libraryPage', String(size)); } catch { /* private mode */ }
+    try {
+      localStorage.setItem('componium.libraryPage', String(size));
+    } catch {
+      /* private mode */
+    }
   }, [size]);
 
   const refresh = useCallback(async () => {
@@ -138,7 +144,9 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
     return next;
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   /* Poll only while something is actually running. A studio sitting idle
    * should not be asking the server a question every second forever. */
@@ -171,7 +179,10 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
         setUploading({ name: f.name, percent: Math.round((e.loaded / e.total) * 100) });
       }
     };
-    xhr.onload = () => { setUploading(null); void refresh(); };
+    xhr.onload = () => {
+      setUploading(null);
+      void refresh();
+    };
     xhr.onerror = () => setUploading(null);
     xhr.send(f);
   };
@@ -183,10 +194,14 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
     const n = (e.job?.chunks ?? []).filter((c) => c.state === 'done').length;
     confirm.ask({
       title: 'Analyse ' + e.film + ' again from the start?',
-      detail: n > 0
-        ? 'This throws away ' + n + ' finished piece' + (n === 1 ? '' : 's')
-          + ', which nothing else in the studio can get back.'
-        : 'Nothing has finished yet, so nothing is lost.',
+      detail:
+        n > 0
+          ? 'This throws away ' +
+            n +
+            ' finished piece' +
+            (n === 1 ? '' : 's') +
+            ', which nothing else in the studio can get back.'
+          : 'Nothing has finished yet, so nothing is lost.',
       verb: n > 0 ? 'Throw away and restart' : 'Restart',
       go: async () => {
         await post('/api/build?reset=1&file=' + encodeURIComponent(e.film));
@@ -211,20 +226,30 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
         : 'This cannot be undone.',
       verb: 'Delete',
       go: async () => {
-        await fetch('/api/delete?file=' + encodeURIComponent(e.film)
-          + (e.hasScore ? '&score=1' : ''), { method: 'DELETE' });
+        await fetch(
+          '/api/delete?file=' + encodeURIComponent(e.film) + (e.hasScore ? '&score=1' : ''),
+          { method: 'DELETE' },
+        );
         await refresh();
       },
     });
   };
 
   const shown = useMemo(
-    () => paginate(matches(data?.entries ?? [], query, (e) => e.film), page, size),
-    [data, query, page, size]);
+    () =>
+      paginate(
+        matches(data?.entries ?? [], query, (e) => e.film),
+        page,
+        size,
+      ),
+    [data, query, page, size],
+  );
 
   /* Back to the first page whenever the filter changes: staying on page three
    * of a search that now matches two things shows nothing at all. */
-  useEffect(() => { setPage(1); }, [query, size]);
+  useEffect(() => {
+    setPage(1);
+  }, [query, size]);
 
   if (!data) return <p className="dim small">loading the library…</p>;
 
@@ -236,12 +261,15 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
           film={reading}
           fps={props.fps}
           onClose={() => setReading(null)}
-          onLookAgain={() => { void lookAgain(reading); }}
+          onLookAgain={() => {
+            void lookAgain(reading);
+          }}
         />
       )}
       <div className="lib-head">
         <span className="dim small">
-          {data.canBuild ? 'scores in ' + (data.scores || '(none)')
+          {data.canBuild
+            ? 'scores in ' + (data.scores || '(none)')
             : 'no composer found, so films cannot be analysed here'}
           {data.free > 0 && '  ·  ' + megabytes(data.free) + ' free'}
         </span>
@@ -249,7 +277,9 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
           {data.canUpload && (
             <>
               <input
-                ref={file} type="file" hidden
+                ref={file}
+                type="file"
+                hidden
                 accept="video/*,.mkv,.mp4,.webm,.mov,.m4v"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -264,10 +294,15 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
             <button
               onClick={() => post('/api/prepare?all=1')}
               title="Make a browser-playable copy of every film that has not got one"
-            >Prepare all</button>
+            >
+              Prepare all
+            </button>
           )}
           {data.canBuild && (
-            <button onClick={() => post('/api/build?all=1')} title="Queue every film, one at a time">
+            <button
+              onClick={() => post('/api/build?all=1')}
+              title="Queue every film, one at a time"
+            >
               Rebuild all
             </button>
           )}
@@ -286,7 +321,9 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
         </label>
         <span className="dim small lib-count">
           {shown.total === 0
-            ? (query ? 'nothing matches' : 'no films yet')
+            ? query
+              ? 'nothing matches'
+              : 'no films yet'
             : shown.pages > 1
               ? `${shown.first}–${shown.last} of ${shown.total}`
               : `${shown.total} film${shown.total === 1 ? '' : 's'}`}
@@ -297,7 +334,11 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
           aria-label="Films per page"
           title="How many films to show at once"
         >
-          {PAGE_SIZES.map((n) => <option key={n} value={n}>{n} per page</option>)}
+          {PAGE_SIZES.map((n) => (
+            <option key={n} value={n}>
+              {n} per page
+            </option>
+          ))}
           <option value={ALL}>show all</option>
         </select>
       </div>
@@ -339,10 +380,13 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
             <span className="slot slot-get">
               {e.hasScore && (
                 <a
-                  className="adm-link" download
+                  className="adm-link"
+                  download
                   href={'/api/score/export?film=' + encodeURIComponent(e.film)}
                   title="Download this score, to keep or to carry to another machine"
-                >Get</a>
+                >
+                  Get
+                </a>
               )}
             </span>
             <span className="slot slot-build">
@@ -350,33 +394,45 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                 <button
                   disabled={!!(e.job && (e.job.state === 'queued' || e.job.state === 'running'))}
                   onClick={() => post('/api/build?file=' + encodeURIComponent(e.film))}
-                  title={resumable(e.job)
-                    ? `Continue from piece ${done(e.job)} of ${e.job!.chunks!.length}. ` +
-                      'The finished pieces are kept.'
-                    : 'Analyse the whole film, in pieces that can be resumed.'
-                      + (e.seen
-                        ? ' What the model already said is reused — open vision'
-                          + ' to read it, or to ask it to look again.'
-                        : '')}
-                >{resumable(e.job) ? 'Resume' : e.hasScore ? 'Rebuild' : 'Analyse'}</button>
+                  title={
+                    resumable(e.job)
+                      ? `Continue from piece ${done(e.job)} of ${e.job!.chunks!.length}. ` +
+                        'The finished pieces are kept.'
+                      : 'Analyse the whole film, in pieces that can be resumed.' +
+                        (e.seen
+                          ? ' What the model already said is reused — open vision' +
+                            ' to read it, or to ask it to look again.'
+                          : '')
+                  }
+                >
+                  {resumable(e.job) ? 'Resume' : e.hasScore ? 'Rebuild' : 'Analyse'}
+                </button>
               )}
             </span>
             <span className="slot slot-reset">
-              {data.canBuild && (e.job?.chunks?.length ?? 0) > 0
-                && e.job?.state !== 'running' && e.job?.state !== 'queued' && (
-                <button
-                  onClick={() => reset(e)}
-                  title="Throw away every finished piece and analyse the film again from nothing"
-                >Reset</button>
-              )}
+              {data.canBuild &&
+                (e.job?.chunks?.length ?? 0) > 0 &&
+                e.job?.state !== 'running' &&
+                e.job?.state !== 'queued' && (
+                  <button
+                    onClick={() => reset(e)}
+                    title="Throw away every finished piece and analyse the film again from nothing"
+                  >
+                    Reset
+                  </button>
+                )}
             </span>
             <span className="slot slot-prepare">
               {data.canPrepare && !e.preview && (
                 <button
-                  disabled={!!(e.prepare && (e.prepare.state === 'queued' || e.prepare.state === 'running'))}
+                  disabled={
+                    !!(e.prepare && (e.prepare.state === 'queued' || e.prepare.state === 'running'))
+                  }
                   onClick={() => post('/api/prepare?file=' + encodeURIComponent(e.film))}
                   title="Make a copy this browser can play. Usually quick: the video is only re-encoded when it has to be."
-                >Prepare</button>
+                >
+                  Prepare
+                </button>
               )}
             </span>
             <span className="slot slot-vision">
@@ -384,7 +440,9 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                 <button
                   onClick={() => setReading(e.film)}
                   title="Read what the model said about this film, and ask it to look again"
-                >vision</button>
+                >
+                  vision
+                </button>
               )}
             </span>
             <span className="slot slot-builds">
@@ -393,7 +451,11 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                   onClick={() => setOpen(open === e.film ? null : e.film)}
                   aria-expanded={open === e.film}
                   title="Every build of this film, and what each step cost"
-                >{open === e.film ? 'hide' : `builds${e.builds?.length ? ' ' + e.builds.length : ''}`}</button>
+                >
+                  {open === e.film
+                    ? 'hide'
+                    : `builds${e.builds?.length ? ' ' + e.builds.length : ''}`}
+                </button>
               )}
             </span>
             <span className="slot slot-icon">
@@ -403,7 +465,9 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                   onClick={() => remove(e)}
                   title={'Delete ' + e.film}
                   aria-label={'Delete ' + e.film}
-                ><Icon name="trash" /></button>
+                >
+                  <Icon name="trash" />
+                </button>
               )}
             </span>
           </div>
@@ -425,13 +489,17 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                   <div className="build-head">
                     <strong>{b.label}</strong>
                     <span className="dim small">{b.note}</span>
-                    {b.seconds ? <span className="build-took small">{howLong(b.seconds)}</span> : null}
+                    {b.seconds ? (
+                      <span className="build-took small">{howLong(b.seconds)}</span>
+                    ) : null}
                   </div>
-                  {b.steps?.length
-                    ? <Steps steps={b.steps} total={b.seconds} />
-                    : <p className="dim small build-none">
-                        Made before the steps were recorded, so there is nothing to show.
-                      </p>}
+                  {b.steps?.length ? (
+                    <Steps steps={b.steps} total={b.seconds} />
+                  ) : (
+                    <p className="dim small build-none">
+                      Made before the steps were recorded, so there is nothing to show.
+                    </p>
+                  )}
                 </div>
               ))}
               {!(e.builds ?? []).length && e.job?.state !== 'running' && (
@@ -444,9 +512,7 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
 
       {shown.total === 0 && (
         <p className="dim small lib-empty">
-          {query
-            ? `Nothing matches “${query}”.`
-            : 'No films here yet. Upload one to get started.'}
+          {query ? `Nothing matches “${query}”.` : 'No films here yet. Upload one to get started.'}
         </p>
       )}
 
@@ -458,15 +524,21 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
             aria-label="Previous page"
             title="Previous page"
             className="icon-btn"
-          ><Icon name="left" /></button>
-          <span className="dim small">page {shown.page} of {shown.pages}</span>
+          >
+            <Icon name="left" />
+          </button>
+          <span className="dim small">
+            page {shown.page} of {shown.pages}
+          </span>
           <button
             onClick={() => setPage((n) => n + 1)}
             disabled={shown.page >= shown.pages}
             aria-label="Next page"
             title="Next page"
             className="icon-btn"
-          ><Icon name="right" /></button>
+          >
+            <Icon name="right" />
+          </button>
         </div>
       )}
     </div>
@@ -478,10 +550,7 @@ function status(e: Entry) {
   if (j && (j.state === 'queued' || j.state === 'running')) {
     return (
       <>
-        <Progress
-          value={j.progress}
-          label={j.state === 'queued' ? 'queued' : j.label}
-        />
+        <Progress value={j.progress} label={j.state === 'queued' ? 'queued' : j.label} />
       </>
     );
   }
@@ -515,15 +584,20 @@ function status(e: Entry) {
   }
 
   const prep = e.prepare;
-  const note = prep && (prep.state === 'queued' || prep.state === 'running')
-    ? ` · preview ${Math.round((prep.progress ?? 0) * 100)}%`
-    : prep?.state === 'failed' ? ' · preview failed'
-      : e.preview ? ' · browser copy ready' : '';
+  const note =
+    prep && (prep.state === 'queued' || prep.state === 'running')
+      ? ` · preview ${Math.round((prep.progress ?? 0) * 100)}%`
+      : prep?.state === 'failed'
+        ? ' · preview failed'
+        : e.preview
+          ? ' · browser copy ready'
+          : '';
 
   if (e.hasScore) {
     return (
       <span className="dim small">
-        {e.tracks} tracks, {e.cues} cues, {clock(e.duration ?? 0)}{note}
+        {e.tracks} tracks, {e.cues} cues, {clock(e.duration ?? 0)}
+        {note}
       </span>
     );
   }

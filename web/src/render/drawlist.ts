@@ -16,7 +16,10 @@ export type Align = 'left' | 'center' | 'right';
 
 export interface Rect {
   k: 'rect';
-  x: number; y: number; w: number; h: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   fill?: string;
   stroke?: string;
   lineWidth?: number;
@@ -28,7 +31,10 @@ export interface Rect {
 
 export interface Line {
   k: 'line';
-  x1: number; y1: number; x2: number; y2: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
   stroke: string;
   lineWidth?: number;
   dash?: number[];
@@ -49,7 +55,9 @@ export interface Path {
 
 export interface Dot {
   k: 'dot';
-  x: number; y: number; r: number;
+  x: number;
+  y: number;
+  r: number;
   fill?: string;
   stroke?: string;
   lineWidth?: number;
@@ -57,7 +65,8 @@ export interface Dot {
 
 export interface Text {
   k: 'text';
-  x: number; y: number;
+  x: number;
+  y: number;
   s: string;
   fill: string;
   align?: Align;
@@ -70,7 +79,10 @@ export interface Text {
 /** A horizontal gradient strip: the collapsed colour track. */
 export interface Ribbon {
   k: 'ribbon';
-  x: number; y: number; w: number; h: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   stops: Array<{ at: number; colour: string }>;
 }
 
@@ -87,14 +99,28 @@ export class DrawList {
     return this;
   }
 
-  rect(r: Omit<Rect, 'k'>): this { return this.push({ k: 'rect', ...r }); }
-  line(l: Omit<Line, 'k'>): this { return this.push({ k: 'line', ...l }); }
-  path(p: Omit<Path, 'k'>): this { return this.push({ k: 'path', ...p }); }
-  dot(d: Omit<Dot, 'k'>): this { return this.push({ k: 'dot', ...d }); }
-  text(t: Omit<Text, 'k'>): this { return this.push({ k: 'text', ...t }); }
-  ribbon(r: Omit<Ribbon, 'k'>): this { return this.push({ k: 'ribbon', ...r }); }
+  rect(r: Omit<Rect, 'k'>): this {
+    return this.push({ k: 'rect', ...r });
+  }
+  line(l: Omit<Line, 'k'>): this {
+    return this.push({ k: 'line', ...l });
+  }
+  path(p: Omit<Path, 'k'>): this {
+    return this.push({ k: 'path', ...p });
+  }
+  dot(d: Omit<Dot, 'k'>): this {
+    return this.push({ k: 'dot', ...d });
+  }
+  text(t: Omit<Text, 'k'>): this {
+    return this.push({ k: 'text', ...t });
+  }
+  ribbon(r: Omit<Ribbon, 'k'>): this {
+    return this.push({ k: 'ribbon', ...r });
+  }
 
-  get length(): number { return this.items.length; }
+  get length(): number {
+    return this.items.length;
+  }
 
   of<K extends Prim['k']>(kind: K): Extract<Prim, { k: K }>[] {
     return this.items.filter((p) => p.k === kind) as Extract<Prim, { k: K }>[];
@@ -102,7 +128,12 @@ export class DrawList {
 }
 
 /** Execute a draw list against a 2D context. The only part that needs a canvas. */
-export function paint(ctx: CanvasRenderingContext2D, list: DrawList, fontStack: string, monoStack: string): void {
+export function paint(
+  ctx: CanvasRenderingContext2D,
+  list: DrawList,
+  fontStack: string,
+  monoStack: string,
+): void {
   for (const p of list.items) {
     ctx.save();
     if ('alpha' in p && typeof p.alpha === 'number') ctx.globalAlpha = p.alpha;
@@ -116,7 +147,10 @@ export function paint(ctx: CanvasRenderingContext2D, list: DrawList, fontStack: 
           ctx.beginPath();
           ctx.rect(p.x, p.y, p.w, p.h);
         }
-        if (p.fill) { ctx.fillStyle = p.fill; ctx.fill(); }
+        if (p.fill) {
+          ctx.fillStyle = p.fill;
+          ctx.fill();
+        }
         if (p.hatch) {
           ctx.save();
           ctx.clip();
@@ -178,7 +212,10 @@ export function paint(ctx: CanvasRenderingContext2D, list: DrawList, fontStack: 
       case 'dot': {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        if (p.fill) { ctx.fillStyle = p.fill; ctx.fill(); }
+        if (p.fill) {
+          ctx.fillStyle = p.fill;
+          ctx.fill();
+        }
         if (p.stroke) {
           ctx.strokeStyle = p.stroke;
           ctx.lineWidth = p.lineWidth ?? 1.4;

@@ -22,7 +22,8 @@ import { join } from 'node:path';
 
 const CSS = readFileSync(
   join(new URL('../..', import.meta.url).pathname.replace(/\/$/, ''), 'src/index.css'),
-  'utf8');
+  'utf8',
+);
 
 const SHIPPED: Record<string, string> = {
   ground: '#0d1015',
@@ -66,7 +67,8 @@ const ALIASES: Record<string, string> = {
 
 function tripletOf(name: string): [number, number, number] {
   const found = CSS.match(
-    new RegExp('--' + name + '-hsl:\\s*([\\d.]+)\\s+([\\d.]+)%\\s+([\\d.]+)%\\s*;'));
+    new RegExp('--' + name + '-hsl:\\s*([\\d.]+)\\s+([\\d.]+)%\\s+([\\d.]+)%\\s*;'),
+  );
   if (!found) throw new Error('no --' + name + '-hsl in index.css');
   return [Number(found[1]), Number(found[2]), Number(found[3])];
 }
@@ -80,9 +82,17 @@ function hexOf([h, s, l]: [number, number, number]): string {
   const m = lig - c / 2;
   const sixth = Math.floor((((h % 360) + 360) % 360) / 60);
   const [r, g, b] = [
-    [c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x],
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
   ][sixth];
-  const byte = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  const byte = (v: number) =>
+    Math.round((v + m) * 255)
+      .toString(16)
+      .padStart(2, '0');
   return '#' + byte(r) + byte(g) + byte(b);
 }
 

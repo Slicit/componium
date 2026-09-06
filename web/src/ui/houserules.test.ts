@@ -92,9 +92,13 @@ function tags(text: string, name: string): Tag[] {
  * between them should not find the hierarchy shifting under them.
  * ui/admin/Boards.tsx is deliberately not here. It is a section used inside a
  * page and starts at h3 because that is what it is. */
-const PAGES = ['ui/admin/Rigs.tsx', 'ui/admin/Devices.tsx',
-  'ui/admin/Nodes.tsx', 'ui/admin/Firmware.tsx',
-  'ui/admin/RoomDefaults.tsx'];
+const PAGES = [
+  'ui/admin/Rigs.tsx',
+  'ui/admin/Devices.tsx',
+  'ui/admin/Nodes.tsx',
+  'ui/admin/Firmware.tsx',
+  'ui/admin/RoomDefaults.tsx',
+];
 
 describe('buttons', () => {
   it('an icon button says what it does', () => {
@@ -178,7 +182,8 @@ describe('components from a library', () => {
      * anywhere else is not generated and does nothing at all. Caught here
      * rather than left to be discovered as an element that simply ignores
      * the padding it was given. */
-    const utility = /className="[^"]*\b(?:flex|grid|p-\d|px-\d|py-\d|mt-\d|gap-\d|text-(?:sm|lg|xs)|rounded-(?:sm|md|lg)|bg-(?:card|popover|background|primary|secondary|muted|destructive))\b/;
+    const utility =
+      /className="[^"]*\b(?:flex|grid|p-\d|px-\d|py-\d|mt-\d|gap-\d|text-(?:sm|lg|xs)|rounded-(?:sm|md|lg)|bg-(?:card|popover|background|primary|secondary|muted|destructive))\b/;
     const bad: string[] = [];
     for (const file of files) {
       if (utility.test(file.text)) bad.push(`${file.name} uses a Tailwind utility`);

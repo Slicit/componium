@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-  DEFAULT_VIEWPORT, MAX_VIEWPORTS, normalise, normaliseCamera, normaliseList,
-  cleanName, sameLayout, put, drop, type Viewport,
+  DEFAULT_VIEWPORT,
+  MAX_VIEWPORTS,
+  normalise,
+  normaliseCamera,
+  normaliseList,
+  cleanName,
+  sameLayout,
+  put,
+  drop,
+  type Viewport,
 } from './viewport';
 
 const view = (over: Partial<Viewport> = {}): Viewport => ({ ...DEFAULT_VIEWPORT, ...over });
@@ -30,8 +38,10 @@ describe('normalise', () => {
 
 describe('normaliseCamera', () => {
   it('takes a complete view', () => {
-    expect(normaliseCamera({ pos: [1, 2, 3], target: [0, 1, 2] }))
-      .toEqual({ pos: [1, 2, 3], target: [0, 1, 2] });
+    expect(normaliseCamera({ pos: [1, 2, 3], target: [0, 1, 2] })).toEqual({
+      pos: [1, 2, 3],
+      target: [0, 1, 2],
+    });
   });
 
   it('refuses half a view rather than aiming at the floor', () => {
@@ -101,8 +111,12 @@ describe('drop', () => {
 
 describe('normaliseList', () => {
   it('drops rows with no usable name', () => {
-    expect(normaliseList([{ name: '', viewport: {} }, { name: 'ok', viewport: {} }]))
-      .toHaveLength(1);
+    expect(
+      normaliseList([
+        { name: '', viewport: {} },
+        { name: 'ok', viewport: {} },
+      ]),
+    ).toHaveLength(1);
   });
   it('drops a duplicate name rather than keeping two rows that look alike', () => {
     const out = normaliseList([

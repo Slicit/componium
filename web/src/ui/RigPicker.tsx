@@ -20,7 +20,10 @@ interface Shelf {
 
 const plain = (file: string) => file.replace(/\.toml$/, '');
 
-export function RigPicker({ armed, onChanged }: {
+export function RigPicker({
+  armed,
+  onChanged,
+}: {
   armed: boolean;
   /** Told after a switch, so the room and the devices reread what they draw. */
   onChanged: () => void;
@@ -38,15 +41,21 @@ export function RigPicker({ armed, onChanged }: {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const choose = async (file: string) => {
     if (file === shelf.current) return;
-    if (armed && !window.confirm(
-      `Switch to ${plain(file)}?\n\nThe room is live. Changing the rig stops it `
-      + `and puts every output back to safe. You can go live again on the new `
-      + `rig straight after.`
-    )) return;
+    if (
+      armed &&
+      !window.confirm(
+        `Switch to ${plain(file)}?\n\nThe room is live. Changing the rig stops it ` +
+          `and puts every output back to safe. You can go live again on the new ` +
+          `rig straight after.`,
+      )
+    )
+      return;
 
     setBusy(true);
     try {
@@ -75,9 +84,13 @@ export function RigPicker({ armed, onChanged }: {
   if (!shelf.shelf || shelf.rigs.length < 2) return null;
 
   return (
-    <label className="rig-pick" title={
-      'Which rig this studio drives. Changing it stops a live room and puts '
-      + 'every output back to safe.'}>
+    <label
+      className="rig-pick"
+      title={
+        'Which rig this studio drives. Changing it stops a live room and puts ' +
+        'every output back to safe.'
+      }
+    >
       <span className="rig-pick-name">rig</span>
       <select
         value={shelf.current}
@@ -86,7 +99,9 @@ export function RigPicker({ armed, onChanged }: {
         onChange={(e) => void choose(e.target.value)}
       >
         {shelf.rigs.map((r) => (
-          <option key={r} value={r}>{plain(r)}</option>
+          <option key={r} value={r}>
+            {plain(r)}
+          </option>
         ))}
       </select>
     </label>

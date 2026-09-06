@@ -72,9 +72,12 @@ export function Overview(props: {
         const x1 = at(seg.a);
         const x2 = Math.max(x1 + 1, at(seg.b));
         list.rect({
-          x: x1, y: y + bandH * (1 - seg.level) * 0.75,
-          w: x2 - x1, h: Math.max(1.5, bandH * (0.25 + seg.level * 0.75) - 1),
-          fill: band.colour, alpha: 0.85,
+          x: x1,
+          y: y + bandH * (1 - seg.level) * 0.75,
+          w: x2 - x1,
+          h: Math.max(1.5, bandH * (0.25 + seg.level * 0.75) - 1),
+          fill: band.colour,
+          alpha: 0.85,
         });
       }
     });
@@ -87,8 +90,13 @@ export function Overview(props: {
     list.rect({ x: 0, y: 0, w: Math.max(0, x1), h: HEIGHT, fill: '#0d1015', alpha: 0.66 });
     list.rect({ x: x2, y: 0, w: Math.max(0, w - x2), h: HEIGHT, fill: '#0d1015', alpha: 0.66 });
     list.rect({
-      x: x1, y: 0.5, w: Math.max(2, x2 - x1), h: HEIGHT - 1,
-      stroke: theme.ink, lineWidth: 1.5, radius: 2,
+      x: x1,
+      y: 0.5,
+      w: Math.max(2, x2 - x1),
+      h: HEIGHT - 1,
+      stroke: theme.ink,
+      lineWidth: 1.5,
+      radius: 2,
     });
     /* Grips, so it looks like something you can take hold of. */
     for (const gx of [x1, x2]) {
@@ -96,12 +104,22 @@ export function Overview(props: {
     }
 
     const px = at(time);
-    list.line({ x1: px, y1: 0, x2: px, y2: HEIGHT, stroke: theme.playhead, lineWidth: 1, alpha: 0.9 });
+    list.line({
+      x1: px,
+      y1: 0,
+      x2: px,
+      y2: HEIGHT,
+      stroke: theme.playhead,
+      lineWidth: 1,
+      alpha: 0.9,
+    });
 
     paint(ctx, list, FONT, MONO);
   }, [bands, score.duration, view, time]);
 
-  useEffect(() => { draw(); });
+  useEffect(() => {
+    draw();
+  });
   useEffect(() => {
     const on = () => draw();
     window.addEventListener('resize', on);
@@ -110,43 +128,49 @@ export function Overview(props: {
 
   /* Click to jump there, drag to scrub the window along. Grabbing an edge
    * resizes instead, which is the fastest way to change zoom by a lot. */
-  const pointer = useCallback((e: React.PointerEvent) => {
-    const host = wrap.current;
-    if (!host || e.button !== 0) return;
-    const box = host.getBoundingClientRect();
-    const duration = Math.max(0.001, score.duration);
-    const toTime = (clientX: number) =>
-      ((clientX - box.left) / Math.max(1, box.width)) * duration;
+  const pointer = useCallback(
+    (e: React.PointerEvent) => {
+      const host = wrap.current;
+      if (!host || e.button !== 0) return;
+      const box = host.getBoundingClientRect();
+      const duration = Math.max(0.001, score.duration);
+      const toTime = (clientX: number) =>
+        ((clientX - box.left) / Math.max(1, box.width)) * duration;
 
-    const edgePx = 7;
-    const x1 = (view.start / duration) * box.width;
-    const x2 = (view.end / duration) * box.width;
-    const localX = e.clientX - box.left;
-    const grab: 'start' | 'end' | 'move' =
-      Math.abs(localX - x1) < edgePx ? 'start'
-        : Math.abs(localX - x2) < edgePx ? 'end'
-          : 'move';
+      const edgePx = 7;
+      const x1 = (view.start / duration) * box.width;
+      const x2 = (view.end / duration) * box.width;
+      const localX = e.clientX - box.left;
+      const grab: 'start' | 'end' | 'move' =
+        Math.abs(localX - x1) < edgePx ? 'start' : Math.abs(localX - x2) < edgePx ? 'end' : 'move';
 
-    if (grab === 'move') view.set(toTime(e.clientX) - view.span / 2, view.span);
-    onView();
-
-    const move = (ev: PointerEvent) => {
-      const t = toTime(ev.clientX);
-      if (grab === 'move') view.set(t - view.span / 2, view.span);
-      else if (grab === 'start') view.set(t, view.end - t);
-      else view.set(view.start, t - view.start);
+      if (grab === 'move') view.set(toTime(e.clientX) - view.span / 2, view.span);
       onView();
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  }, [view, score.duration, onView]);
+
+      const move = (ev: PointerEvent) => {
+        const t = toTime(ev.clientX);
+        if (grab === 'move') view.set(t - view.span / 2, view.span);
+        else if (grab === 'start') view.set(t, view.end - t);
+        else view.set(view.start, t - view.start);
+        onView();
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    },
+    [view, score.duration, onView],
+  );
 
   return (
-    <div className="tl-overview" ref={wrap} onPointerDown={pointer} title="The whole film. Drag the box to move, its edges to zoom.">
+    <div
+      className="tl-overview"
+      ref={wrap}
+      onPointerDown={pointer}
+      title="The whole film. Drag the box to move, its edges to zoom."
+    >
       <canvas ref={canvas} />
     </div>
   );
@@ -195,10 +219,16 @@ function buildBands(score: Score, columns = 480): Band[] {
     const segments: Band['segments'] = [];
     let c = 0;
     while (c < columns) {
-      if (level[c] <= 0) { c++; continue; }
+      if (level[c] <= 0) {
+        c++;
+        continue;
+      }
       const start = c;
       let peak = 0;
-      while (c < columns && level[c] > 0) { peak = Math.max(peak, level[c]); c++; }
+      while (c < columns && level[c] > 0) {
+        peak = Math.max(peak, level[c]);
+        c++;
+      }
       segments.push({
         a: (start / columns) * duration,
         b: (c / columns) * duration,

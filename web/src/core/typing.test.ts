@@ -15,7 +15,13 @@ describe('knowing when somebody is typing', () => {
     const input = document.createElement('input');
     document.body.append(input);
     let seen = false;
-    window.addEventListener('keydown', (e) => { seen = isTyping(e); }, { once: true });
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        seen = isTyping(e);
+      },
+      { once: true },
+    );
     pressOn(input);
     expect(seen).toBe(true);
   });
@@ -24,7 +30,13 @@ describe('knowing when somebody is typing', () => {
     const canvas = document.createElement('canvas');
     document.body.append(canvas);
     let seen = true;
-    window.addEventListener('keydown', (e) => { seen = isTyping(e); }, { once: true });
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        seen = isTyping(e);
+      },
+      { once: true },
+    );
     pressOn(canvas);
     expect(seen).toBe(false);
   });
@@ -43,10 +55,14 @@ describe('knowing when somebody is typing', () => {
 
     let target = '';
     let seen = false;
-    window.addEventListener('keydown', (e) => {
-      target = (e.target as HTMLElement).tagName;
-      seen = isTyping(e);
-    }, { once: true });
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        target = (e.target as HTMLElement).tagName;
+        seen = isTyping(e);
+      },
+      { once: true },
+    );
     pressOn(input);
 
     // The retargeting is real, and is why the old guard could not work.
@@ -60,7 +76,13 @@ describe('knowing when somebody is typing', () => {
     Object.defineProperty(div, 'isContentEditable', { value: true });
     document.body.append(div);
     let seen = false;
-    window.addEventListener('keydown', (e) => { seen = isTyping(e); }, { once: true });
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        seen = isTyping(e);
+      },
+      { once: true },
+    );
     pressOn(div);
     expect(seen).toBe(true);
   });

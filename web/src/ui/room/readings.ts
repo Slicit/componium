@@ -43,14 +43,14 @@ export function deviceState(
        * during a red scene previews red rather than white. With no cue there
        * is nothing to borrow and plain white at the forced level is the honest
        * default. */
-      params: (s?.active && s.params) ? s.params : { intensity: 1 },
+      params: s?.active && s.params ? s.params : { intensity: 1 },
       muted: off,
       forced: true,
     };
   }
 
   return {
-    level: (!off && s?.active) ? s.level : 0,
+    level: !off && s?.active ? s.level : 0,
     params: s?.params ?? {},
     muted: off,
     forced: false,
@@ -58,8 +58,12 @@ export function deviceState(
 }
 
 export interface Pose {
-  surge: number; sway: number; heave: number;
-  roll: number; pitch: number; yaw: number;
+  surge: number;
+  sway: number;
+  heave: number;
+  roll: number;
+  pitch: number;
+  yaw: number;
 }
 
 /**
@@ -87,9 +91,11 @@ export function seatPose(
     const level = forced!.get(id)!;
     const t = n(nowMs) / 1000;
     return {
-      surge: 0, sway: 0, yaw: 0,
+      surge: 0,
+      sway: 0,
+      yaw: 0,
       heave: level * 0.34 * Math.sin(t * 2.3),
-      roll: level * 0.20 * Math.sin(t * 1.7),
+      roll: level * 0.2 * Math.sin(t * 1.7),
       pitch: level * 0.14 * Math.sin(t * 3.1),
     };
   }
@@ -97,8 +103,12 @@ export function seatPose(
   const motion = state['motion.platform'] ?? findKind(state, 'motion');
   const p = motion?.params ?? {};
   return {
-    surge: n(p.surge), sway: n(p.sway), heave: n(p.heave),
-    roll: n(p.roll), pitch: n(p.pitch), yaw: n(p.yaw),
+    surge: n(p.surge),
+    sway: n(p.sway),
+    heave: n(p.heave),
+    roll: n(p.roll),
+    pitch: n(p.pitch),
+    yaw: n(p.yaw),
   };
 }
 

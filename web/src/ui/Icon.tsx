@@ -16,8 +16,7 @@
  * worth a dependency, and an icon font that fails to load leaves squares.
  */
 
-export type IconName =
-  | 'trash' | 'save' | 'edit' | 'search' | 'left' | 'right' | 'play' | 'stop';
+export type IconName = 'trash' | 'save' | 'edit' | 'search' | 'left' | 'right' | 'play' | 'stop';
 
 const paths: Record<IconName, JSX.Element> = {
   /* A bin with a lid and two staves. */

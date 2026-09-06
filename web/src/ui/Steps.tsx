@@ -50,8 +50,9 @@ export function Steps(props: { steps: Step[]; total?: number }) {
       {steps.map((s, i) => (
         <div
           key={i}
-          className={'step' + (s.state === 'failed' ? ' failed' : '')
-            + (s.seconds ? '' : ' running')}
+          className={
+            'step' + (s.state === 'failed' ? ' failed' : '') + (s.seconds ? '' : ' running')
+          }
           title={s.note || undefined}
         >
           <span className="step-at dim small">{began(s.started)}</span>
@@ -62,26 +63,26 @@ export function Steps(props: { steps: Step[]; total?: number }) {
               style={{ width: Math.max(2, ((s.seconds || 0) / longest) * 100) + '%' }}
             />
           </span>
-          <span className="step-secs dim small">
-            {s.seconds ? howLong(s.seconds) : '…'}
-          </span>
+          <span className="step-secs dim small">{s.seconds ? howLong(s.seconds) : '…'}</span>
         </div>
       ))}
       {total > 0 && (
         <div className="step step-total">
           <span className="step-at" />
-          <span className="step-name dim small">
-            {steps.length} steps
-          </span>
+          <span className="step-name dim small">{steps.length} steps</span>
           <span className="step-bar" />
           <span className="step-secs small">{howLong(total)}</span>
         </div>
       )}
       {steps.some((s) => s.note) && (
         <ul className="step-notes dim small">
-          {steps.filter((s) => s.note).map((s, i) => (
-            <li key={i}><strong>{s.name}</strong> — {s.note}</li>
-          ))}
+          {steps
+            .filter((s) => s.note)
+            .map((s, i) => (
+              <li key={i}>
+                <strong>{s.name}</strong> — {s.note}
+              </li>
+            ))}
         </ul>
       )}
     </div>

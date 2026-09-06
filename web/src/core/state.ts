@@ -16,8 +16,14 @@
 
 import { clamp01, type Seconds } from './time';
 import {
-  amplitudeOf, isHSI, valueAt, channelsOf,
-  type Params, type Rig, type Score, type Track,
+  amplitudeOf,
+  isHSI,
+  valueAt,
+  channelsOf,
+  type Params,
+  type Rig,
+  type Score,
+  type Track,
 } from './score';
 
 /**
@@ -65,7 +71,11 @@ export function evaluate(score: Score, t: Seconds, rig?: Rig | null): SceneState
       }
       const value = valueAt(points, t, channelsOf(track, rig), isHSI(track));
       out[id] = {
-        id, active: true, params: value, action: 'set', level: levelOf(value),
+        id,
+        active: true,
+        params: value,
+        action: 'set',
+        level: levelOf(value),
       };
       continue;
     }
@@ -73,8 +83,11 @@ export function evaluate(score: Score, t: Seconds, rig?: Rig | null): SceneState
     const cue = activeCue(track, t);
     if (cue) {
       out[id] = {
-        id, active: true, params: cue.params ?? {},
-        action: cue.action, level: levelOf(cue.params ?? {}),
+        id,
+        active: true,
+        params: cue.params ?? {},
+        action: cue.action,
+        level: levelOf(cue.params ?? {}),
         source: cue.source ?? '',
       };
     } else if (!(id in out)) {

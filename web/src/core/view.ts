@@ -220,9 +220,23 @@ export function ticks(view: TimeView, width: number, targetPx = 90): Tick[] {
   const fps = view.fps;
   const frame = 1 / fps;
   const ladder: Seconds[] = [
-    frame, frame * 2, frame * 5, frame * 10,
-    1, 2, 5, 10, 15, 30,
-    60, 120, 300, 600, 900, 1800, 3600,
+    frame,
+    frame * 2,
+    frame * 5,
+    frame * 10,
+    1,
+    2,
+    5,
+    10,
+    15,
+    30,
+    60,
+    120,
+    300,
+    600,
+    900,
+    1800,
+    3600,
   ];
   /* The ladder is picked for the *labels*, then subdivided.
    *
@@ -235,7 +249,10 @@ export function ticks(view: TimeView, width: number, targetPx = 90): Tick[] {
   const wanted = view.secondsPerPixel(width) * targetPx;
   let major = ladder[ladder.length - 1];
   for (const s of ladder) {
-    if (s >= wanted) { major = s; break; }
+    if (s >= wanted) {
+      major = s;
+      break;
+    }
   }
   const majorEvery = 5;
   /* Never subdivide below a frame: there is nothing between two frames to

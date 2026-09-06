@@ -27,8 +27,13 @@ describe('the board picker', () => {
   it('asks for a typed address when there are no boards', () => {
     // Every installation, until somebody attaches the first one.
     render(
-      <BoardPicker boards={[]} value="" disabled={false} label="Instrument 1"
-        onChange={() => {}} />,
+      <BoardPicker
+        boards={[]}
+        value=""
+        disabled={false}
+        label="Instrument 1"
+        onChange={() => {}}
+      />,
     );
     expect(screen.getByLabelText('Instrument 1 address')).toBeTruthy();
     expect(screen.queryByLabelText('Instrument 1 board')).toBeNull();
@@ -36,14 +41,24 @@ describe('the board picker', () => {
 
   it('shows an address that arrives after it is on screen', () => {
     const { rerender } = render(
-      <BoardPicker boards={boards} value="" disabled={false} label="Instrument 1"
-        onChange={() => {}} />,
+      <BoardPicker
+        boards={boards}
+        value=""
+        disabled={false}
+        label="Instrument 1"
+        onChange={() => {}}
+      />,
     );
     expect(screen.queryByLabelText('Instrument 1 address')).toBeNull();
 
     rerender(
-      <BoardPicker boards={boards} value="10.0.0.5:5570" disabled={false}
-        label="Instrument 1" onChange={() => {}} />,
+      <BoardPicker
+        boards={boards}
+        value="10.0.0.5:5570"
+        disabled={false}
+        label="Instrument 1"
+        onChange={() => {}}
+      />,
     );
     const field = screen.getByLabelText('Instrument 1 address') as HTMLInputElement;
     expect(field.value).toBe('10.0.0.5:5570');
@@ -51,11 +66,17 @@ describe('the board picker', () => {
 
   it('selects the board an address belongs to', () => {
     render(
-      <BoardPicker boards={boards} value="192.168.1.145:5570" disabled={false}
-        label="Instrument 1" onChange={() => {}} />,
+      <BoardPicker
+        boards={boards}
+        value="192.168.1.145:5570"
+        disabled={false}
+        label="Instrument 1"
+        onChange={() => {}}
+      />,
     );
-    expect((screen.getByLabelText('Instrument 1 board') as HTMLSelectElement).value)
-      .toBe('192.168.1.145:5570');
+    expect((screen.getByLabelText('Instrument 1 board') as HTMLSelectElement).value).toBe(
+      '192.168.1.145:5570',
+    );
     // And no free field, because the address is a board and saying it twice
     // invites the two to disagree.
     expect(screen.queryByLabelText('Instrument 1 address')).toBeNull();
@@ -64,18 +85,29 @@ describe('the board picker', () => {
   it('hands up the address of the board that was chosen', () => {
     const chosen: string[] = [];
     render(
-      <BoardPicker boards={boards} value="" disabled={false} label="Instrument 1"
-        onChange={(a) => chosen.push(a)} />,
+      <BoardPicker
+        boards={boards}
+        value=""
+        disabled={false}
+        label="Instrument 1"
+        onChange={(a) => chosen.push(a)}
+      />,
     );
-    fireEvent.change(screen.getByLabelText('Instrument 1 board'),
-      { target: { value: '192.168.1.99:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 1 board'), {
+      target: { value: '192.168.1.99:5570' },
+    });
     expect(chosen).toEqual(['192.168.1.99:5570']);
   });
 
   it('opens a field when somebody wants an address that is on no list', () => {
     render(
-      <BoardPicker boards={boards} value="192.168.1.99:5570" disabled={false}
-        label="Instrument 1" onChange={() => {}} />,
+      <BoardPicker
+        boards={boards}
+        value="192.168.1.99:5570"
+        disabled={false}
+        label="Instrument 1"
+        onChange={() => {}}
+      />,
     );
     fireEvent.change(screen.getByLabelText('Instrument 1 board'), { target: { value: '' } });
     expect(screen.getByLabelText('Instrument 1 address')).toBeTruthy();
@@ -89,16 +121,28 @@ describe('the board picker', () => {
     const second: string[] = [];
     render(
       <>
-        <BoardPicker boards={boards} value="" disabled={false} label="Instrument 1"
-          onChange={(a) => first.push(a)} />
-        <BoardPicker boards={boards} value="" disabled={false} label="Instrument 2"
-          onChange={(a) => second.push(a)} />
+        <BoardPicker
+          boards={boards}
+          value=""
+          disabled={false}
+          label="Instrument 1"
+          onChange={(a) => first.push(a)}
+        />
+        <BoardPicker
+          boards={boards}
+          value=""
+          disabled={false}
+          label="Instrument 2"
+          onChange={(a) => second.push(a)}
+        />
       </>,
     );
-    fireEvent.change(screen.getByLabelText('Instrument 1 board'),
-      { target: { value: '192.168.1.99:5570' } });
-    fireEvent.change(screen.getByLabelText('Instrument 2 board'),
-      { target: { value: '192.168.1.99:5570' } });
+    fireEvent.change(screen.getByLabelText('Instrument 1 board'), {
+      target: { value: '192.168.1.99:5570' },
+    });
+    fireEvent.change(screen.getByLabelText('Instrument 2 board'), {
+      target: { value: '192.168.1.99:5570' },
+    });
     expect(first).toEqual(['192.168.1.99:5570']);
     expect(second).toEqual(['192.168.1.99:5570']);
   });

@@ -30,12 +30,36 @@ const configured = {
      * whose values match the fallbacks cannot tell a number that came from the
      * board from one the page made up, and this test exists for exactly that
      * distinction. */
-    { index: 0, id: 'wind.main', kind: 'wind', latencyMs: 1200,
-      type: 'pwm', gpio: 19, freqHz: 18000, rampUpMs: 1800, rampDownMs: 2900, safe: 0.25 },
-    { index: 1, id: 'light.strip', kind: 'light', latencyMs: 20,
-      type: 'ws28xx', gpio: 27, pixels: 60 },
-    { index: 2, id: 'fog.left', kind: 'fog', latencyMs: 2000,
-      type: 'relay', gpio: 23, active: 'low' },
+    {
+      index: 0,
+      id: 'wind.main',
+      kind: 'wind',
+      latencyMs: 1200,
+      type: 'pwm',
+      gpio: 19,
+      freqHz: 18000,
+      rampUpMs: 1800,
+      rampDownMs: 2900,
+      safe: 0.25,
+    },
+    {
+      index: 1,
+      id: 'light.strip',
+      kind: 'light',
+      latencyMs: 20,
+      type: 'ws28xx',
+      gpio: 27,
+      pixels: 60,
+    },
+    {
+      index: 2,
+      id: 'fog.left',
+      kind: 'fog',
+      latencyMs: 2000,
+      type: 'relay',
+      gpio: 23,
+      active: 'low',
+    },
   ],
 };
 
@@ -63,24 +87,30 @@ let answer: { ok: boolean; body: unknown } = { ok: true, body: empty };
 beforeEach(() => {
   posted = [];
   answer = { ok: true, body: empty };
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.startsWith('/api/rig/options')) {
-      return { ok: true, json: async () => options } as Response;
-    }
-    if (url.startsWith('/api/node')) {
-      posted.push(JSON.parse(init!.body as string));
-      /* The real handler writes plain text on failure and JSON on success, and
-       * the page reads text() either way. A mock that always returned JSON
-       * would hide whether the refusal is ever shown. */
-      return {
-        ok: answer.ok,
-        text: async () => (answer.ok ? JSON.stringify(answer.body) : String(answer.body)),
-      } as Response;
-    }
-    return { ok: false, text: async () => 'no' } as Response;
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.startsWith('/api/rig/options')) {
+        return { ok: true, json: async () => options } as Response;
+      }
+      if (url.startsWith('/api/node')) {
+        posted.push(JSON.parse(init!.body as string));
+        /* The real handler writes plain text on failure and JSON on success, and
+         * the page reads text() either way. A mock that always returned JSON
+         * would hide whether the refusal is ever shown. */
+        return {
+          ok: answer.ok,
+          text: async () => (answer.ok ? JSON.stringify(answer.body) : String(answer.body)),
+        } as Response;
+      }
+      return { ok: false, text: async () => 'no' } as Response;
+    }),
+  );
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 const value = (label: string) =>
   (screen.getByLabelText(label) as HTMLInputElement | HTMLSelectElement).value;
@@ -100,9 +130,12 @@ describe('reaching a board', () => {
   it('will not ask until it has somewhere to ask', async () => {
     // Awaited because mounting fetches the kinds, and a test that returns
     // before that lands leaves React updating an unmounted tree.
-    await act(async () => { render(<Nodes />); });
-    expect((screen.getByRole('button', { name: 'Ask what it has' }) as HTMLButtonElement).disabled)
-      .toBe(true);
+    await act(async () => {
+      render(<Nodes />);
+    });
+    expect(
+      (screen.getByRole('button', { name: 'Ask what it has' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('asks without configuring', async () => {
@@ -185,7 +218,7 @@ describe('what is wired to it', () => {
     expect(fan.gpio).toBe(19);
   });
 
-  it("does not give a strip a fan ramp time", async () => {
+  it('does not give a strip a fan ramp time', async () => {
     /* The fields a board does not report still have to come from somewhere, and
      * the somewhere has to be that device's own type. Falling back to pwm
      * defaults puts a fan's ramp up and ramp down on a strip, and the next
@@ -207,9 +240,13 @@ describe('what is wired to it', () => {
     /* Older firmware announces what it carries and not how. The pins shown are
      * then guesses, and a guess presented as an answer is how somebody writes
      * gpio 18 onto a board that had a strip on 5. */
-    answer = { ok: true, body: { ...configured, instruments: [
-      { index: 0, id: 'wind.main', kind: 'wind', latencyMs: 1200 },
-    ] } };
+    answer = {
+      ok: true,
+      body: {
+        ...configured,
+        instruments: [{ index: 0, id: 'wind.main', kind: 'wind', latencyMs: 1200 }],
+      },
+    };
     await reach();
     await waitFor(() => expect(screen.getByText(/not how it is wired/)).toBeTruthy());
   });
@@ -219,8 +256,9 @@ describe('what is wired to it', () => {
      * wrong the first time a kind is added. */
     await editing();
     const select = screen.getByLabelText('Device 1 kind');
-    expect([...select.querySelectorAll('option')].map((o) => o.value))
-      .toEqual(options.kinds.map((k) => k.kind));
+    expect([...select.querySelectorAll('option')].map((o) => o.value)).toEqual(
+      options.kinds.map((k) => k.kind),
+    );
   });
 
   it('asks only for the settings that type has', async () => {

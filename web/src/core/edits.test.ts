@@ -1,24 +1,34 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { History } from './history';
 import {
-  splitCue, duplicateCues, nudge, scaleAmplitude, smoothPoints, toggleSpan,
-  copy, paste,
+  splitCue,
+  duplicateCues,
+  nudge,
+  scaleAmplitude,
+  smoothPoints,
+  toggleSpan,
+  copy,
+  paste,
 } from './edits';
 import { cueEnd, type Cue, type Point, type Score } from './score';
 
 function fixture(): Score {
   return {
-    title: 'x', duration: 120, fps: 24,
+    title: 'x',
+    duration: 120,
+    fps: 24,
     tracks: [
       {
-        instrument: 'wind.main', type: 'cue',
+        instrument: 'wind.main',
+        type: 'cue',
         cues: [
           { t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 4 },
           { t: 30, action: 'pop', params: { intensity: 1 } },
         ],
       },
       {
-        instrument: 'light.ambient', type: 'curve',
+        instrument: 'light.ambient',
+        type: 'curve',
         points: [
           { t: 0, value: { r: 0, g: 0, b: 0 } },
           { t: 10, value: { r: 1, g: 0.4, b: 0 } },
@@ -31,7 +41,10 @@ function fixture(): Score {
 
 let h: History;
 let score: Score;
-beforeEach(() => { h = new History(); score = fixture(); });
+beforeEach(() => {
+  h = new History();
+  score = fixture();
+});
 
 describe('splitting a span', () => {
   it('makes two spans that together cover the original', () => {

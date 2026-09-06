@@ -7,11 +7,9 @@ import type { Track } from './score';
 const fade = presetById('fog-fade')!;
 const gust = presetById('wind-gust')!;
 
-const cueTrack = (): Track =>
-  ({ instrument: 'fog.left', type: 'cue', cues: [] }) as Track;
+const cueTrack = (): Track => ({ instrument: 'fog.left', type: 'cue', cues: [] }) as Track;
 
-const curveTrack = (): Track =>
-  ({ instrument: 'wind.main', type: 'curve', points: [] }) as Track;
+const curveTrack = (): Track => ({ instrument: 'wind.main', type: 'curve', points: [] }) as Track;
 
 function run(_track: Track, cmd: ReturnType<typeof insertPreset>) {
   const h = new History();
@@ -47,7 +45,10 @@ describe('inserting a preset', () => {
 
   it('undoes back to exactly what was there before', () => {
     const track = curveTrack();
-    track.points = [{ t: 0, value: { intensity: 0.2 } }, { t: 50, value: { intensity: 0.3 } }];
+    track.points = [
+      { t: 0, value: { intensity: 0.2 } },
+      { t: 50, value: { intensity: 0.3 } },
+    ];
     const before = JSON.stringify(track.points);
     const h = run(track, insertPreset(track, gust, 10, ['intensity']));
     h.undo();
@@ -60,8 +61,8 @@ describe('inserting a preset', () => {
     const track = curveTrack();
     track.points = [
       { t: 0, value: { intensity: 0.9 } },
-      { t: 11, value: { intensity: 0.9 } },   // inside the span
-      { t: 12, value: { intensity: 0.9 } },   // inside the span
+      { t: 11, value: { intensity: 0.9 } }, // inside the span
+      { t: 12, value: { intensity: 0.9 } }, // inside the span
       { t: 50, value: { intensity: 0.9 } },
     ];
     run(track, insertPreset(track, gust, 10, ['intensity']));
@@ -81,7 +82,10 @@ describe('inserting a preset', () => {
 
   it('leaves the score sorted', () => {
     const track = curveTrack();
-    track.points = [{ t: 0, value: { intensity: 0.1 } }, { t: 90, value: { intensity: 0.1 } }];
+    track.points = [
+      { t: 0, value: { intensity: 0.1 } },
+      { t: 90, value: { intensity: 0.1 } },
+    ];
     run(track, insertPreset(track, gust, 40, ['intensity']));
     const times = track.points!.map((p) => p.t);
     expect([...times].sort((a, b) => a - b)).toEqual(times);
@@ -94,7 +98,7 @@ describe('inserting a preset', () => {
   });
 
   it('gives every channel the shape', () => {
-    const track = ({ instrument: 'motion.platform', type: 'curve', points: [] }) as Track;
+    const track = { instrument: 'motion.platform', type: 'curve', points: [] } as Track;
     const sway = presetById('motion-sway')!;
     run(track, insertPreset(track, sway, 0, ['heave', 'roll', 'pitch']));
     for (const p of track.points!) {

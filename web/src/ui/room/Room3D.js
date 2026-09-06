@@ -298,17 +298,25 @@ const BUILDERS = {
      * real intensity looks like a hole cut in the picture rather than a bright
      * lamp. The sprite carries the same soft radial falloff the particles use,
      * so it reads as light instead of as geometry. */
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: SPRITE, color: colour, transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, depthWrite: false,
-    }));
+    const halo = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: SPRITE,
+        color: colour,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
     halo.scale.setScalar(0.25);
     group.add(halo);
 
     let light = null;
     return {
       group: group,
-      attach(l) { light = l; },
+      attach(l) {
+        light = l;
+      },
       apply(level, params) {
         const c = parsedColour(colourOf(params));
         halo.material.color.copy(c);
@@ -345,8 +353,7 @@ const BUILDERS = {
       /* A channel, so the strip is mounted in something rather than floating.
        * Lit like the rest of the room, which is what makes it read as an
        * object next to the emitter it holds. */
-      const housing = box(0.085, 0.04, AMBIENT_STRIP_LENGTH,
-                          surface(0x22252b, 0.45, 0.5, 1.0));
+      const housing = box(0.085, 0.04, AMBIENT_STRIP_LENGTH, surface(0x22252b, 0.45, 0.5, 1.0));
       place(housing, x, ROOM_H - 0.02, AMBIENT_STRIP_Z);
       group.add(housing);
 
@@ -356,7 +363,7 @@ const BUILDERS = {
        * around it, the way a real fixture does. */
       const strip = new THREE.Mesh(
         new THREE.BoxGeometry(0.055, 0.022, AMBIENT_STRIP_LENGTH),
-        new THREE.MeshBasicMaterial({ color: 0x0b0c0e, toneMapped: false })
+        new THREE.MeshBasicMaterial({ color: 0x0b0c0e, toneMapped: false }),
       );
       place(strip, x, ROOM_H - 0.055, AMBIENT_STRIP_Z);
       group.add(strip);
@@ -387,7 +394,9 @@ const BUILDERS = {
        * point light at the coordinate in the rig file. */
       ownLights: lights.length,
       fixed: true,
-      setGain(v) { gain.value = Math.max(0, Math.min(1, Number(v) || 0)); },
+      setGain(v) {
+        gain.value = Math.max(0, Math.min(1, Number(v) || 0));
+      },
       apply(level, params) {
         const c = parsedColour(colourOf(params));
         for (const strip of strips) {
@@ -493,9 +502,18 @@ const BUILDERS = {
 
   shake() {
     const group = new THREE.Group();
-    const unit = box(0.3, 0.12, 0.3, new THREE.MeshStandardMaterial({
-      color: 0xff9a5c, roughness: 0.4, metalness: 0.5, emissive: 0xff9a5c, emissiveIntensity: 0,
-    }));
+    const unit = box(
+      0.3,
+      0.12,
+      0.3,
+      new THREE.MeshStandardMaterial({
+        color: 0xff9a5c,
+        roughness: 0.4,
+        metalness: 0.5,
+        emissive: 0xff9a5c,
+        emissiveIntensity: 0,
+      }),
+    );
     group.add(unit);
     return {
       group: group,
@@ -503,7 +521,10 @@ const BUILDERS = {
         unit.material.emissiveIntensity = level * 1.4;
         const a = level * 0.055;
         unit.position.set(
-          (Math.random() - 0.5) * a, (Math.random() - 0.5) * a, (Math.random() - 0.5) * a);
+          (Math.random() - 0.5) * a,
+          (Math.random() - 0.5) * a,
+          (Math.random() - 0.5) * a,
+        );
       },
     };
   },
@@ -706,10 +727,18 @@ export class Room3D {
      * Neutral rather than the blue-grey it was: with the fill lighting able to
      * reach zero now, a wall with a hue of its own tints everything the film
      * throws onto it. */
-    const shell = box(ROOM_W, ROOM_H, ROOM_D, new THREE.MeshStandardMaterial({
-      color: 0x4e5157, roughness: 0.9, metalness: 0.0,
-      side: THREE.BackSide, envMapIntensity: 0.55,
-    }));
+    const shell = box(
+      ROOM_W,
+      ROOM_H,
+      ROOM_D,
+      new THREE.MeshStandardMaterial({
+        color: 0x4e5157,
+        roughness: 0.9,
+        metalness: 0.0,
+        side: THREE.BackSide,
+        envMapIntensity: 0.55,
+      }),
+    );
     shell.receiveShadow = true;
     place(shell, 0, ROOM_H / 2, ROOM_D / 2);
     scene.add(shell);
@@ -718,15 +747,11 @@ export class Room3D {
      * the walls into mirrors. A faint reflection is most of what stops a room
      * looking like a cardboard box, and it is also where a light cue shows up
      * second, after the wall it is pointed at. */
-    const floorMap = texture('floor.jpg',
-                            ROOM_W * CARPET_PER_METRE, ROOM_D * CARPET_PER_METRE);
+    const floorMap = texture('floor.jpg', ROOM_W * CARPET_PER_METRE, ROOM_D * CARPET_PER_METRE);
     this.textures.push(floorMap);
     const floorMaterial = surface(0xffffff, 0.72, 0.02, 1.0);
     floorMaterial.map = floorMap;
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROOM_W, ROOM_D),
-      floorMaterial
-    );
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     place(floor, 0, 0.002, ROOM_D / 2);
@@ -766,8 +791,7 @@ export class Room3D {
     this.textures.push(slats);
     const panelMaterial = surface(0xffffff, 0.55, 0.02, 1.0);
     panelMaterial.map = slats;
-    const panel = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROOM_W, ROOM_H), panelMaterial);
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_H), panelMaterial);
     panel.receiveShadow = true;
     place(panel, 0, ROOM_H / 2, 0.012);
     scene.add(panel);
@@ -804,7 +828,7 @@ export class Room3D {
        * which is how a real fitting behaves. */
       const trim = new THREE.Mesh(
         new THREE.RingGeometry(0.075, 0.105, 32),
-        surface(0x2a2f38, 0.35, 0.6, 1.2)
+        surface(0x2a2f38, 0.35, 0.6, 1.2),
       );
       trim.rotation.x = Math.PI / 2;
       place(trim, x, ROOM_H - 0.004, 2.6);
@@ -812,7 +836,7 @@ export class Room3D {
 
       const lens = new THREE.Mesh(
         new THREE.CircleGeometry(0.076, 32),
-        new THREE.MeshBasicMaterial({ color: LENS_ON, toneMapped: false })
+        new THREE.MeshBasicMaterial({ color: LENS_ON, toneMapped: false }),
       );
       lens.rotation.x = Math.PI / 2;
       place(lens, x, ROOM_H - 0.006, 2.6);
@@ -848,7 +872,7 @@ export class Room3D {
      * the other way a letterbox arrives here, lands on exactly this colour. */
     this.screenMatte = new THREE.Mesh(
       new THREE.PlaneGeometry(3.22, 1.82),
-      new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false })
+      new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false }),
     );
     place(this.screenMatte, 0, 0, 0.046);
     this.screenMatte.visible = false;
@@ -859,7 +883,7 @@ export class Room3D {
      * job belongs to the ceiling strips now. */
     this.screen = new THREE.Mesh(
       new THREE.PlaneGeometry(3.22, 1.82),
-      new THREE.MeshBasicMaterial({ color: SCREEN_OFF })
+      new THREE.MeshBasicMaterial({ color: SCREEN_OFF }),
     );
     place(this.screen, 0, 0, 0.048);
     tv.add(this.screen);
@@ -925,19 +949,34 @@ export class Room3D {
     fabricLight.map = knit;
     const leg = surface(0x23262d, 0.3, 0.65, 1.2);
 
-    couch.add(place(softBox(2.7, 0.34, 1.08,
-      upholster(fabric, 2.7, 0.34, 1.08), 0.07), 0, 0.34, 0));
+    couch.add(
+      place(softBox(2.7, 0.34, 1.08, upholster(fabric, 2.7, 0.34, 1.08), 0.07), 0, 0.34, 0),
+    );
     for (const x of [-0.66, 0.66]) {
-      couch.add(place(softBox(1.28, 0.2, 0.98,
-        upholster(fabricLight, 1.28, 0.2, 0.98), 0.06), x, 0.58, -0.02));
-      couch.add(place(softBox(1.24, 0.58, 0.19,
-        upholster(fabricLight, 1.24, 0.58, 0.19), 0.06), x, 0.82, 0.44));
+      couch.add(
+        place(
+          softBox(1.28, 0.2, 0.98, upholster(fabricLight, 1.28, 0.2, 0.98), 0.06),
+          x,
+          0.58,
+          -0.02,
+        ),
+      );
+      couch.add(
+        place(
+          softBox(1.24, 0.58, 0.19, upholster(fabricLight, 1.24, 0.58, 0.19), 0.06),
+          x,
+          0.82,
+          0.44,
+        ),
+      );
     }
-    couch.add(place(softBox(2.7, 0.8, 0.24,
-      upholster(fabric, 2.7, 0.8, 0.24), 0.07), 0, 0.76, 0.54));
+    couch.add(
+      place(softBox(2.7, 0.8, 0.24, upholster(fabric, 2.7, 0.8, 0.24), 0.07), 0, 0.76, 0.54),
+    );
     for (const x of [-1.34, 1.34]) {
-      couch.add(place(softBox(0.28, 0.34, 1.08,
-        upholster(fabric, 0.28, 0.34, 1.08), 0.08), x, 0.66, 0));
+      couch.add(
+        place(softBox(0.28, 0.34, 1.08, upholster(fabric, 0.28, 0.34, 1.08), 0.08), x, 0.66, 0),
+      );
     }
     for (const x of [-1.2, 1.2]) {
       for (const z of [-0.44, 0.44]) {
@@ -945,7 +984,10 @@ export class Room3D {
       }
     }
     couch.traverse((o) => {
-      if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
     });
     place(couch, 0, 0, SEAT_Z);
     scene.add(couch);
@@ -1041,7 +1083,7 @@ export class Room3D {
     if (video && this.wantProjection && !this.projectorTexture) {
       const canvas = document.createElement('canvas');
       canvas.width = THROW_WIDTH;
-      canvas.height = Math.round(THROW_WIDTH * 9 / 16);
+      canvas.height = Math.round((THROW_WIDTH * 9) / 16);
       const context = canvas.getContext('2d');
       context.scale(-1, 1);
       context.translate(-canvas.width, 0);
@@ -1169,8 +1211,7 @@ export class Room3D {
      * It reaches everything drawn, cue lights and the projection included, so
      * pulling it down while darkening the room would have dimmed the very
      * things the darkened room exists to show. */
-    this.renderer.toneMappingExposure =
-      BASE_EXPOSURE * Math.pow(2, Math.max(0, level - 0.5));
+    this.renderer.toneMappingExposure = BASE_EXPOSURE * Math.pow(2, Math.max(0, level - 0.5));
     this.frame();
   }
 
@@ -1224,9 +1265,7 @@ export class Room3D {
     for (const inst of instruments || []) {
       const isWash = inst.kind === 'light' && !washTaken && inst.id !== 'light.event';
       if (isWash) washTaken = true;
-      const build = isWash
-        ? BUILDERS.lightAmbient
-        : (BUILDERS[inst.kind] || BUILDERS.shake);
+      const build = isWash ? BUILDERS.lightAmbient : BUILDERS[inst.kind] || BUILDERS.shake;
       const device = build();
       const [x, y, z] = inst.position || [0, 0, 0];
       /* A fixture that spans the room says where it is itself. */
@@ -1259,7 +1298,12 @@ export class Room3D {
         this.washDevice = device;
         if (device.setGain) device.setGain(this.wash);
       }
-      this.devices.set(inst.id, { group: device.group, apply: device.apply, light: light, kind: inst.kind });
+      this.devices.set(inst.id, {
+        group: device.group,
+        apply: device.apply,
+        light: light,
+        kind: inst.kind,
+      });
     }
   }
 
@@ -1326,7 +1370,6 @@ export class Room3D {
        * comes back. It did.
        */
       device.group.scale.setScalar(muted ? 0.55 : 1);
-
     }
 
     const pose = readSeat(this.state, this.forced, now);
@@ -1334,17 +1377,16 @@ export class Room3D {
      * and this is what that is in metres. Small on purpose — 75mm across a
      * room is a few pixels — because the alternative is a preview that lies
      * about the one question it exists to answer. */
-    this.seat.position.set(pose.sway * SEAT_TRAVEL,
-                           pose.heave * SEAT_TRAVEL,
-                           this.seatRest + pose.surge * SEAT_TRAVEL);
-    this.seat.rotation.set(pose.pitch * SEAT_TILT,
-                           pose.yaw * SEAT_TILT,
-                           pose.roll * SEAT_TILT);
+    this.seat.position.set(
+      pose.sway * SEAT_TRAVEL,
+      pose.heave * SEAT_TRAVEL,
+      this.seatRest + pose.surge * SEAT_TRAVEL,
+    );
+    this.seat.rotation.set(pose.pitch * SEAT_TILT, pose.yaw * SEAT_TILT, pose.roll * SEAT_TILT);
     /* A held tilt is not movement. The couch resting off centre looks the same
      * every frame, so what matters is whether the pose changed, not whether it
      * is at rest. */
-    const posed = pose.sway + pose.heave + pose.surge
-      + pose.pitch + pose.yaw + pose.roll;
+    const posed = pose.sway + pose.heave + pose.surge + pose.pitch + pose.yaw + pose.roll;
     if (this.lastPose === undefined || Math.abs(posed - this.lastPose) > 1e-6) {
       this.activity.moved();
     }
@@ -1370,13 +1412,17 @@ export class Room3D {
      * pixels wide and the alternative - working out whether the film has
      * advanced - costs more thought than the draw does. Nothing happens at all
      * when the projector is off. */
-    const running = !!(this.picture && !this.picture.paused
-      && this.picture.readyState >= 2);
+    const running = !!(this.picture && !this.picture.paused && this.picture.readyState >= 2);
     /* While it plays, and once more whenever the film was moved or switched
      * under it. A seek while paused presents a new frame and nothing else
      * would notice. */
-    if (this.projector.visible && this.throwContext && this.picture
-        && this.picture.readyState >= 2 && (running || this.repaintThrow)) {
+    if (
+      this.projector.visible &&
+      this.throwContext &&
+      this.picture &&
+      this.picture.readyState >= 2 &&
+      (running || this.repaintThrow)
+    ) {
       this.repaintThrow = false;
       const c = this.throwCanvas;
       this.throwContext.drawImage(this.picture, 0, 0, c.width, c.height);
@@ -1530,4 +1576,3 @@ export function webglAvailable() {
     return false;
   }
 }
-

@@ -1,13 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  History, moveCues, movePoints, removePoints, insertPoints, removeCues,
-  resizeCues, withOrphans,
+  History,
+  moveCues,
+  movePoints,
+  removePoints,
+  insertPoints,
+  removeCues,
+  resizeCues,
+  withOrphans,
 } from './history';
 import type { Cue, Point, Track } from './score';
 
 function cueTrack(): Track {
   return {
-    instrument: 'wind.main', type: 'cue',
+    instrument: 'wind.main',
+    type: 'cue',
     cues: [
       { t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 4 },
       { t: 30, action: 'gust', params: { intensity: 1 }, duration: 2 },
@@ -17,7 +24,8 @@ function cueTrack(): Track {
 
 function curveTrack(): Track {
   return {
-    instrument: 'light.ambient', type: 'curve',
+    instrument: 'light.ambient',
+    type: 'curve',
     points: [
       { t: 0, value: { r: 0, g: 0, b: 0 } },
       { t: 10, value: { r: 1, g: 0.5, b: 0 } },
@@ -27,7 +35,9 @@ function curveTrack(): Track {
 }
 
 let h: History;
-beforeEach(() => { h = new History(); });
+beforeEach(() => {
+  h = new History();
+});
 
 describe('undo and redo', () => {
   it('puts a moved event back', () => {
@@ -126,8 +136,12 @@ describe('sorting, and why commands hold objects', () => {
 describe('the orphan rule', () => {
   it('takes the partner when removing would leave one point', () => {
     const track: Track = {
-      instrument: 'l', type: 'curve',
-      points: [{ t: 0, value: { r: 0 } }, { t: 5, value: { r: 1 } }],
+      instrument: 'l',
+      type: 'curve',
+      points: [
+        { t: 0, value: { r: 0 } },
+        { t: 5, value: { r: 1 } },
+      ],
     };
     expect(withOrphans(track, [track.points![0]]).length).toBe(2);
     h.run(removePoints(track, [track.points![0]]));
@@ -143,8 +157,12 @@ describe('the orphan rule', () => {
   /* Undo has to restore both, or the rule quietly eats a point. */
   it('restores the partner on undo', () => {
     const track: Track = {
-      instrument: 'l', type: 'curve',
-      points: [{ t: 0, value: { r: 0 } }, { t: 5, value: { r: 1 } }],
+      instrument: 'l',
+      type: 'curve',
+      points: [
+        { t: 0, value: { r: 0 } },
+        { t: 5, value: { r: 1 } },
+      ],
     };
     h.run(removePoints(track, [track.points![0]]));
     h.undo();
@@ -153,8 +171,12 @@ describe('the orphan rule', () => {
 
   it('says in the label that a partner went too', () => {
     const track: Track = {
-      instrument: 'l', type: 'curve',
-      points: [{ t: 0, value: { r: 0 } }, { t: 5, value: { r: 1 } }],
+      instrument: 'l',
+      type: 'curve',
+      points: [
+        { t: 0, value: { r: 0 } },
+        { t: 5, value: { r: 1 } },
+      ],
     };
     h.run(removePoints(track, [track.points![0]]));
     expect(h.undoLabel).toContain('partner');
@@ -204,10 +226,12 @@ describe('multiple events at once', () => {
   it('moves a selection together and undoes it together', () => {
     const track = cueTrack();
     const [a, b] = track.cues as Cue[];
-    h.run(moveCues([
-      { track, cue: a, from: 10, to: 15 },
-      { track, cue: b, from: 30, to: 35 },
-    ]));
+    h.run(
+      moveCues([
+        { track, cue: a, from: 10, to: 15 },
+        { track, cue: b, from: 30, to: 35 },
+      ]),
+    );
     expect(track.cues!.map((c) => c.t)).toEqual([15, 35]);
     h.undo();
     expect(track.cues!.map((c) => c.t)).toEqual([10, 30]);

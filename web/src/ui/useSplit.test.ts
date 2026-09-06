@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-  columnsAt, clampHeight, COLUMNS, MIN_COLUMNS, MAX_COLUMNS,
-  MIN_HEIGHT, MAX_HEIGHT, DEFAULT_COLUMNS,
+  columnsAt,
+  clampHeight,
+  COLUMNS,
+  MIN_COLUMNS,
+  MAX_COLUMNS,
+  MIN_HEIGHT,
+  MAX_HEIGHT,
+  DEFAULT_COLUMNS,
 } from './useSplit';
 
 describe('the twelve column split', () => {

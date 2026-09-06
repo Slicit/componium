@@ -25,12 +25,7 @@ export interface MenuItem {
 
 export type MenuEntry = MenuItem | { separator: true };
 
-export function Menu(props: {
-  x: number;
-  y: number;
-  items: MenuEntry[];
-  onClose: () => void;
-}) {
+export function Menu(props: { x: number; y: number; items: MenuEntry[]; onClose: () => void }) {
   const { x, y, items, onClose } = props;
   const box = useRef<HTMLDivElement>(null);
 
@@ -42,7 +37,9 @@ export function Menu(props: {
       if (box.current && e.target instanceof Node && box.current.contains(e.target)) return;
       onClose();
     };
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('pointerdown', away, true);
     window.addEventListener('wheel', onClose, { passive: true });
     window.addEventListener('blur', onClose);
@@ -72,23 +69,26 @@ export function Menu(props: {
 
   return (
     <div className="menu" ref={box} style={{ left: x, top: y }} role="menu">
-      {items.map((item, i) => (
-        'separator' in item && item.separator
-          ? <div key={'s' + i} className="menu-sep" />
-          : (
-            <button
-              key={item.label + i}
-              className={'menu-item' + (item.danger ? ' danger' : '')}
-              role="menuitem"
-              disabled={!!item.why || !item.run}
-              title={item.why}
-              onClick={() => { item.run?.(); onClose(); }}
-            >
-              <span>{item.label}</span>
-              {item.key && <kbd>{item.key}</kbd>}
-            </button>
-          )
-      ))}
+      {items.map((item, i) =>
+        'separator' in item && item.separator ? (
+          <div key={'s' + i} className="menu-sep" />
+        ) : (
+          <button
+            key={item.label + i}
+            className={'menu-item' + (item.danger ? ' danger' : '')}
+            role="menuitem"
+            disabled={!!item.why || !item.run}
+            title={item.why}
+            onClick={() => {
+              item.run?.();
+              onClose();
+            }}
+          >
+            <span>{item.label}</span>
+            {item.key && <kbd>{item.key}</kbd>}
+          </button>
+        ),
+      )}
     </div>
   );
 }

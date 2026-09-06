@@ -53,7 +53,9 @@ describe('interpolating a colour', () => {
 
 describe('a track written in hsi', () => {
   const track: Track = {
-    instrument: 'light.ambient', type: 'curve', space: 'hsi',
+    instrument: 'light.ambient',
+    type: 'curve',
+    space: 'hsi',
     points: [
       { t: 0, value: { h: 0, s: 1, i: 0 } },
       { t: 10, value: { h: 0, s: 1, i: 1 } },
@@ -77,7 +79,9 @@ describe('a track written in hsi', () => {
 
   it('interpolates through the colour space, not channel by channel', () => {
     const seam: Track = {
-      instrument: 'l', type: 'curve', space: 'hsi',
+      instrument: 'l',
+      type: 'curve',
+      space: 'hsi',
       points: [
         { t: 0, value: { h: 0.97, s: 1, i: 1 } },
         { t: 10, value: { h: 0.03, s: 1, i: 1 } },
@@ -94,7 +98,8 @@ describe('a track written in hsi', () => {
 
 describe('rgb tracks are untouched', () => {
   const track: Track = {
-    instrument: 'light.old', type: 'curve',
+    instrument: 'light.old',
+    type: 'curve',
     points: [
       { t: 0, value: { r: 0, g: 0, b: 0 } },
       { t: 10, value: { r: 1, g: 0.5, b: 0 } },

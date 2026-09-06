@@ -9,10 +9,27 @@ import type { MenuEntry } from './Menu';
 import type { Hit } from '../core/hit';
 import { History, removeCues, removePoints } from '../core/history';
 import {
-  addTrack, copy, duplicateCues, missingInstruments, paste, removeTrack,
-  scaleAmplitude, smoothPoints, splitCue, toggleSpan, type Clip,
+  addTrack,
+  copy,
+  duplicateCues,
+  missingInstruments,
+  paste,
+  removeTrack,
+  scaleAmplitude,
+  smoothPoints,
+  splitCue,
+  toggleSpan,
+  type Clip,
 } from '../core/edits';
-import { cueEnd, isSpan, type Cue, type Point, type Rig, type Score, type Track } from '../core/score';
+import {
+  cueEnd,
+  isSpan,
+  type Cue,
+  type Point,
+  type Rig,
+  type Score,
+  type Track,
+} from '../core/score';
 import { durationLabel, timecode } from '../core/time';
 
 export interface MenuContext {
@@ -36,12 +53,18 @@ export interface MenuContext {
 export function menuFor(ctx: MenuContext): MenuEntry[] {
   const { hit } = ctx;
   switch (hit.k) {
-    case 'cue': return cueMenu(ctx, hit);
-    case 'point': return pointMenu(ctx, hit);
-    case 'lane': return laneMenu(ctx, hit);
-    case 'ruler': return rulerMenu(ctx, hit);
-    case 'empty': return emptyMenu(ctx);
-    default: return [];
+    case 'cue':
+      return cueMenu(ctx, hit);
+    case 'point':
+      return pointMenu(ctx, hit);
+    case 'lane':
+      return laneMenu(ctx, hit);
+    case 'ruler':
+      return rulerMenu(ctx, hit);
+    case 'empty':
+      return emptyMenu(ctx);
+    default:
+      return [];
   }
 }
 
@@ -61,7 +84,10 @@ function cueMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'cue' }>): MenuEntry[]
 
   return [
     {
-      label: acting.length > 1 ? `${acting.length} events` : `${cue.action} at ${timecode(cue.t, ctx.fps)}`,
+      label:
+        acting.length > 1
+          ? `${acting.length} events`
+          : `${cue.action} at ${timecode(cue.t, ctx.fps)}`,
       why: isSpan(cue) ? `lasts ${durationLabel(cue.duration ?? 0, ctx.fps)}` : 'an instant',
     },
     { separator: true },
@@ -71,8 +97,11 @@ function cueMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'cue' }>): MenuEntry[]
       /* Disabled with a reason rather than hidden: this is the one action
        * whose absence would be puzzling, because whether it applies depends on
        * where the playhead is rather than on what was clicked. */
-      why: !isSpan(cue) ? 'only a span can be split'
-        : !inside ? 'move the playhead inside this event first' : undefined,
+      why: !isSpan(cue)
+        ? 'only a span can be split'
+        : !inside
+          ? 'move the playhead inside this event first'
+          : undefined,
       run: () => run(ctx, splitCue(track, cue, ctx.time)),
     },
     {
@@ -86,11 +115,13 @@ function cueMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'cue' }>): MenuEntry[]
     },
     { separator: true },
     {
-      label: 'Copy', key: '⌘C',
+      label: 'Copy',
+      key: '⌘C',
       run: () => ctx.setClipboard(copy(ctx.score, new Set(acting))),
     },
     {
-      label: 'Cut', key: '⌘X',
+      label: 'Cut',
+      key: '⌘X',
       run: () => {
         ctx.setClipboard(copy(ctx.score, new Set(acting)));
         run(ctx, removeCues(track, acting));
@@ -122,14 +153,17 @@ function cueMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'cue' }>): MenuEntry[]
 function pointMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'point' }>): MenuEntry[] {
   const track = ctx.score.tracks[hit.row.track];
   const point = hit.point;
-  const selected = [...ctx.selected].filter((s): s is Point => (track.points ?? []).includes(s as Point));
+  const selected = [...ctx.selected].filter((s): s is Point =>
+    (track.points ?? []).includes(s as Point),
+  );
   const acting = selected.includes(point) && selected.length > 1 ? selected : [point];
   const value = point.value?.[hit.channel];
   const remaining = (track.points ?? []).length - acting.length;
 
   return [
     {
-      label: acting.length > 1 ? `${acting.length} points` : `${hit.channel} = ${value?.toFixed(3)}`,
+      label:
+        acting.length > 1 ? `${acting.length} points` : `${hit.channel} = ${value?.toFixed(3)}`,
       why: timecode(point.t, ctx.fps),
     },
     { separator: true },
@@ -139,7 +173,9 @@ function pointMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'point' }>): MenuEnt
         const all = track.points ?? [];
         const i = all.indexOf(p);
         return i <= 0 || i >= all.length - 1;
-      }) ? 'an end point has no neighbours to average with' : undefined,
+      })
+        ? 'an end point has no neighbours to average with'
+        : undefined,
       run: () => run(ctx, smoothPoints(track, acting)),
     },
     {
@@ -152,7 +188,8 @@ function pointMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'point' }>): MenuEnt
     },
     { separator: true },
     {
-      label: 'Copy', key: '⌘C',
+      label: 'Copy',
+      key: '⌘C',
       run: () => ctx.setClipboard(copy(ctx.score, new Set(acting))),
     },
     { separator: true },
@@ -170,17 +207,22 @@ function pointMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'point' }>): MenuEnt
         ctx.setSelected(new Set());
       },
     },
-    ...(remaining === 1 ? [{
-      label: '…which empties the track',
-      why: 'a curve needs two points or none, so the last one goes too',
-    } as MenuEntry] : []),
+    ...(remaining === 1
+      ? [
+          {
+            label: '…which empties the track',
+            why: 'a curve needs two points or none, so the last one goes too',
+          } as MenuEntry,
+        ]
+      : []),
   ];
 }
 
 function laneMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'lane' }>): MenuEntry[] {
   const track = ctx.score.tracks[hit.row.track];
-  const canPaste = ctx.clipboard
-    && (track.type === 'curve' ? ctx.clipboard.points.length : ctx.clipboard.cues.length);
+  const canPaste =
+    ctx.clipboard &&
+    (track.type === 'curve' ? ctx.clipboard.points.length : ctx.clipboard.cues.length);
 
   return [
     { label: track.instrument, why: timecode(hit.t, ctx.fps) },
@@ -188,8 +230,10 @@ function laneMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'lane' }>): MenuEntry
     {
       label: 'Paste here',
       key: '⌘V',
-      why: !ctx.clipboard ? 'nothing copied yet'
-        : !canPaste ? `the clipboard holds ${track.type === 'curve' ? 'events, not points' : 'points, not events'}`
+      why: !ctx.clipboard
+        ? 'nothing copied yet'
+        : !canPaste
+          ? `the clipboard holds ${track.type === 'curve' ? 'events, not points' : 'points, not events'}`
           : undefined,
       run: () => run(ctx, paste(ctx.clipboard!, track, hit.t, ctx.score, ctx.rig)),
     },
@@ -203,10 +247,14 @@ function laneMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'lane' }>): MenuEntry
         ctx.setSelected(all);
       },
     },
-    ...(ctx.canCollapse(track) ? [{
-      label: 'Collapse or expand its channels',
-      run: () => ctx.toggleCollapse(track.instrument),
-    } as MenuEntry] : []),
+    ...(ctx.canCollapse(track)
+      ? [
+          {
+            label: 'Collapse or expand its channels',
+            run: () => ctx.toggleCollapse(track.instrument),
+          } as MenuEntry,
+        ]
+      : []),
     { separator: true },
     { label: 'Move playhead here', run: () => ctx.seek(hit.t) },
     { separator: true },
@@ -243,10 +291,12 @@ function rulerMenu(ctx: MenuContext, hit: Extract<Hit, { k: 'ruler' }>): MenuEnt
 function emptyMenu(ctx: MenuContext): MenuEntry[] {
   const missing = missingInstruments(ctx.score, ctx.rig);
   if (!missing.length) {
-    return [{
-      label: 'Every instrument in the rig already has a track',
-      why: ctx.rig ? undefined : 'no rig loaded, so there is nothing to add',
-    }];
+    return [
+      {
+        label: 'Every instrument in the rig already has a track',
+        why: ctx.rig ? undefined : 'no rig loaded, so there is nothing to add',
+      },
+    ];
   }
   return [
     { label: 'Add a track', why: 'for an instrument the rig has and the score does not' },

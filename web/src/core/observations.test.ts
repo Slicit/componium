@@ -29,8 +29,7 @@ describe('what the model found, counted', () => {
     // different for no reason.
     const got = tally(trace);
     expect(got.slice(0, 2).map((x) => x.label)).toEqual(['scene-calm', 'water']);
-    expect(got.filter((x) => x.count === 2).map((x) => x.label))
-      .toEqual(['dust', 'scene-active']);
+    expect(got.filter((x) => x.count === 2).map((x) => x.label)).toEqual(['dust', 'scene-active']);
   });
 
   it('counts nothing from nothing', () => {

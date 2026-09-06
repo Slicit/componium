@@ -9,17 +9,21 @@ const RULER = 26;
 const W = 1000;
 
 const score: Score = {
-  title: 'x', duration: 100, fps: 24,
+  title: 'x',
+  duration: 100,
+  fps: 24,
   tracks: [
     {
-      instrument: 'wind.main', type: 'cue',
+      instrument: 'wind.main',
+      type: 'cue',
       cues: [
         { t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 10 },
         { t: 50, action: 'pop', params: { intensity: 1 } },
       ],
     },
     {
-      instrument: 'light.ambient', type: 'curve',
+      instrument: 'light.ambient',
+      type: 'curve',
       points: [
         { t: 0, value: { r: 0, g: 0, b: 0 } },
         { t: 40, value: { r: 1, g: 0.5, b: 0 } },

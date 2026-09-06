@@ -9,8 +9,7 @@ import { useEffect, useState } from 'react';
 import { parseRoute, type Route } from '../core/route';
 
 export function useRoute(): Route {
-  const [hash, setHash] = useState(() =>
-    typeof location === 'undefined' ? '' : location.hash);
+  const [hash, setHash] = useState(() => (typeof location === 'undefined' ? '' : location.hash));
 
   useEffect(() => {
     const onChange = () => setHash(location.hash);

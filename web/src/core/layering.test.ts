@@ -96,9 +96,13 @@ describe('the layers point downward', () => {
      * draws arrives as a prop, which is why it can be rendered in a test with
      * a handmade score and no application around it at all. */
     const timeline = readFileSync(join(SRC, 'ui/Timeline.tsx'), 'utf8');
-    const reachingOut = importsOf(timeline).filter((spec) =>
-      spec.includes('useLive') || spec.includes('useRoute')
-      || spec.includes('state') || spec.endsWith('/App'));
+    const reachingOut = importsOf(timeline).filter(
+      (spec) =>
+        spec.includes('useLive') ||
+        spec.includes('useRoute') ||
+        spec.includes('state') ||
+        spec.endsWith('/App'),
+    );
     expect(reachingOut).toEqual([]);
   });
 });

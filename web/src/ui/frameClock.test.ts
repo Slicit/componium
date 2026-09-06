@@ -12,11 +12,19 @@ function filmed(times: number[]) {
         cb = fn;
         return times.length;
       },
-      cancelVideoFrameCallback(h: number) { cancelled.push(h); },
+      cancelVideoFrameCallback(h: number) {
+        cancelled.push(h);
+      },
     },
-    present(t: number) { cb?.(0, { mediaTime: t }); },
-    get pending() { return cb !== null; },
-    get cancelled() { return cancelled; },
+    present(t: number) {
+      cb?.(0, { mediaTime: t });
+    },
+    get pending() {
+      return cb !== null;
+    },
+    get cancelled() {
+      return cancelled;
+    },
   };
 }
 
@@ -26,8 +34,13 @@ function ticking(): Frames & { run(n: number): void; cancelled: number[] } {
   const cancelled: number[] = [];
   let n = 0;
   return {
-    request(cb) { next = cb; return ++n; },
-    cancel(h) { cancelled.push(h); },
+    request(cb) {
+      next = cb;
+      return ++n;
+    },
+    cancel(h) {
+      cancelled.push(h);
+    },
     cancelled,
     run(count: number) {
       for (let i = 0; i < count; i++) {

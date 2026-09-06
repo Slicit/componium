@@ -23,9 +23,13 @@ const many = Array.from({ length: 34 }, (_, i) => film(`film-${String(i).padStar
 
 function libraryOf(entries: unknown[]) {
   return {
-    scores: '/scores', free: 1024 * 1024 * 100,
-    canBuild: true, canUpload: true, canPrepare: true,
-    current: '', entries,
+    scores: '/scores',
+    free: 1024 * 1024 * 100,
+    canBuild: true,
+    canUpload: true,
+    canPrepare: true,
+    current: '',
+    entries,
   };
 }
 
@@ -33,13 +37,27 @@ let body: unknown;
 
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal('fetch', vi.fn(async () => ({
-    ok: true, json: async () => body,
-  } as Response)));
-  vi.stubGlobal('confirm', vi.fn(() => true));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        ({
+          ok: true,
+          json: async () => body,
+        }) as Response,
+    ),
+  );
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 async function show(entries: unknown[]) {
   body = libraryOf(entries);
@@ -59,9 +77,15 @@ describe('the action column', () => {
     await show([
       film('bare.mp4'),
       film('rich.mp4', {
-        hasScore: true, preview: true,
-        job: { kind: 'analyse', state: 'failed', progress: 0.5, label: '',
-               chunks: [{ index: 0, from: 0, to: 10, state: 'done' }] },
+        hasScore: true,
+        preview: true,
+        job: {
+          kind: 'analyse',
+          state: 'failed',
+          progress: 0.5,
+          label: '',
+          chunks: [{ index: 0, from: 0, to: 10, state: 'done' }],
+        },
       }),
     ]);
     const counts = rows().map((r) => r.querySelectorAll('.lib-actions .slot').length);
@@ -166,7 +190,7 @@ describe('paging', () => {
     await show(many);
     fireEvent.change(screen.getByLabelText('Films per page'), { target: { value: '25' } });
     fireEvent.change(screen.getByLabelText('Filter films'), { target: { value: 'film-1' } });
-    expect(rows()).toHaveLength(10);  // film-10 through film-19
+    expect(rows()).toHaveLength(10); // film-10 through film-19
 
     cleanup();
     await show(many);
@@ -190,7 +214,8 @@ describe('reaching what the model said', () => {
       film('looked.mp4', { hasScore: true, seen: true }),
     ]);
     const buttons = rows().map((r) =>
-      Array.from(r.querySelectorAll('button')).map((b) => b.textContent));
+      Array.from(r.querySelectorAll('button')).map((b) => b.textContent),
+    );
     expect(buttons[0]).not.toContain('vision');
     expect(buttons[1]).toContain('vision');
   });
@@ -198,15 +223,17 @@ describe('reaching what the model said', () => {
   it('says what a rebuild does about the description', async () => {
     // The thing nobody was ever told: a rebuild reuses what the model said.
     await show([film('looked.mp4', { hasScore: true, seen: true })]);
-    const rebuild = Array.from(document.querySelectorAll('button'))
-      .find((b) => b.textContent === 'Rebuild')!;
+    const rebuild = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Rebuild',
+    )!;
     expect(rebuild.title).toContain('reused');
   });
 
   it('does not say it for a film with nothing to reuse', async () => {
     await show([film('fresh.mp4', { hasScore: true })]);
-    const rebuild = Array.from(document.querySelectorAll('button'))
-      .find((b) => b.textContent === 'Rebuild')!;
+    const rebuild = Array.from(document.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Rebuild',
+    )!;
     expect(rebuild.title).not.toContain('reused');
   });
 
@@ -242,8 +269,9 @@ describe('the width of an action slot', () => {
 
   it('names each width only once, so two slots cannot claim the same one', async () => {
     await show([film('a.mp4', { hasScore: true, seen: true, preview: true })]);
-    const named = Array.from(document.querySelectorAll('.lib-row .slot'))
-      .map((s) => Array.from(s.classList).find((c) => c.startsWith('slot-')));
+    const named = Array.from(document.querySelectorAll('.lib-row .slot')).map((s) =>
+      Array.from(s.classList).find((c) => c.startsWith('slot-')),
+    );
     expect(new Set(named).size).toBe(named.length);
   });
 });

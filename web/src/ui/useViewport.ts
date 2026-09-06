@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  DEFAULT_VIEWPORT, drop, normalise, normaliseList, put,
-  type CameraView, type NamedViewport, type Viewport,
+  DEFAULT_VIEWPORT,
+  drop,
+  normalise,
+  normaliseList,
+  put,
+  type CameraView,
+  type NamedViewport,
+  type Viewport,
 } from '../core/viewport';
 import { clampHeight, columnsAt, COLUMNS } from './useSplit';
 
@@ -22,7 +28,11 @@ function read(key: string): unknown {
 }
 
 function write(key: string, value: unknown) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ }
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* private mode */
+  }
 }
 
 export interface Viewports {
@@ -55,8 +65,12 @@ export function useViewport(): Viewports {
   const live = useRef<CameraView | null>(viewport.camera);
   const [camera, setCamera] = useState<CameraView | null>(() => viewport.camera);
 
-  useEffect(() => { write(CURRENT, { ...viewport, camera: live.current }); }, [viewport]);
-  useEffect(() => { write(SAVED, saved); }, [saved]);
+  useEffect(() => {
+    write(CURRENT, { ...viewport, camera: live.current });
+  }, [viewport]);
+  useEffect(() => {
+    write(SAVED, saved);
+  }, [saved]);
 
   /* Saving the camera on a timer rather than on every frame. Writing
    * localStorage per frame of a drag is a serialise and a synchronous disk
@@ -72,18 +86,30 @@ export function useViewport(): Viewports {
     }, 400);
   }, []);
 
-  useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
+  useEffect(
+    () => () => {
+      if (pending.current) clearTimeout(pending.current);
+    },
+    [],
+  );
 
   const setColumns = useCallback(
-    (n: number) => setViewport((v) => ({ ...v, columns: columnsAt(n / COLUMNS) })), []);
+    (n: number) => setViewport((v) => ({ ...v, columns: columnsAt(n / COLUMNS) })),
+    [],
+  );
   const setHeight = useCallback(
-    (px: number) => setViewport((v) => ({ ...v, height: clampHeight(px) })), []);
+    (px: number) => setViewport((v) => ({ ...v, height: clampHeight(px) })),
+    [],
+  );
   const setRoom = useCallback((on: boolean) => setViewport((v) => ({ ...v, room: on })), []);
   const setForce = useCallback((on: boolean) => setViewport((v) => ({ ...v, force: on })), []);
 
-  const save = useCallback((name: string) => {
-    setSaved((list) => put(list, name, { ...viewport, camera: live.current }));
-  }, [viewport]);
+  const save = useCallback(
+    (name: string) => {
+      setSaved((list) => put(list, name, { ...viewport, camera: live.current }));
+    },
+    [viewport],
+  );
 
   const apply = useCallback((name: string) => {
     setSaved((list) => {
@@ -110,7 +136,17 @@ export function useViewport(): Viewports {
   }, []);
 
   return {
-    viewport, setColumns, setHeight, setRoom, setForce,
-    camera, onCamera, saved, save, apply, remove, reset,
+    viewport,
+    setColumns,
+    setHeight,
+    setRoom,
+    setForce,
+    camera,
+    onCamera,
+    saved,
+    save,
+    apply,
+    remove,
+    reset,
   };
 }

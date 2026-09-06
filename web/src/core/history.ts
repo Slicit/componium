@@ -16,14 +16,26 @@
 import { round3, type Seconds } from './time';
 import type { Cue, Point, Score, Track } from './score';
 
-export interface MoveCue { track: Track; cue: Cue; from: Seconds; to: Seconds }
-export interface ResizeCue { track: Track; cue: Cue; from: Seconds; to: Seconds }
+export interface MoveCue {
+  track: Track;
+  cue: Cue;
+  from: Seconds;
+  to: Seconds;
+}
+export interface ResizeCue {
+  track: Track;
+  cue: Cue;
+  from: Seconds;
+  to: Seconds;
+}
 export interface MovePoint {
   track: Track;
   point: Point;
-  fromT: Seconds; toT: Seconds;
+  fromT: Seconds;
+  toT: Seconds;
   channel?: string;
-  fromV?: number; toV?: number;
+  fromV?: number;
+  toV?: number;
 }
 
 export type Command =
@@ -179,11 +191,21 @@ export class History {
   /** Bumped on every change, so a view can tell that something happened. */
   version = 0;
 
-  get canUndo(): boolean { return this.past.length > 0; }
-  get canRedo(): boolean { return this.future.length > 0; }
-  get undoLabel(): string | null { return this.past[this.past.length - 1]?.label ?? null; }
-  get redoLabel(): string | null { return this.future[this.future.length - 1]?.label ?? null; }
-  get depth(): number { return this.past.length; }
+  get canUndo(): boolean {
+    return this.past.length > 0;
+  }
+  get canRedo(): boolean {
+    return this.future.length > 0;
+  }
+  get undoLabel(): string | null {
+    return this.past[this.past.length - 1]?.label ?? null;
+  }
+  get redoLabel(): string | null {
+    return this.future[this.future.length - 1]?.label ?? null;
+  }
+  get depth(): number {
+    return this.past.length;
+  }
 
   /** True once anything has been done that is not yet saved. */
   dirty = false;
@@ -205,7 +227,9 @@ export class History {
   }
 
   /** End a gesture, so the next edit starts a new undo entry. */
-  seal(): void { this.key = null; }
+  seal(): void {
+    this.key = null;
+  }
 
   undo(): boolean {
     const cmd = this.past.pop();
@@ -229,7 +253,9 @@ export class History {
     return true;
   }
 
-  saved(): void { this.dirty = false; }
+  saved(): void {
+    this.dirty = false;
+  }
 
   /**
    * Forget everything, for when a different score is opened.
@@ -325,11 +351,14 @@ export function removePoints(track: Track, points: Point[]): Command {
   const all = withOrphans(track, points);
   return {
     k: 'removePoints',
-    label: all.length > points.length
-      /* Said out loud in the undo label, because removing one point and
-       * watching two disappear is alarming if you do not know the rule. */
-      ? 'Remove point (and its partner)'
-      : all.length > 1 ? `Remove ${all.length} points` : 'Remove point',
+    label:
+      all.length > points.length
+        ? /* Said out loud in the undo label, because removing one point and
+           * watching two disappear is alarming if you do not know the rule. */
+          'Remove point (and its partner)'
+        : all.length > 1
+          ? `Remove ${all.length} points`
+          : 'Remove point',
     track,
     points: all,
   };

@@ -17,14 +17,20 @@ let sent: string[] = [];
 beforeEach(() => {
   shelf = { shelf: true, current: 'esp32-rig.toml', rigs: ['esp32-rig.toml', 'virtual-rig.toml'] };
   sent = [];
-  vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => {
-    if (!init || init.method !== 'POST') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_url: string, init?: RequestInit) => {
+      if (!init || init.method !== 'POST') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
+      }
+      sent.push(String(init.body));
       return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
-    }
-    sent.push(String(init.body));
-    return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
-  }));
-  vi.stubGlobal('confirm', vi.fn(() => true));
+    }),
+  );
+  vi.stubGlobal(
+    'confirm',
+    vi.fn(() => true),
+  );
   vi.stubGlobal('alert', vi.fn());
 });
 
@@ -66,7 +72,10 @@ describe('the rig picker', () => {
   });
 
   it('does not switch when the question is answered no', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     await show(true);
     fireEvent.change(pick(), { target: { value: 'virtual-rig.toml' } });
     expect(sent.length).toBe(0);
@@ -85,14 +94,18 @@ describe('the rig picker', () => {
   });
 
   it('stays where it was when the server refuses', async () => {
-    vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => {
-      if (!init || init.method !== 'POST') {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
-      }
-      return Promise.resolve({
-        ok: false, text: () => Promise.resolve('chose it, but it will not load'),
-      } as Response);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, init?: RequestInit) => {
+        if (!init || init.method !== 'POST') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(shelf) } as Response);
+        }
+        return Promise.resolve({
+          ok: false,
+          text: () => Promise.resolve('chose it, but it will not load'),
+        } as Response);
+      }),
+    );
     await show();
     fireEvent.change(pick(), { target: { value: 'virtual-rig.toml' } });
     await waitFor(() => expect(window.alert).toHaveBeenCalled());
@@ -103,7 +116,9 @@ describe('the rig picker', () => {
 
   it('takes up no room when there is nothing to choose between', async () => {
     shelf = { shelf: true, current: 'only.toml', rigs: ['only.toml'] };
-    await act(async () => { render(<RigPicker armed={false} onChanged={() => {}} />); });
+    await act(async () => {
+      render(<RigPicker armed={false} onChanged={() => {}} />);
+    });
     expect(screen.queryByLabelText('Rig in use')).toBeNull();
   });
 });

@@ -28,7 +28,11 @@ describe('reading the address bar', () => {
 
 describe('writing one', () => {
   it('round trips', () => {
-    for (const [section, page] of [['', ''], ['admin', ''], ['admin', 'devices']] as const) {
+    for (const [section, page] of [
+      ['', ''],
+      ['admin', ''],
+      ['admin', 'devices'],
+    ] as const) {
       expect(parseRoute(routeHash(section, page))).toEqual({ section, page });
     }
   });

@@ -17,8 +17,13 @@ import { timecode } from '../core/time';
 import { channelsOf, latencyOf, type Rig, type Score } from '../core/score';
 import { DrawList, paint } from '../render/drawlist';
 import {
-  drawCalm, drawCollapsedEnvelope, drawCues, drawCurve, drawLatency,
-  drawPlayhead, drawRibbon,
+  drawCalm,
+  drawCollapsedEnvelope,
+  drawCues,
+  drawCurve,
+  drawLatency,
+  drawPlayhead,
+  drawRibbon,
 } from '../render/lanes';
 import { dark } from './theme';
 import type { Editing } from './useEditing';
@@ -98,20 +103,33 @@ export function Timeline(props: TimelineProps) {
     for (const tick of ticks(view, w)) {
       const x = view.toX(tick.t, w);
       list.line({
-        x1: x, y1: tick.major ? RULER_H - 12 : RULER_H - 6, x2: x, y2: RULER_H,
-        stroke: tick.major ? theme.muted : theme.line, lineWidth: 1,
+        x1: x,
+        y1: tick.major ? RULER_H - 12 : RULER_H - 6,
+        x2: x,
+        y2: RULER_H,
+        stroke: tick.major ? theme.muted : theme.line,
+        lineWidth: 1,
       });
       if (tick.major) {
         list.text({
-          x: x + 4, y: 12, s: timecode(tick.t, fps), fill: theme.muted,
-          size: 10, mono: true,
+          x: x + 4,
+          y: 12,
+          s: timecode(tick.t, fps),
+          fill: theme.muted,
+          size: 10,
+          mono: true,
         });
       }
       /* The same tick, faint, down the lanes: a gridline is what lets you
        * compare two tracks at a glance without dragging a playhead about. */
       list.line({
-        x1: x, y1: RULER_H, x2: x, y2: h,
-        stroke: theme.line, lineWidth: 1, alpha: tick.major ? 0.9 : 0.4,
+        x1: x,
+        y1: RULER_H,
+        x2: x,
+        y2: h,
+        stroke: theme.line,
+        lineWidth: 1,
+        alpha: tick.major ? 0.9 : 0.4,
       });
     }
     list.line({ x1: 0, y1: RULER_H - 0.5, x2: w, y2: RULER_H - 0.5, stroke: theme.line });
@@ -129,8 +147,12 @@ export function Timeline(props: TimelineProps) {
 
       if (row.y > 0) {
         list.line({
-          x1: 0, y1: box.y - 0.5, x2: w, y2: box.y - 0.5,
-          stroke: theme.line, alpha: row.head ? 1 : 0.45,
+          x1: 0,
+          y1: box.y - 0.5,
+          x2: w,
+          y2: box.y - 0.5,
+          stroke: theme.line,
+          alpha: row.head ? 1 : 0.45,
         });
       }
 
@@ -166,10 +188,13 @@ export function Timeline(props: TimelineProps) {
       const bx = Math.min(edit.band.x1, edit.band.x2);
       const by = Math.min(edit.band.y1, edit.band.y2);
       list.rect({
-        x: bx, y: by,
+        x: bx,
+        y: by,
         w: Math.abs(edit.band.x2 - edit.band.x1),
         h: Math.abs(edit.band.y2 - edit.band.y1),
-        fill: theme.event, stroke: theme.event, alpha: 0.18,
+        fill: theme.event,
+        stroke: theme.event,
+        alpha: 0.18,
       });
     }
 
@@ -186,13 +211,28 @@ export function Timeline(props: TimelineProps) {
      * it is rebuilt whenever `revision` changes, so an edit produces a new
      * layout object and a new draw with it.
      */
-  }, [score, rig, view, view.start, view.span, time, lay, fps, overlays,
-    edit.selected, edit.band, edit.guide, edit.version]);
+  }, [
+    score,
+    rig,
+    view,
+    view.start,
+    view.span,
+    time,
+    lay,
+    fps,
+    overlays,
+    edit.selected,
+    edit.band,
+    edit.guide,
+    edit.version,
+  ]);
 
   /* Keyed on the draw itself, which changes exactly when its inputs do. It
    * used to have no dependency array at all, which redrew on every commit of
    * this component whatever had caused it. */
-  useEffect(() => { draw(); }, [draw]);
+  useEffect(() => {
+    draw();
+  }, [draw]);
 
   useEffect(() => {
     const on = () => draw();
@@ -204,28 +244,34 @@ export function Timeline(props: TimelineProps) {
       ro = new ResizeObserver(on);
       ro.observe(wrap.current);
     }
-    return () => { window.removeEventListener('resize', on); ro?.disconnect(); };
+    return () => {
+      window.removeEventListener('resize', on);
+      ro?.disconnect();
+    };
   }, [draw]);
 
   /* --- pointer --- */
 
-  const wheel = useCallback((e: WheelEvent) => {
-    const host = wrap.current;
-    if (!host) return;
-    e.preventDefault();
-    const box = host.getBoundingClientRect();
-    const anchor = (e.clientX - box.left) / Math.max(1, box.width);
+  const wheel = useCallback(
+    (e: WheelEvent) => {
+      const host = wrap.current;
+      if (!host) return;
+      e.preventDefault();
+      const box = host.getBoundingClientRect();
+      const anchor = (e.clientX - box.left) / Math.max(1, box.width);
 
-    if (e.ctrlKey || e.metaKey || e.shiftKey) {
-      /* Zoom about the cursor. Trackpad pinch arrives as ctrl+wheel, which is
-       * why that gesture is the one bound to zoom. */
-      view.zoomAt(anchor, Math.exp(e.deltaY * 0.0015));
-    } else {
-      const by = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      view.panByFraction((by / Math.max(1, box.width)) * 1.2);
-    }
-    onView();
-  }, [view, onView]);
+      if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        /* Zoom about the cursor. Trackpad pinch arrives as ctrl+wheel, which is
+         * why that gesture is the one bound to zoom. */
+        view.zoomAt(anchor, Math.exp(e.deltaY * 0.0015));
+      } else {
+        const by = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        view.panByFraction((by / Math.max(1, box.width)) * 1.2);
+      }
+      onView();
+    },
+    [view, onView],
+  );
 
   /* Bound natively rather than through onWheel, so the page stays put.
    *
@@ -290,7 +336,8 @@ export function TrackHeads(props: {
   onAddTrack: ((e: React.MouseEvent) => void) | null;
   revision: number;
 }) {
-  const { score, rig, collapsed, order, onToggleCollapse, onMove, onMoveTo, onAddTrack, revision } = props;
+  const { score, rig, collapsed, order, onToggleCollapse, onMove, onMoveTo, onAddTrack, revision } =
+    props;
   /* Which group is being carried, and which one it would land in front of.
    * Held here rather than in the app: it is entirely about this column. */
   const [dragging, setDragging] = useState<string | null>(null);
@@ -305,10 +352,12 @@ export function TrackHeads(props: {
       {lay.rows.map((row, i) => (
         <div
           key={row.instrument + '/' + (row.channel ?? '') + i}
-          className={'tl-head'
-            + (row.head ? ' is-head' : '')
-            + (dragging === row.instrument ? ' is-dragging' : '')
-            + (over === row.instrument && row.head ? ' is-over' : '')}
+          className={
+            'tl-head' +
+            (row.head ? ' is-head' : '') +
+            (dragging === row.instrument ? ' is-dragging' : '') +
+            (over === row.instrument && row.head ? ' is-over' : '')
+          }
           style={{ height: row.h }}
           /* Only the row carrying the name is a handle: dragging a channel
              lane would be ambiguous about what is being moved. */
@@ -320,7 +369,10 @@ export function TrackHeads(props: {
             /* Firefox refuses to start a drag without data on it. */
             e.dataTransfer.setData('text/plain', row.instrument);
           }}
-          onDragEnd={() => { setDragging(null); setOver(null); }}
+          onDragEnd={() => {
+            setDragging(null);
+            setOver(null);
+          }}
           onDragOver={(e) => {
             if (!dragging || dragging === row.instrument) return;
             e.preventDefault();
@@ -346,14 +398,20 @@ export function TrackHeads(props: {
                   className="tl-chev"
                   onClick={() => onToggleCollapse(row.instrument)}
                   title={collapsed.has(row.instrument) ? 'Expand channels' : 'Collapse channels'}
-                  aria-label={collapsed.has(row.instrument) ? 'Expand channels' : 'Collapse channels'}
+                  aria-label={
+                    collapsed.has(row.instrument) ? 'Expand channels' : 'Collapse channels'
+                  }
                   aria-expanded={!collapsed.has(row.instrument)}
                 >
                   {collapsed.has(row.instrument) ? '▶' : '▼'}
                 </button>
-              ) : <span className="tl-chev-gap" />}
+              ) : (
+                <span className="tl-chev-gap" />
+              )}
 
-              <span className="tl-name" title={row.instrument}>{row.instrument}</span>
+              <span className="tl-name" title={row.instrument}>
+                {row.instrument}
+              </span>
 
               {/* What the compound row is showing, when there is one. */}
               {!row.editable && (
@@ -364,8 +422,20 @@ export function TrackHeads(props: {
               )}
 
               <span className="tl-move">
-                <button onClick={() => onMove(row.instrument, -1)} title="Move up" aria-label="Move up">↑</button>
-                <button onClick={() => onMove(row.instrument, 1)} title="Move down" aria-label="Move down">↓</button>
+                <button
+                  onClick={() => onMove(row.instrument, -1)}
+                  title="Move up"
+                  aria-label="Move up"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => onMove(row.instrument, 1)}
+                  title="Move down"
+                  aria-label="Move down"
+                >
+                  ↓
+                </button>
               </span>
             </>
           ) : (

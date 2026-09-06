@@ -1,19 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import {
-  layout, orderTracks, rowAt, canCollapse, summaryLabel,
-  ROW_CUE, ROW_CHANNEL, ROW_COLLAPSED,
+  layout,
+  orderTracks,
+  rowAt,
+  canCollapse,
+  summaryLabel,
+  ROW_CUE,
+  ROW_CHANNEL,
+  ROW_COLLAPSED,
 } from './layout';
 import type { Track } from './score';
 
 const tracks: Track[] = [
   { instrument: 'wind.main', type: 'cue', cues: [{ t: 1, action: 'gust' }] },
   {
-    instrument: 'light.ambient', type: 'curve',
-    points: [{ t: 0, value: { r: 0, g: 0, b: 0 } }, { t: 5, value: { r: 1, g: 1, b: 1 } }],
+    instrument: 'light.ambient',
+    type: 'curve',
+    points: [
+      { t: 0, value: { r: 0, g: 0, b: 0 } },
+      { t: 5, value: { r: 1, g: 1, b: 1 } },
+    ],
   },
   {
-    instrument: 'shake.seat', type: 'curve',
-    points: [{ t: 0, value: { intensity: 0 } }, { t: 5, value: { intensity: 1 } }],
+    instrument: 'shake.seat',
+    type: 'curve',
+    points: [
+      { t: 0, value: { intensity: 0 } },
+      { t: 5, value: { intensity: 1 } },
+    ],
   },
 ];
 
@@ -58,7 +72,9 @@ describe('rows', () => {
   });
 
   it('names the instrument once per group, on its first row', () => {
-    const heads = open().rows.filter((r) => r.head).map((r) => r.instrument);
+    const heads = open()
+      .rows.filter((r) => r.head)
+      .map((r) => r.instrument);
     expect(heads).toEqual(['wind.main', 'light.ambient', 'shake.seat']);
   });
 });
@@ -110,7 +126,8 @@ describe('collapsing', () => {
 
   it('compounds a non-colour multi-channel curve to an envelope', () => {
     const motion: Track = {
-      instrument: 'motion.platform', type: 'curve',
+      instrument: 'motion.platform',
+      type: 'curve',
       points: [
         { t: 0, value: { heave: 0, roll: 0 } },
         { t: 5, value: { heave: 1, roll: 0.5 } },

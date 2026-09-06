@@ -24,7 +24,8 @@ export function Force(props: {
 
   const set = (id: string, value: number) => {
     const next = new Map(forced);
-    if (value > 0) next.set(id, value / 100); else next.delete(id);
+    if (value > 0) next.set(id, value / 100);
+    else next.delete(id);
     onChange(next);
   };
 
@@ -32,15 +33,23 @@ export function Force(props: {
     <div className="force">
       <div className="force-head">
         <span className="dim small">Force a device, 0 releases it back to the score</span>
-        <button className="small-btn" onClick={() => onChange(new Map())}>Release all</button>
+        <button className="small-btn" onClick={() => onChange(new Map())}>
+          Release all
+        </button>
       </div>
       {instruments.map((inst) => {
         const at = Math.round((forced.get(inst.id) ?? 0) * 100);
         return (
           <label className={'force-row' + (at > 0 ? ' forcing' : '')} key={inst.id}>
-            <span className="force-name" title={inst.kind}>{inst.id}</span>
+            <span className="force-name" title={inst.kind}>
+              {inst.id}
+            </span>
             <input
-              type="range" min={0} max={100} step={1} value={at}
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={at}
               onChange={(e) => set(inst.id, Number(e.target.value))}
             />
             <span className="force-value">{at > 0 ? at + '%' : 'auto'}</span>

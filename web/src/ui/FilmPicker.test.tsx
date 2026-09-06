@@ -25,9 +25,7 @@ const FILMS = [
 
 function show(over: Partial<React.ComponentProps<typeof FilmPicker>> = {}) {
   const onPick = vi.fn();
-  render(
-    <FilmPicker films={FILMS} value="" fallback="(score)" onPick={onPick} {...over} />,
-  );
+  render(<FilmPicker films={FILMS} value="" fallback="(score)" onPick={onPick} {...over} />);
   return onPick;
 }
 
@@ -165,7 +163,9 @@ describe('the pointer', () => {
   it('closes when the press starts somewhere else', () => {
     show();
     openIt();
-    act(() => { document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })); });
+    act(() => {
+      document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    });
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 

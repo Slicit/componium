@@ -42,7 +42,7 @@ export function tally(observations: readonly Observation[]): Tally[] {
   }
   return [...counts.entries()]
     .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label));
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
 /** Effects the model named, as opposed to how it described the scene. */
@@ -64,15 +64,14 @@ export function scenes(t: readonly Tally[]): Tally[] {
  * not catch it, which is a mapping problem rather than a model one, and no
  * amount of looking at labels will show it.
  */
-export function matching(
-  observations: readonly Observation[],
-  query: string,
-): Observation[] {
+export function matching(observations: readonly Observation[], query: string): Observation[] {
   const want = (query ?? '').trim().toLowerCase();
   if (!want) return [...(observations ?? [])];
-  return (observations ?? []).filter((o) =>
-    (o.seen ?? '').toLowerCase().includes(want)
-    || (o.labels ?? []).some((l) => l.toLowerCase().includes(want)));
+  return (observations ?? []).filter(
+    (o) =>
+      (o.seen ?? '').toLowerCase().includes(want) ||
+      (o.labels ?? []).some((l) => l.toLowerCase().includes(want)),
+  );
 }
 
 /**
@@ -86,7 +85,6 @@ export function matching(
 export function quietShare(observations: readonly Observation[]): number {
   const all = observations ?? [];
   if (!all.length) return 0;
-  const quiet = all.filter(
-    (o) => !(o.labels ?? []).some((l) => !l.startsWith(SCENE))).length;
+  const quiet = all.filter((o) => !(o.labels ?? []).some((l) => !l.startsWith(SCENE))).length;
   return quiet / all.length;
 }

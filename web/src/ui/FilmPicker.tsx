@@ -40,24 +40,27 @@ export function FilmPicker({ films, value, fallback, onPick }: FilmPickerProps) 
   const box = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
-  const shown = useMemo(
-    () => matches(films, query, (f) => f.name),
-    [films, query]);
+  const shown = useMemo(() => matches(films, query, (f) => f.name), [films, query]);
 
   /* Kept inside the list whenever the list changes under it. Filtering to two
    * results with the cursor on the ninth would otherwise leave Enter pointing
    * at nothing. */
-  useEffect(() => { setAt(0); }, [query]);
+  useEffect(() => {
+    setAt(0);
+  }, [query]);
 
   const close = useCallback(() => {
     setOpen(false);
     setQuery('');
   }, []);
 
-  const choose = useCallback((name: string) => {
-    onPick(name);
-    close();
-  }, [onPick, close]);
+  const choose = useCallback(
+    (name: string) => {
+      onPick(name);
+      close();
+    },
+    [onPick, close],
+  );
 
   /* Clicking away closes it. Pointerdown rather than click, so that a press
    * beginning outside dismisses before whatever was pressed acts on a studio
@@ -76,7 +79,11 @@ export function FilmPicker({ films, value, fallback, onPick }: FilmPickerProps) 
   }, [open]);
 
   const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setAt((i) => Math.min(shown.length - 1, i + 1));

@@ -165,7 +165,10 @@ export function hexOf(params: Params | undefined): string | null {
 }
 
 export function toHex(r: number, g: number, b: number): string {
-  const c = (v: number) => Math.round(clamp01(v) * 255).toString(16).padStart(2, '0');
+  const c = (v: number) =>
+    Math.round(clamp01(v) * 255)
+      .toString(16)
+      .padStart(2, '0');
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
@@ -291,7 +294,10 @@ export function valueAt(points: Point[], t: Seconds, channels: string[], hsi = f
 
   let hi = 0;
   for (let i = 0; i < points.length; i++) {
-    if (points[i].t > t) { hi = i; break; }
+    if (points[i].t > t) {
+      hi = i;
+      break;
+    }
   }
   const a = points[hi - 1];
   const b = points[hi];
@@ -363,12 +369,18 @@ export function hsiToRGB(h: number, s: number, i: number): [number, number, numb
   const q = val * (1 - sat * f);
   const t = val * (1 - sat * (1 - f));
   switch (k) {
-    case 0: return [val, t, p];
-    case 1: return [q, val, p];
-    case 2: return [p, val, t];
-    case 3: return [p, q, val];
-    case 4: return [t, p, val];
-    default: return [val, p, q];
+    case 0:
+      return [val, t, p];
+    case 1:
+      return [q, val, p];
+    case 2:
+      return [p, val, t];
+    case 3:
+      return [p, q, val];
+    case 4:
+      return [t, p, val];
+    default:
+      return [val, p, q];
   }
 }
 
@@ -402,7 +414,6 @@ export function rgbToHSI(r: number, g: number, b: number): [number, number, numb
   return [hue, max === 0 ? 0 : span / max, max];
 }
 
-
 /**
  * Write a picked colour into whichever channels these params actually use.
  *
@@ -429,7 +440,6 @@ export function writeColour(params: Params, hex: string): void {
   if (typeof params.b === 'number') params.b = round3(rgb[2]);
 }
 
-
 /**
  * Interpolate a colour, taking hue the short way round and carrying a hue
  * across a point that has none.
@@ -437,21 +447,25 @@ export function writeColour(params: Params, hex: string): void {
  * Mirrors colour.Lerp in Go. See that file for why hue cannot simply be
  * averaged: the seam is red, and white has no hue to average with.
  */
-export function lerpHSI(
-  a: Params, b: Params, f: number,
-): { h: number; s: number; i: number } {
+export function lerpHSI(a: Params, b: Params, f: number): { h: number; s: number; i: number } {
   const neutral = 1e-4;
-  const wrap = (h: number) => { const x = h % 1; return x < 0 ? x + 1 : x; };
+  const wrap = (h: number) => {
+    const x = h % 1;
+    return x < 0 ? x + 1 : x;
+  };
   let ah = wrap(a.h ?? 0);
   let bh = wrap(b.h ?? 0);
   const as = a.s ?? 0;
   const bs = b.s ?? 0;
-  if (as <= neutral && bs <= neutral) { ah = 0; bh = 0; }
-  else if (as <= neutral) ah = bh;
+  if (as <= neutral && bs <= neutral) {
+    ah = 0;
+    bh = 0;
+  } else if (as <= neutral) ah = bh;
   else if (bs <= neutral) bh = ah;
 
   let d = bh - ah;
-  if (d > 0.5) d -= 1; else if (d < -0.5) d += 1;
+  if (d > 0.5) d -= 1;
+  else if (d < -0.5) d += 1;
 
   return {
     h: wrap(ah + d * f),

@@ -17,17 +17,38 @@ import type { Layout } from '../core/layout';
 import { cursorFor, hitRange, hitTest, type Hit, type HitContext } from '../core/hit';
 import { snap, snapTargets } from '../core/snap';
 import {
-  History, insertPoints, moveCues, movePoints, removeCues, removePoints, resizeCues,
+  History,
+  insertPoints,
+  moveCues,
+  movePoints,
+  removeCues,
+  removePoints,
+  resizeCues,
 } from '../core/history';
 import { clamp, clamp01, round3 } from '../core/time';
-import { cueEnd, isHSI, isSpan, valueAt, channelsOf, type Cue, type Point, type Rig, type Score } from '../core/score';
+import {
+  cueEnd,
+  isHSI,
+  isSpan,
+  valueAt,
+  channelsOf,
+  type Cue,
+  type Point,
+  type Rig,
+  type Score,
+} from '../core/score';
 
 /** Below this many pixels a press is a click, not a drag. */
 const SLOP = 3;
 
 export type Selected = Set<Cue | Point>;
 
-export interface Band { x1: number; y1: number; x2: number; y2: number }
+export interface Band {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
 
 export interface Editing {
   selected: Selected;
@@ -77,9 +98,16 @@ export function useEditing(opts: {
   const [version, setVersion] = useState(0);
   const gesture = useRef(0);
 
-  const context = useCallback((geom: Geometry): HitContext => ({
-    score, layout: geom.layout, view, width: geom.width, rulerH: geom.rulerH,
-  }), [score, view]);
+  const context = useCallback(
+    (geom: Geometry): HitContext => ({
+      score,
+      layout: geom.layout,
+      view,
+      width: geom.width,
+      rulerH: geom.rulerH,
+    }),
+    [score, view],
+  );
 
   const changed = useCallback(() => {
     setVersion((n) => n + 1);
@@ -88,66 +116,77 @@ export function useEditing(opts: {
 
   /* --- hover ---------------------------------------------------------- */
 
-  const onPointerMove = useCallback((e: React.PointerEvent, geom: Geometry) => {
-    const x = e.clientX - geom.rect.left;
-    const y = e.clientY - geom.rect.top;
-    setCursor(cursorFor(hitTest(context(geom), x, y)));
-  }, [context]);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent, geom: Geometry) => {
+      const x = e.clientX - geom.rect.left;
+      const y = e.clientY - geom.rect.top;
+      setCursor(cursorFor(hitTest(context(geom), x, y)));
+    },
+    [context],
+  );
 
   /* --- press ---------------------------------------------------------- */
 
-  const onPointerDown = useCallback((e: React.PointerEvent, geom: Geometry) => {
-    if (e.button !== 0) return;
-    const x = e.clientX - geom.rect.left;
-    const y = e.clientY - geom.rect.top;
-    const hit = hitTest(context(geom), x, y);
-    const additive = e.shiftKey || e.metaKey || e.ctrlKey;
-    const key = 'g' + (++gesture.current);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent, geom: Geometry) => {
+      if (e.button !== 0) return;
+      const x = e.clientX - geom.rect.left;
+      const y = e.clientY - geom.rect.top;
+      const hit = hitTest(context(geom), x, y);
+      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+      const key = 'g' + ++gesture.current;
 
-    if (hit.k === 'ruler') { scrub(geom, hit.t); return; }
-
-    /* Selection happens on press, not release: an editor expects the thing it
-     * grabbed to be selected before it starts moving. */
-    let picked = selected;
-    if (hit.k === 'cue' || hit.k === 'point') {
-      const item = hit.k === 'cue' ? hit.cue : hit.point;
-      if (additive) {
-        picked = new Set(selected);
-        if (picked.has(item)) picked.delete(item);
-        else picked.add(item);
-      } else if (!selected.has(item)) {
-        picked = new Set([item]);
+      if (hit.k === 'ruler') {
+        scrub(geom, hit.t);
+        return;
       }
-      setSelected(picked);
-      /* A plain click opens the inspector on what was clicked. Dragging is how
-       * you find a shape and a typed field is how you pin it down; both want
-       * to be available without choosing a mode first. */
-      setFocus(hit.k === 'cue'
-        ? { track: hit.row.track, cue: hit.cue }
-        : { track: hit.row.track, point: hit.point, channel: hit.channel });
-    } else if (!additive) {
-      picked = new Set();
-      setSelected(picked);
-      /* Clicking empty space in a lane still says which track you are working
-       * in, even though it selects nothing.
-       *
-       * Focus used to be cleared here, so a track with nothing on it could
-       * never become the thing being worked on — which is exactly backwards
-       * for authoring: an empty track is the one you most need to point at,
-       * and you had to select a point that was not there in order to do it.
-       * The effects library reads this to know what it is offering shapes for.
-       */
-      setFocus('row' in hit && hit.row ? { track: hit.row.track } : null);
-    }
 
-    if (hit.k === 'cue') {
-      dragCues(e, geom, hit, picked, key);
-    } else if (hit.k === 'point') {
-      dragPoints(e, geom, hit, picked, key);
-    } else {
-      rubberBand(e, geom, additive, picked);
-    }
-  }, [context, selected, view, history, score, time, fps]);
+      /* Selection happens on press, not release: an editor expects the thing it
+       * grabbed to be selected before it starts moving. */
+      let picked = selected;
+      if (hit.k === 'cue' || hit.k === 'point') {
+        const item = hit.k === 'cue' ? hit.cue : hit.point;
+        if (additive) {
+          picked = new Set(selected);
+          if (picked.has(item)) picked.delete(item);
+          else picked.add(item);
+        } else if (!selected.has(item)) {
+          picked = new Set([item]);
+        }
+        setSelected(picked);
+        /* A plain click opens the inspector on what was clicked. Dragging is how
+         * you find a shape and a typed field is how you pin it down; both want
+         * to be available without choosing a mode first. */
+        setFocus(
+          hit.k === 'cue'
+            ? { track: hit.row.track, cue: hit.cue }
+            : { track: hit.row.track, point: hit.point, channel: hit.channel },
+        );
+      } else if (!additive) {
+        picked = new Set();
+        setSelected(picked);
+        /* Clicking empty space in a lane still says which track you are working
+         * in, even though it selects nothing.
+         *
+         * Focus used to be cleared here, so a track with nothing on it could
+         * never become the thing being worked on — which is exactly backwards
+         * for authoring: an empty track is the one you most need to point at,
+         * and you had to select a point that was not there in order to do it.
+         * The effects library reads this to know what it is offering shapes for.
+         */
+        setFocus('row' in hit && hit.row ? { track: hit.row.track } : null);
+      }
+
+      if (hit.k === 'cue') {
+        dragCues(e, geom, hit, picked, key);
+      } else if (hit.k === 'point') {
+        dragPoints(e, geom, hit, picked, key);
+      } else {
+        rubberBand(e, geom, additive, picked);
+      }
+    },
+    [context, selected, view, history, score, time, fps],
+  );
 
   /* --- gestures ------------------------------------------------------- */
 
@@ -165,8 +204,11 @@ export function useEditing(opts: {
   }
 
   function dragCues(
-    e: React.PointerEvent, geom: Geometry,
-    hit: Extract<Hit, { k: 'cue' }>, picked: Selected, key: string,
+    e: React.PointerEvent,
+    geom: Geometry,
+    hit: Extract<Hit, { k: 'cue' }>,
+    picked: Selected,
+    key: string,
   ) {
     const track = score.tracks[hit.row.track];
     const startX = e.clientX;
@@ -199,7 +241,10 @@ export function useEditing(opts: {
           setGuide(s.to);
           const start = clamp(s.t, 0, b.t + b.d - 0.02);
           history.run(moveCues([{ track, cue: b.cue, from: b.t, to: start }]), key);
-          history.run(resizeCues([{ track, cue: b.cue, from: b.d, to: b.t + b.d - start }]), key + 'r');
+          history.run(
+            resizeCues([{ track, cue: b.cue, from: b.d, to: b.t + b.d - start }]),
+            key + 'r',
+          );
         }
       } else {
         /* Snap the event the pointer is on, then shift the rest by the same
@@ -209,9 +254,17 @@ export function useEditing(opts: {
         const s = snap(lead.t + dt, view, geom.width, targets, fps, !free);
         setGuide(s.to);
         const shift = s.t - lead.t;
-        history.run(moveCues(before.map((b) => ({
-          track, cue: b.cue, from: b.t, to: clamp(b.t + shift, 0, score.duration),
-        }))), key);
+        history.run(
+          moveCues(
+            before.map((b) => ({
+              track,
+              cue: b.cue,
+              from: b.t,
+              to: clamp(b.t + shift, 0, score.duration),
+            })),
+          ),
+          key,
+        );
       }
       changed();
     };
@@ -228,8 +281,11 @@ export function useEditing(opts: {
   }
 
   function dragPoints(
-    e: React.PointerEvent, geom: Geometry,
-    hit: Extract<Hit, { k: 'point' }>, picked: Selected, key: string,
+    e: React.PointerEvent,
+    geom: Geometry,
+    hit: Extract<Hit, { k: 'point' }>,
+    picked: Selected,
+    key: string,
   ) {
     const track = score.tracks[hit.row.track];
     const channel = hit.channel;
@@ -237,7 +293,9 @@ export function useEditing(opts: {
     const startY = e.clientY;
     const points = (track.points ?? []).filter((p) => picked.has(p) || p === hit.point);
     const before = points.map((p) => ({
-      point: p, t: p.t, v: p.value[channel] ?? 0,
+      point: p,
+      t: p.t,
+      v: p.value[channel] ?? 0,
     }));
     const targets = snapTargets(score, time, new Set(points));
     let moved = false;
@@ -261,11 +319,20 @@ export function useEditing(opts: {
       setGuide(s.to);
       const shift = s.t - lead.t;
 
-      history.run(movePoints(before.map((b) => ({
-        track, point: b.point, channel,
-        fromT: b.t, toT: clamp(b.t + shift, 0, score.duration),
-        fromV: b.v, toV: clamp01(b.v + dv),
-      }))), key);
+      history.run(
+        movePoints(
+          before.map((b) => ({
+            track,
+            point: b.point,
+            channel,
+            fromT: b.t,
+            toT: clamp(b.t + shift, 0, score.duration),
+            fromV: b.v,
+            toV: clamp01(b.v + dv),
+          })),
+        ),
+        key,
+      );
       changed();
     };
 
@@ -311,50 +378,53 @@ export function useEditing(opts: {
 
   /* --- double click: add and remove ----------------------------------- */
 
-  const onDoubleClick = useCallback((e: React.MouseEvent, geom: Geometry) => {
-    const x = e.clientX - geom.rect.left;
-    const y = e.clientY - geom.rect.top;
-    const hit = hitTest(context(geom), x, y);
+  const onDoubleClick = useCallback(
+    (e: React.MouseEvent, geom: Geometry) => {
+      const x = e.clientX - geom.rect.left;
+      const y = e.clientY - geom.rect.top;
+      const hit = hitTest(context(geom), x, y);
 
-    if (hit.k === 'point') {
-      history.run(removePoints(score.tracks[hit.row.track], [hit.point]));
+      if (hit.k === 'point') {
+        history.run(removePoints(score.tracks[hit.row.track], [hit.point]));
+        history.seal();
+        setSelected(new Set());
+        changed();
+        return;
+      }
+      if (hit.k === 'cue') {
+        history.run(removeCues(score.tracks[hit.row.track], [hit.cue]));
+        history.seal();
+        setSelected(new Set());
+        changed();
+        return;
+      }
+      if (hit.k !== 'lane' || hit.row.draw !== 'curve' || !hit.row.channel) return;
+
+      /* Add a point where the click was, at the clicked value for the channel
+       * clicked in, and at whatever the curve is already worth for the others —
+       * so inserting a control point in red does not kink green and blue. */
+      const track = score.tracks[hit.row.track];
+      const channels = channelsOf(track, rig);
+      const t = round3(clamp(hit.t, 0, score.duration));
+      const localY = y - geom.rulerH - hit.row.y;
+      const v = clamp01(1 - (localY - 3) / Math.max(1, hit.row.h - 6));
+
+      const value = valueAt(track.points ?? [], t, channels, isHSI(track));
+      value[hit.row.channel] = round3(v);
+
+      const adding: Point[] = [{ t, value }];
+      if (!(track.points ?? []).length) {
+        /* Two or none, never one. The first click on an empty track lays a short
+         * flat segment to shape rather than an orphan the score would refuse. */
+        const gap = Math.max(1, Math.min(score.duration - t, score.duration * 0.08));
+        adding.push({ t: round3(Math.min(score.duration, t + gap)), value: { ...value } });
+      }
+      history.run(insertPoints(track, adding));
       history.seal();
-      setSelected(new Set());
       changed();
-      return;
-    }
-    if (hit.k === 'cue') {
-      history.run(removeCues(score.tracks[hit.row.track], [hit.cue]));
-      history.seal();
-      setSelected(new Set());
-      changed();
-      return;
-    }
-    if (hit.k !== 'lane' || hit.row.draw !== 'curve' || !hit.row.channel) return;
-
-    /* Add a point where the click was, at the clicked value for the channel
-     * clicked in, and at whatever the curve is already worth for the others —
-     * so inserting a control point in red does not kink green and blue. */
-    const track = score.tracks[hit.row.track];
-    const channels = channelsOf(track, rig);
-    const t = round3(clamp(hit.t, 0, score.duration));
-    const localY = y - geom.rulerH - hit.row.y;
-    const v = clamp01(1 - (localY - 3) / Math.max(1, hit.row.h - 6));
-
-    const value = valueAt(track.points ?? [], t, channels, isHSI(track));
-    value[hit.row.channel] = round3(v);
-
-    const adding: Point[] = [{ t, value }];
-    if (!(track.points ?? []).length) {
-      /* Two or none, never one. The first click on an empty track lays a short
-       * flat segment to shape rather than an orphan the score would refuse. */
-      const gap = Math.max(1, Math.min(score.duration - t, score.duration * 0.08));
-      adding.push({ t: round3(Math.min(score.duration, t + gap)), value: { ...value } });
-    }
-    history.run(insertPoints(track, adding));
-    history.seal();
-    changed();
-  }, [context, history, score, rig, changed]);
+    },
+    [context, history, score, rig, changed],
+  );
 
   /* --- selection commands --------------------------------------------- */
 
@@ -386,23 +456,40 @@ export function useEditing(opts: {
    * the selection, in which case the selection stands. So a menu never acts on
    * something other than what was pointed at, and never destroys a
    * multi-selection you right-clicked in order to use. */
-  const onContextMenu = useCallback((e: React.MouseEvent, geom: Geometry) => {
-    e.preventDefault();
-    const x = e.clientX - geom.rect.left;
-    const y = e.clientY - geom.rect.top;
-    const hit = hitTest(context(geom), x, y);
-    if (hit.k === 'cue' && !selected.has(hit.cue)) setSelected(new Set([hit.cue]));
-    if (hit.k === 'point' && !selected.has(hit.point)) setSelected(new Set([hit.point]));
-    setMenu({ x: e.clientX, y: e.clientY, hit });
-  }, [context, selected]);
+  const onContextMenu = useCallback(
+    (e: React.MouseEvent, geom: Geometry) => {
+      e.preventDefault();
+      const x = e.clientX - geom.rect.left;
+      const y = e.clientY - geom.rect.top;
+      const hit = hitTest(context(geom), x, y);
+      if (hit.k === 'cue' && !selected.has(hit.cue)) setSelected(new Set([hit.cue]));
+      if (hit.k === 'point' && !selected.has(hit.point)) setSelected(new Set([hit.point]));
+      setMenu({ x: e.clientX, y: e.clientY, hit });
+    },
+    [context, selected],
+  );
 
   const closeMenu = useCallback(() => setMenu(null), []);
   const clearFocus = useCallback(() => setFocus(null), []);
 
   return {
-    selected, band, guide, cursor, version, menu, focus, clearFocus,
-    onPointerDown, onPointerMove, onDoubleClick, onContextMenu, closeMenu,
-    deleteSelection, clearSelection, selectAll, setSelected,
+    selected,
+    band,
+    guide,
+    cursor,
+    version,
+    menu,
+    focus,
+    clearFocus,
+    onPointerDown,
+    onPointerMove,
+    onDoubleClick,
+    onContextMenu,
+    closeMenu,
+    deleteSelection,
+    clearSelection,
+    selectAll,
+    setSelected,
   };
 }
 

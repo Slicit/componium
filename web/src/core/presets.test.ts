@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  PRESETS, actionForKind, build, presetById, presetsFor, valueOf, type Insertion,
+  PRESETS,
+  actionForKind,
+  build,
+  presetById,
+  presetsFor,
+  valueOf,
+  type Insertion,
 } from './presets';
 
 /** build may refuse; these tests are about what it does when it does not. */
@@ -77,7 +83,10 @@ describe('actionForKind', () => {
 });
 
 describe('valueOf', () => {
-  const ramp = [[0, 0], [1, 1]] as const;
+  const ramp = [
+    [0, 0],
+    [1, 1],
+  ] as const;
 
   it('reads a ramp linearly', () => {
     expect(valueOf(ramp, 0)).toBe(0);
@@ -93,7 +102,11 @@ describe('valueOf', () => {
   });
 
   it('interpolates between the right pair of nodes', () => {
-    const shape = [[0, 0], [0.5, 1], [1, 0]] as const;
+    const shape = [
+      [0, 0],
+      [0.5, 1],
+      [1, 0],
+    ] as const;
     expect(valueOf(shape, 0.25)).toBeCloseTo(0.5);
     expect(valueOf(shape, 0.75)).toBeCloseTo(0.5);
   });
@@ -103,7 +116,12 @@ describe('valueOf', () => {
   });
 
   it('does not divide by zero on two nodes at one instant', () => {
-    const shape = [[0, 0], [0.5, 0], [0.5, 1], [1, 1]] as const;
+    const shape = [
+      [0, 0],
+      [0.5, 0],
+      [0.5, 1],
+      [1, 1],
+    ] as const;
     expect(Number.isFinite(valueOf(shape, 0.5))).toBe(true);
   });
 });

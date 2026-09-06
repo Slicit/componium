@@ -29,10 +29,13 @@ export function LibraryPage({ onOpen }: { onOpen: (film: string) => void }) {
   /* Opening a film is a studio action: hand the name up and go there. The
    * studio stays mounted behind this page, so it is still holding its score
    * and its undo history when it comes back into view. */
-  const open = useCallback((film: string) => {
-    onOpen(film);
-    window.location.hash = routeHash('');
-  }, [onOpen]);
+  const open = useCallback(
+    (film: string) => {
+      onOpen(film);
+      window.location.hash = routeHash('');
+    },
+    [onOpen],
+  );
 
   return (
     <section className="panel lib-page">

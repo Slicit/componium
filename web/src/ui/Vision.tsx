@@ -13,7 +13,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  effects, matching, quietShare, scenes, tally, type Observation,
+  effects,
+  matching,
+  quietShare,
+  scenes,
+  tally,
+  type Observation,
 } from '../core/observations';
 import { timecode, type Fps } from '../core/time';
 
@@ -65,14 +70,20 @@ export function Vision(props: {
         setAbout(d.context ?? '');
         setSaved(d.context ?? '');
       })
-      .catch(() => { if (!gone) setFailed(true); });
-    return () => { gone = true; };
+      .catch(() => {
+        if (!gone) setFailed(true);
+      });
+    return () => {
+      gone = true;
+    };
   }, [film]);
 
   /* Escape closes, because a full screen panel with one small × is a trap on
    * a laptop trackpad. */
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close.current(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close.current();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -89,20 +100,24 @@ export function Vision(props: {
   const saveAbout = async () => {
     setSaving(true);
     try {
-      const r = await fetch('/api/context?film=' + encodeURIComponent(film),
-        { method: 'POST', body: about });
+      const r = await fetch('/api/context?film=' + encodeURIComponent(film), {
+        method: 'POST',
+        body: about,
+      });
       if (r.ok) setSaved((await r.json()).context ?? '');
-    } catch { /* left unsaved, and the button says so */ }
+    } catch {
+      /* left unsaved, and the button says so */
+    }
     setSaving(false);
   };
 
   const lookAgain = () => {
     const what = all.length
-      ? `Show ${film} to the model again?\n\n`
-        + `This throws away the ${all.length} observations below and asks for `
-        + 'new ones. It is the one expensive part of an analysis — on a feature '
-        + 'it is the difference between minutes and most of an hour — and the '
-        + 'old description cannot be got back.'
+      ? `Show ${film} to the model again?\n\n` +
+        `This throws away the ${all.length} observations below and asks for ` +
+        'new ones. It is the one expensive part of an analysis — on a feature ' +
+        'it is the difference between minutes and most of an hour — and the ' +
+        'old description cannot be got back.'
       : `Show ${film} to the model?`;
     if (!window.confirm(what)) return;
     onLookAgain();
@@ -110,16 +125,26 @@ export function Vision(props: {
   };
 
   return (
-    <div className="modal-back" onPointerDown={(e) => {
-      if (e.target === e.currentTarget) onClose();
-    }}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={'What the model saw in ' + film}>
+    <div
+      className="modal-back"
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={'What the model saw in ' + film}
+      >
         <header className="modal-head">
           <div>
             <h2>What the model saw</h2>
             <p className="dim small modal-sub">{film}</p>
           </div>
-          <button className="insp-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="insp-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
         </header>
 
         {failed && <p className="dim small">Could not read the description.</p>}
@@ -127,8 +152,8 @@ export function Vision(props: {
 
         {data && !all.length && (
           <p className="dim small">
-            Nothing kept for this film yet. A description is written the first
-            time it is analysed with a model configured.
+            Nothing kept for this film yet. A description is written the first time it is analysed
+            with a model configured.
           </p>
         )}
 
@@ -137,13 +162,17 @@ export function Vision(props: {
             <div className="vis-summary">
               <p className="dim small">
                 {all.length} frames, {timecode(all[0].t, fps, { hours: true })}
-                {' to '}{timecode(reaches, fps, { hours: true })}
+                {' to '}
+                {timecode(reaches, fps, { hours: true })}
                 {duration > 0 && <> of {timecode(duration, fps, { hours: true })}</>}
-                {duration > 0 && <> · covers {Math.round(covers * 100)}%</>}
-                {' '}· {Math.round(quiet * 100)}% carried no effect
+                {duration > 0 && <> · covers {Math.round(covers * 100)}%</>} ·{' '}
+                {Math.round(quiet * 100)}% carried no effect
               </p>
               {data.made && (
-                <p className="dim small">{data.made}{data.note && <> · {data.note}</>}</p>
+                <p className="dim small">
+                  {data.made}
+                  {data.note && <> · {data.note}</>}
+                </p>
               )}
               {partial && (
                 /* The situation this was built to make visible. A rebuild
@@ -152,21 +181,22 @@ export function Vision(props: {
                  * quietly becomes the description of the whole feature and
                  * stays that way. */
                 <p className="vis-warn small">
-                  This describes only the first{' '}
-                  {timecode(reaches, fps, { hours: true })} of the film. A
-                  rebuild reuses it as it stands, so the rest is never looked
-                  at. Looking again covers all of it.
+                  This describes only the first {timecode(reaches, fps, { hours: true })} of the
+                  film. A rebuild reuses it as it stands, so the rest is never looked at. Looking
+                  again covers all of it.
                 </p>
               )}
               <div className="vis-tally">
                 {effects(counts).map((t) => (
                   <span key={t.label} className="vis-chip">
-                    {t.label}<b>{t.count}</b>
+                    {t.label}
+                    <b>{t.count}</b>
                   </span>
                 ))}
                 {scenes(counts).map((t) => (
                   <span key={t.label} className="vis-chip is-scene">
-                    {t.label.replace('scene-', '')}<b>{t.count}</b>
+                    {t.label.replace('scene-', '')}
+                    <b>{t.count}</b>
                   </span>
                 ))}
               </div>
@@ -187,7 +217,11 @@ export function Vision(props: {
                   <span className="vis-labels">
                     {(o.labels ?? [])
                       .filter((l) => !l.startsWith('scene-'))
-                      .map((l) => <span key={l} className="vis-chip">{l}</span>)}
+                      .map((l) => (
+                        <span key={l} className="vis-chip">
+                          {l}
+                        </span>
+                      ))}
                   </span>
                   <span className="vis-said">{o.seen}</span>
                 </div>
@@ -204,9 +238,9 @@ export function Vision(props: {
            * for every film ever made. */
           <div className="vis-about">
             <label className="dim small" htmlFor="vis-about">
-              What is this film? A genre, a line of synopsis, the name of a
-              ship. Used for the descriptions only — never as evidence that
-              something is in a frame — and read by the next run that looks.
+              What is this film? A genre, a line of synopsis, the name of a ship. Used for the
+              descriptions only — never as evidence that something is in a frame — and read by the
+              next run that looks.
             </label>
             <textarea
               id="vis-about"
@@ -218,7 +252,9 @@ export function Vision(props: {
             <div className="vis-about-foot">
               <span className="dim small">
                 {about === saved
-                  ? (saved ? 'saved' : 'nothing said about this film yet')
+                  ? saved
+                    ? 'saved'
+                    : 'nothing said about this film yet'
                   : 'unsaved — takes effect the next time the model looks'}
               </span>
               <button onClick={saveAbout} disabled={saving || about === saved}>
@@ -230,8 +266,8 @@ export function Vision(props: {
 
         <footer className="modal-foot">
           <p className="dim small modal-note">
-            A rebuild reuses this. Looking again is the only part of an analysis
-            that costs a GPU, so it is asked for rather than assumed.
+            A rebuild reuses this. Looking again is the only part of an analysis that costs a GPU,
+            so it is asked for rather than assumed.
           </p>
           <button onClick={lookAgain}>Look again</button>
         </footer>

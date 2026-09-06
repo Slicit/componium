@@ -15,8 +15,16 @@
 
 import { TimeView } from '../core/view';
 import {
-  amplitudeOf, colourOf, cueEnd, isHSI, isNominated, isSpan, valueAt,
-  type Cue, type Point, type Track,
+  amplitudeOf,
+  colourOf,
+  cueEnd,
+  isHSI,
+  isNominated,
+  isSpan,
+  valueAt,
+  type Cue,
+  type Point,
+  type Track,
 } from '../core/score';
 import { DrawList } from './drawlist';
 
@@ -68,7 +76,11 @@ const HANDLE_THRESHOLD = 1 / 12;
  * spans exist in this format.
  */
 export function drawCues(
-  list: DrawList, track: Track, view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  track: Track,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
   opts: { selected?: ReadonlySet<unknown> } = {},
 ): void {
   const cues = track.cues ?? [];
@@ -79,7 +91,10 @@ export function drawCues(
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
     const end = cueEnd(cue);
-    if (!view.intersects(cue.t, end)) { list.culled++; continue; }
+    if (!view.intersects(cue.t, end)) {
+      list.culled++;
+      continue;
+    }
 
     const x = box.x + view.toX(cue.t, box.w);
     const amp = amplitudeOf(cue.params);
@@ -97,7 +112,10 @@ export function drawCues(
     if (isSpan(cue)) {
       const w = Math.max(MIN_EVENT_W, view.toX(end, box.w) - view.toX(cue.t, box.w));
       list.rect({
-        x, y, w, h,
+        x,
+        y,
+        w,
+        h,
         fill: isNominated(cue) ? undefined : tint,
         stroke: isNominated(cue) ? tint : selected ? theme.ink : undefined,
         lineWidth: selected ? 2 : 1.25,
@@ -108,11 +126,25 @@ export function drawCues(
        * stop, and they are what a person drags, so they are drawn as real
        * edges rather than left implicit in a fill. */
       list.line({ x1: x + 0.5, y1: y, x2: x + 0.5, y2: floor, stroke: tint, lineWidth: 1.5 });
-      list.line({ x1: x + w - 0.5, y1: y, x2: x + w - 0.5, y2: floor, stroke: tint, lineWidth: 1.5 });
+      list.line({
+        x1: x + w - 0.5,
+        y1: y,
+        x2: x + w - 0.5,
+        y2: floor,
+        stroke: tint,
+        lineWidth: 1.5,
+      });
     } else {
       /* A marker: a stem to the floor with a head at its amplitude. */
       list.line({ x1: x, y1: floor, x2: x, y2: y, stroke: tint, lineWidth: selected ? 2.5 : 1.5 });
-      list.dot({ x, y, r: selected ? 4.5 : 3.5, fill: isNominated(cue) ? undefined : tint, stroke: tint, lineWidth: 1.5 });
+      list.dot({
+        x,
+        y,
+        r: selected ? 4.5 : 3.5,
+        fill: isNominated(cue) ? undefined : tint,
+        stroke: tint,
+        lineWidth: 1.5,
+      });
     }
 
     /* The label only when there is room for it, so a dense track does not
@@ -122,8 +154,13 @@ export function drawCues(
       : 0;
     if (w > 46 && box.h > 26) {
       list.text({
-        x: x + 5, y: y + 12, s: cue.action, fill: theme.ink,
-        size: 10, weight: 500, alpha: 0.85,
+        x: x + 5,
+        y: y + 12,
+        s: cue.action,
+        fill: theme.ink,
+        size: 10,
+        weight: 500,
+        alpha: 0.85,
       });
     }
   }
@@ -142,7 +179,12 @@ export function drawCues(
  * aliases into noise.
  */
 export function drawCurve(
-  list: DrawList, track: Track, channel: string, view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  track: Track,
+  channel: string,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
   opts: { selected?: ReadonlySet<unknown>; showHandles?: boolean } = {},
 ): void {
   const points = (track.points ?? []).filter((p) => channel in (p.value ?? {}));
@@ -154,15 +196,24 @@ export function drawCurve(
 
   /* Gridline at half, so a value can be read without a ruler. */
   list.line({
-    x1: box.x, y1: y(0.5), x2: box.x + box.w, y2: y(0.5),
-    stroke: theme.grid, lineWidth: 1, alpha: 0.5, dash: [2, 4],
+    x1: box.x,
+    y1: y(0.5),
+    x2: box.x + box.w,
+    y2: y(0.5),
+    stroke: theme.grid,
+    lineWidth: 1,
+    alpha: 0.5,
+    dash: [2, 4],
   });
 
   if (!points.length) {
     list.text({
-      x: box.x + 8, y: box.y + box.h / 2 + 3,
+      x: box.x + 8,
+      y: box.y + box.h / 2 + 3,
       s: 'no points — double click to start a curve',
-      fill: theme.muted, size: 10, alpha: 0.75,
+      fill: theme.muted,
+      size: 10,
+      alpha: 0.75,
     });
     return;
   }
@@ -184,7 +235,8 @@ export function drawCurve(
        * other channel is a magnitude and reads better filled. */
       const magnitude = channel !== 'h';
       list.path({
-        pts, stroke: colour,
+        pts,
+        stroke: colour,
         fill: magnitude ? colour : undefined,
         baseline: magnitude ? bottom : undefined,
         lineWidth: magnitude ? 1.6 : 2,
@@ -198,8 +250,12 @@ export function drawCurve(
         const px = box.x + view.toX(p.t, box.w);
         const sel = opts.selected?.has(p) ?? false;
         list.dot({
-          x: px, y: y(p.value[channel]), r: sel ? 5 : 3.6,
-          fill: sel ? colour : theme.eventSoft, stroke: colour, lineWidth: 1.5,
+          x: px,
+          y: y(p.value[channel]),
+          r: sel ? 5 : 3.6,
+          fill: sel ? colour : theme.eventSoft,
+          stroke: colour,
+          lineWidth: 1.5,
         });
       }
     }
@@ -213,8 +269,14 @@ export function drawCurve(
  * score contains.
  */
 function drawEnvelope(
-  list: DrawList, points: Point[], channel: string, view: TimeView, box: LaneBox,
-  colour: string, y: (v: number) => number, magnitude = true,
+  list: DrawList,
+  points: Point[],
+  channel: string,
+  view: TimeView,
+  box: LaneBox,
+  colour: string,
+  y: (v: number) => number,
+  magnitude = true,
 ): void {
   const cols = Math.max(1, Math.floor(box.w));
   const lo = new Float32Array(cols).fill(Infinity);
@@ -260,7 +322,9 @@ function drawEnvelope(
   list.path({
     pts: shape,
     fill: magnitude ? colour : undefined,
-    stroke: colour, lineWidth: 1, alpha: magnitude ? 0.55 : 0.9,
+    stroke: colour,
+    lineWidth: 1,
+    alpha: magnitude ? 0.55 : 0.9,
   });
 }
 
@@ -283,7 +347,8 @@ function lowerBound(points: Point[], t: number): number {
   let hi = points.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (points[mid].t < t) lo = mid + 1; else hi = mid;
+    if (points[mid].t < t) lo = mid + 1;
+    else hi = mid;
   }
   return lo;
 }
@@ -299,15 +364,24 @@ function lowerBound(points: Point[], t: number): number {
  * channel and the wrong one for judging a look.
  */
 export function drawRibbon(
-  list: DrawList, track: Track, channels: string[], view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  track: Track,
+  channels: string[],
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
   samples = 96,
 ): void {
   const points = track.points ?? [];
   if (!points.length) {
     list.rect({ x: box.x, y: box.y, w: box.w, h: box.h, fill: theme.eventSoft, alpha: 0.4 });
     list.text({
-      x: box.x + 8, y: box.y + box.h / 2 + 3, s: 'no points',
-      fill: theme.muted, size: 10, alpha: 0.75,
+      x: box.x + 8,
+      y: box.y + box.h / 2 + 3,
+      s: 'no points',
+      fill: theme.muted,
+      size: 10,
+      alpha: 0.75,
     });
     return;
   }
@@ -327,7 +401,11 @@ export function drawRibbon(
  * the track does, so a collapsed group still shows where it is busy.
  */
 export function drawCollapsedEnvelope(
-  list: DrawList, track: Track, view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  track: Track,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
 ): void {
   if (track.type === 'curve') {
     const chans = new Set<string>();
@@ -341,7 +419,13 @@ export function drawCollapsedEnvelope(
 
 /* --- shared chrome ------------------------------------------------------ */
 
-export function drawPlayhead(list: DrawList, t: number, view: TimeView, box: LaneBox, theme: Theme): void {
+export function drawPlayhead(
+  list: DrawList,
+  t: number,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
+): void {
   if (!view.intersects(t, t)) return;
   const x = box.x + view.toX(t, box.w);
   list.line({ x1: x, y1: box.y, x2: x, y2: box.y + box.h, stroke: theme.playhead, lineWidth: 1.5 });
@@ -349,7 +433,12 @@ export function drawPlayhead(list: DrawList, t: number, view: TimeView, box: Lan
 
 /** A cue's dispatch moment: `latency` earlier than its authored time. */
 export function drawLatencyGhost(
-  list: DrawList, cue: Cue, latency: number, view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  cue: Cue,
+  latency: number,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
 ): void {
   if (latency <= 0) return;
   const fireAt = cue.t - latency;
@@ -357,7 +446,16 @@ export function drawLatencyGhost(
   const x1 = box.x + view.toX(fireAt, box.w);
   const x2 = box.x + view.toX(cue.t, box.w);
   const mid = box.y + box.h / 2;
-  list.line({ x1, y1: mid, x2, y2: mid, stroke: theme.muted, lineWidth: 1, dash: [2, 3], alpha: 0.8 });
+  list.line({
+    x1,
+    y1: mid,
+    x2,
+    y2: mid,
+    stroke: theme.muted,
+    lineWidth: 1,
+    dash: [2, 3],
+    alpha: 0.8,
+  });
   list.dot({ x: x1, y: mid, r: 2.5, stroke: theme.muted, lineWidth: 1 });
 }
 
@@ -374,22 +472,36 @@ export function drawLatencyGhost(
 export function drawCalm(
   list: DrawList,
   regions: Array<{ from: number; to: number }>,
-  view: TimeView, box: LaneBox, theme: Theme,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
 ): void {
   for (const r of regions) {
-    if (!view.intersects(r.from, r.to)) { list.culled++; continue; }
+    if (!view.intersects(r.from, r.to)) {
+      list.culled++;
+      continue;
+    }
     const x1 = box.x + view.toX(r.from, box.w);
     const x2 = box.x + view.toX(r.to, box.w);
     list.rect({
-      x: x1, y: box.y, w: Math.max(1, x2 - x1), h: box.h,
-      fill: theme.calm, alpha: 0.5,
+      x: x1,
+      y: box.y,
+      w: Math.max(1, x2 - x1),
+      h: box.h,
+      fill: theme.calm,
+      alpha: 0.5,
     });
     /* Edges, so a band reads as a decision with boundaries rather than as a
      * smudge in the background. */
     for (const x of [x1, x2]) {
       list.line({
-        x1: x, y1: box.y, x2: x, y2: box.y + box.h,
-        stroke: theme.calm, lineWidth: 1, alpha: 0.9,
+        x1: x,
+        y1: box.y,
+        x2: x,
+        y2: box.y + box.h,
+        stroke: theme.calm,
+        lineWidth: 1,
+        alpha: 0.9,
       });
     }
   }
@@ -409,15 +521,21 @@ export function drawCalm(
  * legible as a duration rather than as two unrelated marks.
  */
 export function drawLatency(
-  list: DrawList, track: Track, latency: number,
-  view: TimeView, box: LaneBox, theme: Theme,
+  list: DrawList,
+  track: Track,
+  latency: number,
+  view: TimeView,
+  box: LaneBox,
+  theme: Theme,
 ): void {
   if (latency <= 0) return;
   const y = box.y + box.h - 3;
 
   for (const cue of track.cues ?? []) {
     const fires = cue.t - latency;
-    if (!view.intersects(fires, cue.t)) { continue; }
+    if (!view.intersects(fires, cue.t)) {
+      continue;
+    }
     const x1 = box.x + view.toX(fires, box.w);
     const x2 = box.x + view.toX(cue.t, box.w);
     /* Below a couple of pixels the lead is shorter than the line that would
@@ -425,12 +543,23 @@ export function drawLatency(
     if (x2 - x1 < 2) continue;
 
     list.line({
-      x1, y1: y, x2, y2: y,
-      stroke: theme.muted, lineWidth: 1, dash: [2, 3], alpha: 0.9,
+      x1,
+      y1: y,
+      x2,
+      y2: y,
+      stroke: theme.muted,
+      lineWidth: 1,
+      dash: [2, 3],
+      alpha: 0.9,
     });
     list.line({
-      x1, y1: y - 5, x2: x1, y2: y + 1,
-      stroke: theme.muted, lineWidth: 1.5, alpha: 0.9,
+      x1,
+      y1: y - 5,
+      x2: x1,
+      y2: y + 1,
+      stroke: theme.muted,
+      lineWidth: 1.5,
+      alpha: 0.9,
     });
   }
 }

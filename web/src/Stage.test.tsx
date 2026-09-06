@@ -23,32 +23,54 @@ const score = {
   path: '/scores/sintel.componium',
   tracks: [
     {
-      instrument: 'light.ambient', type: 'curve',
-      points: [{ t: 0, value: { r: 0, g: 0, b: 0 } }, { t: 20, value: { r: 1, g: 0, b: 0 } }],
+      instrument: 'light.ambient',
+      type: 'curve',
+      points: [
+        { t: 0, value: { r: 0, g: 0, b: 0 } },
+        { t: 20, value: { r: 1, g: 0, b: 0 } },
+      ],
     },
   ],
 };
 
 const rig = { name: 'test', instruments: [{ id: 'wind.main', kind: 'wind', latency: 0 }] };
-const media = [{ name: 'big-buck-bunny.mp4', size: 10 }, { name: 'sintel.mp4', size: 100 }];
+const media = [
+  { name: 'big-buck-bunny.mp4', size: 10 },
+  { name: 'sintel.mp4', size: 100 },
+];
 
 beforeEach(() => {
   localStorage.clear();
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-    const body = url.startsWith('/api/score') ? score
-      : url.startsWith('/api/rig') ? rig
-        : url.startsWith('/api/media') ? media
-          : {};
-    return { ok: true, json: async () => body, text: async () => JSON.stringify(body) } as Response;
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      const body = url.startsWith('/api/score')
+        ? score
+        : url.startsWith('/api/rig')
+          ? rig
+          : url.startsWith('/api/media')
+            ? media
+            : {};
+      return {
+        ok: true,
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      } as Response;
+    }),
+  );
   Object.defineProperty(HTMLMediaElement.prototype, 'duration', {
-    configurable: true, get: () => 120,
+    configurable: true,
+    get: () => 120,
   });
   HTMLMediaElement.prototype.play = vi.fn(async () => {});
   HTMLMediaElement.prototype.pause = vi.fn();
 });
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 /* What the film picker is showing.
  *
@@ -75,8 +97,9 @@ async function open() {
 
 const stage = () => document.querySelector('.stage') as HTMLElement;
 const button = (label: string) =>
-  Array.from(document.querySelectorAll('button'))
-    .find((b) => b.textContent?.trim().toLowerCase().startsWith(label)) as HTMLButtonElement;
+  Array.from(document.querySelectorAll('button')).find((b) =>
+    b.textContent?.trim().toLowerCase().startsWith(label),
+  ) as HTMLButtonElement;
 
 describe('opening a film', () => {
   it('opens the film the score was made from, with no clicking', async () => {

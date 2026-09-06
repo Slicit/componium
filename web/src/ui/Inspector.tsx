@@ -15,8 +15,16 @@ import type { History } from '../core/history';
 import { movePoints, moveCues, resizeCues } from '../core/history';
 import { durationLabel, parseTime, timecode, clamp01, round3, type Fps } from '../core/time';
 import {
-  amplitudeOf, cueEnd, hexOf, isHSI, isSpan, writeColour,
-  type Cue, type Point, type Score, type Track,
+  amplitudeOf,
+  cueEnd,
+  hexOf,
+  isHSI,
+  isSpan,
+  writeColour,
+  type Cue,
+  type Point,
+  type Score,
+  type Track,
 } from '../core/score';
 
 export interface Selection {
@@ -46,10 +54,12 @@ export function Inspector(props: {
   if (!selection) {
     return (
       <aside className="insp is-empty">
-        <header><span className="insp-what">Editor</span></header>
+        <header>
+          <span className="insp-what">Editor</span>
+        </header>
         <p className="insp-note">
-          Click an event or a curve point and its numbers appear here, where
-          they can be typed exactly rather than dragged approximately.
+          Click an event or a curve point and its numbers appear here, where they can be typed
+          exactly rather than dragged approximately.
         </p>
       </aside>
     );
@@ -68,9 +78,14 @@ export function Inspector(props: {
     <aside className="insp">
       <header>
         <span className="insp-what">{track.instrument}</span>
-        <button className="insp-close" onClick={onClose}
-                aria-label="Clear selection"
-                title="Clear the selection. The editor stays.">×</button>
+        <button
+          className="insp-close"
+          onClick={onClose}
+          aria-label="Clear selection"
+          title="Clear the selection. The editor stays."
+        >
+          ×
+        </button>
       </header>
 
       {cue && (
@@ -83,7 +98,11 @@ export function Inspector(props: {
             onCommit={(text) => {
               const t = parseTime(text, fps);
               if (t === null) return false;
-              run(moveCues([{ track, cue, from: cue.t, to: Math.max(0, Math.min(score.duration, t)) }]));
+              run(
+                moveCues([
+                  { track, cue, from: cue.t, to: Math.max(0, Math.min(score.duration, t)) },
+                ]),
+              );
               return true;
             }}
           />
@@ -102,7 +121,10 @@ export function Inspector(props: {
           ) : (
             <Row label="Length" value="an instant" />
           )}
-          <Row label="Ends" value={isSpan(cue) ? timecode(cueEnd(cue), fps, { hours: true }) : '—'} />
+          <Row
+            label="Ends"
+            value={isSpan(cue) ? timecode(cueEnd(cue), fps, { hours: true }) : '—'}
+          />
 
           {Object.keys(cue.params ?? {}).length > 0 && <div className="insp-sep" />}
           {Object.entries(cue.params ?? {}).map(([key, v]) => (
@@ -144,11 +166,13 @@ export function Inspector(props: {
           )}
           {cue.source && (
             <p className="insp-note">
-              Nominated by {cue.source}. The composer guessed at this rather than
-              measuring it, so it is worth confirming before trusting it to a machine.
+              Nominated by {cue.source}. The composer guessed at this rather than measuring it, so
+              it is worth confirming before trusting it to a machine.
             </p>
           )}
-          <button className="insp-go" onClick={() => onSeek(cue.t)}>Move playhead here</button>
+          <button className="insp-go" onClick={() => onSeek(cue.t)}>
+            Move playhead here
+          </button>
         </>
       )}
 
@@ -162,10 +186,16 @@ export function Inspector(props: {
             onCommit={(text) => {
               const t = parseTime(text, fps);
               if (t === null) return false;
-              run(movePoints([{
-                track, point,
-                fromT: point.t, toT: Math.max(0, Math.min(score.duration, t)),
-              }]));
+              run(
+                movePoints([
+                  {
+                    track,
+                    point,
+                    fromT: point.t,
+                    toT: Math.max(0, Math.min(score.duration, t)),
+                  },
+                ]),
+              );
               return true;
             }}
           />
@@ -179,11 +209,19 @@ export function Inspector(props: {
               onCommit={(text) => {
                 const n = Number(text);
                 if (!Number.isFinite(n)) return false;
-                run(movePoints([{
-                  track, point, channel: key,
-                  fromT: point.t, toT: point.t,
-                  fromV: v, toV: key === 'h' ? ((n % 1) + 1) % 1 : clamp01(n),
-                }]));
+                run(
+                  movePoints([
+                    {
+                      track,
+                      point,
+                      channel: key,
+                      fromT: point.t,
+                      toT: point.t,
+                      fromV: v,
+                      toV: key === 'h' ? ((n % 1) + 1) % 1 : clamp01(n),
+                    },
+                  ]),
+                );
                 return true;
               }}
             />
@@ -201,9 +239,13 @@ export function Inspector(props: {
                 const edits = Object.keys(point.value)
                   .filter((k) => point.value[k] !== before[k])
                   .map((k) => ({
-                    track, point, channel: k,
-                    fromT: point.t, toT: point.t,
-                    fromV: before[k], toV: point.value[k],
+                    track,
+                    point,
+                    channel: k,
+                    fromT: point.t,
+                    toT: point.t,
+                    fromV: before[k],
+                    toV: point.value[k],
                   }));
                 if (!edits.length) return;
                 /* Put back, because the command is what applies it. Editing in
@@ -214,7 +256,9 @@ export function Inspector(props: {
             />
           )}
           <Row label="Level" value={String(round3(amplitudeOf(point.value) ?? 0))} />
-          <button className="insp-go" onClick={() => onSeek(point.t)}>Move playhead here</button>
+          <button className="insp-go" onClick={() => onSeek(point.t)}>
+            Move playhead here
+          </button>
         </>
       )}
     </aside>
@@ -274,7 +318,9 @@ function Field(props: {
   const [bad, setBad] = useState(false);
   /* Follow the document while not being typed in: a drag elsewhere, or an
    * undo, has to show here too. */
-  useEffect(() => { setText(props.value); }, [props.value]);
+  useEffect(() => {
+    setText(props.value);
+  }, [props.value]);
 
   const commit = () => {
     if (text === props.value) return;
@@ -297,8 +343,15 @@ function Field(props: {
         onChange={(e) => setText(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); commit(); (e.target as HTMLInputElement).blur(); }
-          if (e.key === 'Escape') { setText(props.value); (e.target as HTMLInputElement).blur(); }
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+            (e.target as HTMLInputElement).blur();
+          }
+          if (e.key === 'Escape') {
+            setText(props.value);
+            (e.target as HTMLInputElement).blur();
+          }
           /* The timeline's shortcuts must not fire while a number is being
            * typed — s is "split", and it is also a letter. */
           e.stopPropagation();

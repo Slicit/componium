@@ -32,7 +32,10 @@ vi.mock('../render/drawlist', async () => {
   const real = await vi.importActual<typeof import('../render/drawlist')>('../render/drawlist');
   return {
     ...real,
-    paint: (...args: Parameters<typeof real.paint>) => { paints(); real.paint(...args); },
+    paint: (...args: Parameters<typeof real.paint>) => {
+      paints();
+      real.paint(...args);
+    },
   };
 });
 
@@ -40,11 +43,16 @@ const rig = { name: 'demo', instruments: [{ id: 'wind.main', kind: 'wind', laten
 
 function scoreOf(): Score {
   return {
-    title: 'demo', duration: 120, fps: 24,
-    tracks: [{
-      instrument: 'wind.main', type: 'cue',
-      cues: [{ t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 2 }],
-    }],
+    title: 'demo',
+    duration: 120,
+    fps: 24,
+    tracks: [
+      {
+        instrument: 'wind.main',
+        type: 'cue',
+        cues: [{ t: 10, action: 'gust', params: { intensity: 0.5 }, duration: 2 }],
+      },
+    ],
   } as unknown as Score;
 }
 
@@ -69,15 +77,20 @@ function fakeContext(): CanvasRenderingContext2D {
       if (key === 'canvas') return {};
       return noop;
     },
-    set() { return true; },
+    set() {
+      return true;
+    },
   }) as unknown as CanvasRenderingContext2D;
 }
 
 function makeDrawable() {
-  HTMLCanvasElement.prototype.getContext =
-    (() => fakeContext()) as unknown as HTMLCanvasElement['getContext'];
+  HTMLCanvasElement.prototype.getContext = (() =>
+    fakeContext()) as unknown as HTMLCanvasElement['getContext'];
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
-    configurable: true, get() { return 1000; },
+    configurable: true,
+    get() {
+      return 1000;
+    },
   });
 }
 
@@ -98,14 +111,28 @@ const history = new History();
 let edit: ReturnType<typeof useEditing>;
 function Harness(props: { time: number; revision: number; overlays: typeof NO_OVERLAYS }) {
   edit = useEditing({
-    score: SCORE, rig, view, history, time: props.time, fps: 24,
-    onSeek: () => {}, onChanged: () => {},
+    score: SCORE,
+    rig,
+    view,
+    history,
+    time: props.time,
+    fps: 24,
+    onSeek: () => {},
+    onChanged: () => {},
   });
   return (
     <Timeline
-      score={SCORE} rig={rig} view={view} time={props.time}
-      collapsed={NO_COLLAPSE} order={NO_ORDER} onSeek={() => {}} onView={() => {}}
-      edit={edit} revision={props.revision} overlays={props.overlays}
+      score={SCORE}
+      rig={rig}
+      view={view}
+      time={props.time}
+      collapsed={NO_COLLAPSE}
+      order={NO_ORDER}
+      onSeek={() => {}}
+      onView={() => {}}
+      edit={edit}
+      revision={props.revision}
+      overlays={props.overlays}
     />
   );
 }
@@ -149,7 +176,9 @@ describe('the timeline draws when something it draws has changed', () => {
     view.set(0, 30);
     const { rerender } = render(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     const before = paints.mock.calls.length;
-    act(() => { view.pan(10); });
+    act(() => {
+      view.pan(10);
+    });
     rerender(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     expect(paints.mock.calls.length).toBeGreaterThan(before);
     expect(view.start).toBe(10);
@@ -160,7 +189,9 @@ describe('the timeline draws when something it draws has changed', () => {
     // redraw here would be work done to produce an identical picture.
     const { rerender } = render(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     const before = paints.mock.calls.length;
-    act(() => { view.pan(10); });
+    act(() => {
+      view.pan(10);
+    });
     rerender(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     expect(paints.mock.calls.length).toBe(before);
   });
@@ -168,7 +199,9 @@ describe('the timeline draws when something it draws has changed', () => {
   it('draws again when the window is zoomed', () => {
     const { rerender } = render(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     const before = paints.mock.calls.length;
-    act(() => { view.zoom(0.5); });
+    act(() => {
+      view.zoom(0.5);
+    });
     rerender(<Harness time={0} revision={0} overlays={NO_OVERLAYS} />);
     expect(paints.mock.calls.length).toBeGreaterThan(before);
   });
