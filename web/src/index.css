@@ -7,6 +7,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
+/* Tailwind, for the components copied in from shadcn. Preflight is off in
+   tailwind.config.js, so `base` contributes almost nothing and none of the
+   rules below are reset out from under. Everything this project styles by
+   hand carries on doing so; see ADR 0010. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* The palette, as the three numbers a hue, a saturation and a
      lightness actually are.

@@ -11,6 +11,7 @@ import { ALL, DEFAULT_PAGE_SIZE, PAGE_SIZES, matches, paginate } from '../core/p
 import { Steps, howLong, type Step } from './Steps';
 import { Progress } from './Progress';
 import { Vision } from './Vision';
+import { Confirm, useConfirm } from './Confirm';
 import type { Fps } from '../core/time';
 
 const POLL_MS = 700;
@@ -101,6 +102,7 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
   const polling = useRef(false);
   const file = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
+  const confirm = useConfirm();
   /* Which film's description is open for reading. One at a time: it is a full
    * panel, and comparing two descriptions is a different job from reading one. */
   const [reading, setReading] = useState<string | null>(null);
@@ -177,13 +179,19 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
   /* Reset is asked about rather than done, because the thing it discards is
    * the expensive thing: on a feature, the finished pieces can be an hour of
    * work that nothing else in the studio can get back. */
-  const reset = async (e: Entry) => {
+  const reset = (e: Entry) => {
     const n = (e.job?.chunks ?? []).filter((c) => c.state === 'done').length;
-    const what = n > 0
-      ? `Throw away ${n} finished piece${n === 1 ? '' : 's'} of ${e.film} and analyse it again from the start?`
-      : `Start the analysis of ${e.film} again from nothing?`;
-    if (!window.confirm(what)) return;
-    await post('/api/build?reset=1&file=' + encodeURIComponent(e.film));
+    confirm.ask({
+      title: 'Analyse ' + e.film + ' again from the start?',
+      detail: n > 0
+        ? 'This throws away ' + n + ' finished piece' + (n === 1 ? '' : 's')
+          + ', which nothing else in the studio can get back.'
+        : 'Nothing has finished yet, so nothing is lost.',
+      verb: n > 0 ? 'Throw away and restart' : 'Restart',
+      go: async () => {
+        await post('/api/build?reset=1&file=' + encodeURIComponent(e.film));
+      },
+    });
   };
 
   /* Showing a film to the model again.
@@ -195,14 +203,19 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
     await post('/api/build?vision=redo&file=' + encodeURIComponent(film));
   };
 
-  const remove = async (e: Entry) => {
-    const what = e.hasScore
-      ? `Delete ${e.film} and its score? This cannot be undone.`
-      : `Delete ${e.film}? This cannot be undone.`;
-    if (!window.confirm(what)) return;
-    await fetch('/api/delete?file=' + encodeURIComponent(e.film) + (e.hasScore ? '&score=1' : ''),
-      { method: 'DELETE' });
-    await refresh();
+  const remove = (e: Entry) => {
+    confirm.ask({
+      title: 'Delete ' + e.film + '?',
+      detail: e.hasScore
+        ? 'The film and its score both go, and this cannot be undone.'
+        : 'This cannot be undone.',
+      verb: 'Delete',
+      go: async () => {
+        await fetch('/api/delete?file=' + encodeURIComponent(e.film)
+          + (e.hasScore ? '&score=1' : ''), { method: 'DELETE' });
+        await refresh();
+      },
+    });
   };
 
   const shown = useMemo(
@@ -217,6 +230,7 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
 
   return (
     <div className="lib">
+      <Confirm asking={confirm.asking} close={confirm.close} />
       {reading && (
         <Vision
           film={reading}

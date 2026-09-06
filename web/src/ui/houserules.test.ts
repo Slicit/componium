@@ -34,10 +34,22 @@ function sources(dir: string): string[] {
   return out;
 }
 
-const files = sources(SRC).map((path) => ({
+const all = sources(SRC).map((path) => ({
   name: relative(SRC, path),
   text: readFileSync(path, 'utf8'),
 }));
+
+/* Components copied in from shadcn are not read by the rules below, and
+ * cannot be: they render through Radix, so a button in the source is
+ * <AlertDialogPrimitive.Action> rather than <button>, and a source scan
+ * looking for <button> finds nothing and says everything is fine. That is
+ * the worst way for a check to fail, so rather than let it happen quietly,
+ * they are excluded here and the boundary below is what holds instead.
+ *
+ * What actually covers them is a rendering test. Confirm.test.tsx asks for
+ * the dialog's buttons by their accessible names, which is the same
+ * question these rules ask, put to the DOM instead of the file. */
+const files = all.filter((f) => !f.name.startsWith('ui/shad/'));
 
 type Tag = { attrs: string; end: number; selfClosing: boolean };
 
@@ -137,6 +149,39 @@ describe('inputs', () => {
         if (before.lastIndexOf('<label') > before.lastIndexOf('</label>')) continue;
         bad.push(`${file.name}: unlabelled input ${attrs.trim().split('\n')[0].slice(0, 50)}`);
       }
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('components from a library', () => {
+  it('are reached through a wrapper, not used directly by pages', () => {
+    /* One project component stands in front of each copied one. Three
+     * reasons, and the third is the one that matters later: the app keeps
+     * speaking its own vocabulary (Confirm, not AlertDialog); swapping or
+     * dropping a library touches one file; and the wrapper is a place a
+     * rendering test can live, which is the only kind of test that can see
+     * these at all. */
+    const wrappers = ['ui/Confirm.tsx'];
+    const bad: string[] = [];
+    for (const file of all) {
+      if (file.name.startsWith('ui/shad/') || wrappers.includes(file.name)) continue;
+      if (/from '[^']*\/shad\//.test(file.text)) {
+        bad.push(`${file.name} imports a shadcn component directly`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('keep their utility classes to themselves', () => {
+    /* tailwind.config.js only scans ui/shad, so a utility class written
+     * anywhere else is not generated and does nothing at all. Caught here
+     * rather than left to be discovered as an element that simply ignores
+     * the padding it was given. */
+    const utility = /className="[^"]*\b(?:flex|grid|p-\d|px-\d|py-\d|mt-\d|gap-\d|text-(?:sm|lg|xs)|rounded-(?:sm|md|lg)|bg-(?:card|popover|background|primary|secondary|muted|destructive))\b/;
+    const bad: string[] = [];
+    for (const file of files) {
+      if (utility.test(file.text)) bad.push(`${file.name} uses a Tailwind utility`);
     }
     expect(bad).toEqual([]);
   });

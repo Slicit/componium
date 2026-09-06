@@ -113,12 +113,44 @@ No dependency, no build change, nothing to undo. It removed the only part of
 a future migration that would otherwise touch every colour in the app, and
 it found the `--muted` collision while nothing depended on the answer.
 
-**Stage 2, only when a specific control justifies it.** Add Tailwind with
-preflight disabled and a prefix, and Radix for one component: whichever of
-dialog, tooltip or command palette is actually wanted next. New code only, no
-rewrites. The question this stage answers is whether two styling systems in
-one repo is tolerable in practice, and it answers it at the cost of one
-component rather than twenty-six.
+**Stage 2. Done, 2026-09-06.** Tailwind 3 with preflight disabled, and
+shadcn's AlertDialog, replacing the two `window.confirm` calls in the
+library. Four things came out of doing it that were not obvious from
+planning it.
+
+*No prefix, because none was needed.* The plan said prefix the utilities.
+The 204 class names this project defines were compared against the utility
+names Tailwind generates and none collide, so the prefix was dropped. That
+matters more than it sounds: a prefix has to be applied by hand to every
+component shadcn publishes, on every copy, for ever.
+
+*Tailwind reads prose.* Pointed at `src/**`, the scanner did what it is
+built to do and pulled candidate class names out of comments: a file saying
+"hidden rather than unmounted" produced a real `.hidden{display:none}`
+rule, along with `.block`, `.table`, `.grid`, `.fixed` and dozens more.
+Nothing broke, and that was checked rather than assumed — every class the
+app puts on an element was compared against every class Tailwind emitted,
+and nothing was newly styled. But an element carrying `className="hidden"`
+as a hook would have disappeared. `content` is now scoped to `ui/shad`,
+which also enforces the rule that utilities live only in copied components:
+written anywhere else they are not generated, so they do nothing, which is
+noticed at once rather than becoming a habit.
+
+*The blinding was real, and worse than predicted.* This document said the
+source-scanning house rules would stop seeing components rendered through
+Radix. They did. What it did not anticipate is that the whole suite stayed
+green when `window.confirm` was replaced: the library's tests stub confirm
+and click delete, and not one of them checked that the film was deleted, so
+the guard on the most destructive action in the studio could be swapped out
+with nothing objecting. `Confirm.test.tsx` now covers it, including Escape,
+which `window.confirm` gave for free and a hand-rolled dialog would be
+likely to lose.
+
+*The boundary is a rule now.* Copied components live in `ui/shad` and are
+reached through one project wrapper each, never directly by a page.
+`houserules.test.ts` enforces both that and the utility scoping, and
+excludes `ui/shad` from its own source scanning with a note saying what
+covers it instead.
 
 **Stage 3, if stage 2 was pleasant.** Replace the hand-built controls that
 are genuinely hard, in this order: the menu, the film picker, the viewport
