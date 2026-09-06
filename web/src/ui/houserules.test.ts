@@ -166,7 +166,13 @@ describe('components from a library', () => {
      * dropping a library touches one file; and the wrapper is a place a
      * rendering test can live, which is the only kind of test that can see
      * these at all. */
-    const wrappers = ['ui/Confirm.tsx', 'ui/Modal.tsx', 'ui/Tip.tsx', 'ui/Menu.tsx'];
+    const wrappers = [
+      'ui/Confirm.tsx',
+      'ui/Modal.tsx',
+      'ui/Tip.tsx',
+      'ui/Menu.tsx',
+      'ui/FilmPicker.tsx',
+    ];
     const bad: string[] = [];
     for (const file of all) {
       if (file.name.startsWith('ui/shad/') || wrappers.includes(file.name)) continue;
