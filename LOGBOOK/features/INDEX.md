@@ -17,7 +17,7 @@ Being worked on now.
 - [feat-score-editing](feat-score-editing.md) · Real editing of the generated score, not just correcting one cue at a time.
 - [feat-timeline-v2](feat-timeline-v2.md) · A timeline somebody who edits video for a living would accept.
 
-## Shipped (19)
+## Shipped (20)
 
 Done, and verified in the way each file says.
 
@@ -37,6 +37,7 @@ Done, and verified in the way each file says.
 - [feat-score-format](feat-score-format.md) · A score says what should happen.
 - [feat-spans](feat-spans.md) · Scores are generated ahead of time, so nothing needs a high refresh rate at playback.
 - [feat-studio](feat-studio.md) · Authoring is the real user experience problem.
+- [feat-the-record](feat-the-record.md) · Componium and Stream Composer are sibling projects on the same LOGBOOK spec, written the same fortnight by the same people.
 - [feat-timing-core](feat-timing-core.md) · Everything in Componium rests on one unverified assumption: that a media player's reported position can be disciplined into a clock good enough to land a cue on a frame.
 - [feat-tuning](feat-tuning.md) · The clock spike showed that timing quality depends entirely on what is at the other end: mpv resolves to 41 ms and answers in 53 us, VLC resolves to 247 ms and answers in 21 ms.
 - [feat-two-clocks](feat-two-clocks.md) · Three complaints arrived together and turned out to be one shape.
@@ -61,6 +62,6 @@ Deliberately not now, and the reasoning is kept.
 
 ---
 
-Total: 26 features. `LOGBOOK.md` is the entry point,
+Total: 27 features. `LOGBOOK.md` is the entry point,
 `LOGBOOK/notes.md` holds what generalises past one feature, and
 `LOGBOOK/candidates.md` holds what has been noticed and not yet triaged.

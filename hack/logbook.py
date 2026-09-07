@@ -55,6 +55,19 @@ FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 TITLE = re.compile(r"^# (.+)$", re.M)
 HEADING = re.compile(r"^## (.+)$", re.M)
 LINK = re.compile(r"\[\[([^\]]+)\]\]")
+FENCE = re.compile(r"```.*?```", re.S)
+CODE = re.compile(r"`[^`\n]*`")
+
+
+def links(text):
+    """Every [[target]] that is a link, rather than the syntax being described.
+
+    A file explaining that a link to a missing feature fails the build will
+    write `[[link]]` in backticks, and a checker that cannot tell those apart
+    makes documenting itself impossible. Code spans and fenced blocks are
+    dropped before looking.
+    """
+    return LINK.findall(CODE.sub("", FENCE.sub("", text)))
 
 
 class Feature:
@@ -126,7 +139,7 @@ def loose_links(known):
         if not os.path.exists(path):
             continue
         text = open(path, encoding="utf-8").read()
-        for target in LINK.findall(text):
+        for target in links(text):
             if target not in known:
                 problems.append(
                     "LOGBOOK/" + name + ": [[" + target + "]] does not name a feature file"
@@ -161,7 +174,7 @@ def check(features):
                     where + ": " + f.status + " work needs a `## " + need + "` section"
                 )
 
-        for target in LINK.findall(f.text):
+        for target in links(f.text):
             if target not in known:
                 problems.append(
                     where + ": [[" + target + "]] does not name a feature file"
