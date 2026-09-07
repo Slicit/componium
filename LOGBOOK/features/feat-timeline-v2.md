@@ -1,9 +1,19 @@
+---
+status: active
+branch: main
+---
+
 # feat-timeline-v2 — a timeline a video editor would accept
 
-Status: **proposed, not started.** Written 2026-08-29 after the first editable
-timeline landed and was judged "kinda ok, but not what I expected" by someone
-who edits video for a living. That is the right verdict and this file is the
-response.
+Status: **active.** Phases 0 to 3 have shipped and phases 4 and 5 are part
+done; see the Decisions log.
+
+## Intent
+
+A timeline somebody who edits video for a living would accept. Written
+2026-08-29, after the first editable timeline landed and was judged "kinda
+ok, but not what I expected" by exactly that person. That is the right
+verdict and this file is the response.
 
 ## The diagnosis
 
@@ -325,11 +335,42 @@ Phases 0–2 are the ones that change the verdict. 3–5 are what make it good.
 3. Is a committed `dist/` acceptable, given we already commit three.js?
 4. Does anything need to keep working in Firefox?
 
-## Related
+## Links
 
-- `feat-score-editing.md` — the deferred editing features this supersedes and
+- [[feat-score-editing]] — the deferred editing features this supersedes and
   absorbs; its warning about "rebuild all" destroying hand edits still stands
   and belongs in Phase 2.
-- `feat-studio.md` — the studio as it is, and the no-build-step decision this
+- [[feat-studio]] — the studio as it is, and the no-build-step decision this
   reverses.
-- `feat-safety.md` — the constraints the overlays in Part 5 visualise.
+- [[feat-safety]] — the constraints the overlays in Part 5 visualise.
+
+## Decisions
+
+- 2026-09-07 · The status in this file was wrong, and is corrected above.
+  Phases 0 to 3 shipped without the file being touched: the headless core with
+  its command and undo stack, the canvas surface replacing the SVG one, editing
+  through those commands, and the keyboard and context menus. Phases 4 and 5
+  are part done. The plan below is kept exactly as written on 2026-08-29,
+  because it is still the plan.
+- 2026-09-07 · What the timeline became has an ADR of its own now, 0009, and
+  that is the short version of why the phase list matters less than it did: the
+  thing works well enough that the rule is now about not breaking it. Improving
+  it needs an argument about which of the three layers the improvement belongs
+  in, and `web/src/core/layering.test.ts` fails the build if the answer is
+  wrong.
+
+## Verification
+
+`web/src/render/lanes.test.ts` holds the number that decided the architecture:
+a two hour score across eight lanes must draw in a bounded number of
+primitives. That test is the guard against anyone reintroducing per-point
+drawing, which is what made the previous timeline unable to hold a feature
+film.
+
+`web/src/core/layering.test.ts` holds the shape: core imports neither React nor
+ui, the renderer touches no canvas, and `Timeline.tsx` imports no application
+state. The renderer never drawing anything is the only reason the drawing is
+testable at all.
+
+What neither covers is what a browser does with the result, which is
+[[feat-browser-suite]].

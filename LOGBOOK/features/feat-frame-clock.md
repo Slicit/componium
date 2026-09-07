@@ -5,6 +5,8 @@ branch: fix-frame-clock
 
 # fix-frame-clock · the playhead runs at the film's rate
 
+## Intent
+
 Reported as a strobe that does not line up with the room, with the reasonable
 guess that the 3D view cannot keep up. It can. It was being handed four light
 values a second.
@@ -61,3 +63,20 @@ took to build. A low rate beside a small cost is a room being asked for frames
 slowly. A high cost is a room that cannot keep up. Opposite problems, and a
 single FPS number cannot tell them apart, which is the whole reason this
 feature was misdiagnosed in the first place.
+
+## Verification
+
+The frame arithmetic is covered by `web/src/core/time.test.ts`. The change this
+file is about is not. `requestVideoFrameCallback` is a browser API the test
+environment does not implement, so `web/src/ui/frameClock.ts` takes its
+animation-frame fallback there and the path that matters is never exercised. It
+was verified the way it was reported: by watching a strobe against the room.
+
+That is exactly the wall [[feat-browser-suite]] was built for, and this is the
+best candidate for the next spec in it.
+
+## Links
+
+- Branch: `fix-frame-clock`
+- `web/src/ui/frameClock.ts`
+- Related features: [[feat-timeline-v2]], [[feat-studio]]

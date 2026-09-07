@@ -110,5 +110,15 @@ the machine is the constraint.
 - Branch: `feat-tuning`
 - PR: TBD
 - Related ideas: `LOGBOOK/ideas.md` 2026-08-29
-- Related features: `feat-timing-core` produces the measurements this consumes
+- Related features: [[feat-timing-core]] produces the measurements this consumes
 - External: none
+
+## Verification
+
+The milestone table records M3 as verified against live mpv, which is the only
+standard worth anything here: a tuning profile that is correct about a
+simulated player is correct about nothing.
+
+`componium doctor` printing the profile back in words is part of the feature
+rather than a debugging aid, and for the usual reason. A number nobody can read
+is a number nobody checks.

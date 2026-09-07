@@ -95,4 +95,4 @@ the snapping path has only unit test coverage.
 ## Links
 
 - Branch: `feat-composer-v1`
-- Related features: `feat-composer-v0`
+- Related features: [[feat-composer-v0]]

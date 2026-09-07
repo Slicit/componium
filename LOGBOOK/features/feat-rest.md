@@ -5,6 +5,8 @@ branch: feat-rest
 
 # feat-rest — the platform should be still by default
 
+## Intent
+
 Written 2026-08-30 after the observation that there is "way too much shake and
 motion platform, and/or they seem too brutal too often, even on some absolutely
 calm scenes".
@@ -115,10 +117,10 @@ Do not fix this by lowering the gain. It makes a score that is still never at
 rest and merely weaker, and it would make genuine events too small at the same
 time — the 1% of points above 0.5 are the ones that should survive intact.
 
-## Related
+## Links
 
-- `feat-analysis-engine.md` — what the composer nominates and how.
-- `feat-safety.md` — the duty cycle and maximum continuous run, which are the
+- [[feat-analysis-engine]] — what the composer nominates and how.
+- [[feat-safety]] — the duty cycle and maximum continuous run, which are the
   hardware-side version of this same concern.
-- `feat-body-haptics.md` — deferred, and dependent on this: a shoulder punch is
+- [[feat-body-haptics]] — deferred, and dependent on this: a shoulder punch is
   meaningless if the seat is already moving all the time.

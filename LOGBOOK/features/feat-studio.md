@@ -70,4 +70,4 @@ the timecode logic is proven, the rendering and event handling are not.
 ## Links
 
 - Branch: `feat-studio`
-- Related features: `feat-score-format`
+- Related features: [[feat-score-format]]

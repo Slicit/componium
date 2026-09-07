@@ -5,6 +5,8 @@ branch: feat-postgres
 
 # feat-postgres · move derived data off the filesystem
 
+## Intent
+
 The plan for ADR 0006. Four stages, each usable on its own, ordered so that the
 riskiest unknowns are proved on the least valuable data.
 
@@ -193,3 +195,17 @@ where they land. Python gained nothing but two fields it had been dropping.
 - **2026-09-02 · Migrations are numbered SQL files and a small runner.** Every
   framework here brings opinions about a schema this project is capable of
   describing in plain SQL.
+
+## Verification
+
+`internal/store` has contract tests that run against a real Postgres rather
+than a fake, and CI runs the Go suite twice on purpose: once with no database,
+where those tests skip and everything else must still pass, and once with one,
+where they run. The first of the two is the useful half. It is what notices the
+day something quietly starts needing a service.
+
+## Links
+
+- Branch: `feat-postgres`
+- ADR: `docs/adr/0006-postgres-for-derived-data.md`
+- Related features: [[feat-analysis-engine]], [[feat-chunked-analysis]]

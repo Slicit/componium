@@ -8,7 +8,7 @@ parent: feat-composer
 
 ## Intent
 
-The cheap half of `feat-composer`: prove the pipeline end to end with the two
+The cheap half of [[feat-composer]]: prove the pipeline end to end with the two
 signals that cost least and deliver most, before spending anything on semantic
 detection.
 
@@ -71,5 +71,5 @@ not been judged against real film content.
 ## Links
 
 - Branch: `feat-composer-v0`
-- Related features: `feat-composer` is the parent, `feat-score-format` is what
+- Related features: [[feat-composer]] is the parent, [[feat-score-format]] is what
   it emits

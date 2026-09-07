@@ -62,5 +62,5 @@ available. The packet is correct by construction against E1.31-2018 section
 ## Links
 
 - Branch: `feat-sacn-light`
-- Related features: `feat-timing-core`
+- Related features: [[feat-timing-core]]
 - External: ANSI E1.31-2018

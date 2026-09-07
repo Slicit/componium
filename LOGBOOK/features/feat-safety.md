@@ -79,4 +79,4 @@ firmware equivalents on a real node do not exist yet.
 ## Links
 
 - Branch: `feat-safety`
-- Related features: `feat-timing-core`
+- Related features: [[feat-timing-core]]

@@ -1,8 +1,17 @@
+---
+status: active
+branch: main
+---
+
 # feat-score-editing — hand editing a track to finish the render
 
-Status: **deferred, not started.** Recorded 2026-08-29 at the user's request.
+Status: **active.** Recorded 2026-08-29 as deferred and not started. Most
+of it was built over the following week without this file being touched;
+the record was corrected on 2026-09-07 and the correction is in the
+Decisions log. Everything below describes 2026-08-29 and is kept, because
+the analysis in it is what shaped the work.
 
-## What
+## Intent
 
 Real editing of the generated score, not just correcting one cue at a time.
 The composer's output is a first pass; finishing a film means shaping it by
@@ -47,8 +56,21 @@ of it — everything above is new.
   every film, so this is a real hazard, not a hypothetical one. Decide this
   before writing any editing UI.
 
-## Related
+## Links
 
-- `feat-studio.md` — the editor as it stands, and the save round trip.
-- `feat-score-format.md` — cues, curves, spans and what the parser accepts.
-- `feat-safety.md` — the constraints an edit must not be able to break.
+- [[feat-studio]] — the editor as it stands, and the save round trip.
+- [[feat-score-format]] — cues, curves, spans and what the parser accepts.
+- [[feat-safety]] — the constraints an edit must not be able to break.
+
+## Decisions
+
+- 2026-09-07 · The status in this file was wrong. Recorded on 2026-08-29 as
+  deferred and not started, and by 2026-09-07 most of it had been built without
+  the file being touched: undo and redo, multi-select, spans, split, duplicate,
+  copy and paste, and a context menu over the whole surface with a keyboard of
+  its own. "What exists today" above describes 2026-08-29.
+- 2026-09-07 · Two of its questions are still open and still the right
+  questions. What smoothing is allowed to do to a score's guarantees, and
+  whether a hand edit is a diff against the analysis or an overwrite of it. The
+  library still has a Rebuild button beside every film, so the second one is a
+  live hazard rather than a hypothetical.

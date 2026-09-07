@@ -60,6 +60,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: the logbook holds together
+        # Every feature file has the four sections its status calls for,
+        # every [[link]] resolves, and INDEX.md is what the files say it is.
+        # LOGBOOK.md has pointed agents at that index since 2026-08-29 and it
+        # did not exist until 2026-09-07, which is the failure this prevents
+        # repeating.
+        run: |
+          python3 hack/logbook.py check
+          python3 hack/logbook.py index --check
       - name: composer tests
         working-directory: composer
         run: python3 -m unittest discover -p 'test_*.py' -v

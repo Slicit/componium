@@ -5,6 +5,8 @@ branch: feat-ota
 
 # feat-ota · updating a board without a ladder
 
+## Intent
+
 A node is a small box on a wall, behind a screen, or in a ceiling. Every
 firmware change so far has meant a USB cable, which means reaching the box, and
 reaching the box is the expensive part of every other decision in this project.
@@ -89,7 +91,7 @@ tested:
 The port in that URL is the one the studio was told to listen on, not the one
 the request arrived on, for the same tunnel reason.
 
-## What is tested, and what is not
+## Verification
 
 Three tests against real firmware on an emulated board, in
 `internal/emulated/update_test.go`. An update with no signature is refused. An
@@ -136,3 +138,15 @@ nowhere else.
 - A board that is offline cannot be told anything, so an update is a thing you
   do to boards that are working. There is no queue and there should probably
   not be one, but it is worth writing down that this was a choice.
+
+## Decisions
+
+Written as a narrative before this file had a Decisions log, so the reasoning
+is in the sections above rather than as a dated list. New choices about this
+feature belong here, newest last.
+
+## Links
+
+- Branch: `feat-ota`
+- Related features: [[feat-esp32-node]], [[feat-first-real-device]],
+  [[feat-nodes-carry-several-devices]]

@@ -5,6 +5,8 @@ branch: feat-chunked-analysis
 
 # feat-chunked-analysis · analysing a feature in pieces you can resume
 
+## Intent
+
 Analysing a two hour film is a single run of tens of minutes that either
 finishes or is worth nothing. It is often worth nothing: a restart of the
 studio, a container recreated, a machine under load, and the whole thing starts
@@ -129,7 +131,7 @@ can read one. The numbering is fixed width so that sorting the filenames sorts
 the chunks; a feature is more than ten pieces, and `chunk-10` sorts before
 `chunk-2`.
 
-## What was verified, and how
+## Verification
 
 - A whole-film run and a two-chunk run of the same film, sampled every half
   second and compared: **median difference 0.0000** on shake, motion and light;
@@ -140,9 +142,15 @@ the chunks; a feature is more than ten pieces, and `chunk-10` sorts before
   and resumed: it restarted at chunk 1 and did not redo chunk 0.
 - Reset removed the partials and the state.
 
-## Related
+## Links
 
-- `feat-rest.md` — the scoring review. Its first finding and this feature's
+- [[feat-rest]] — the scoring review. Its first finding and this feature's
   hazard are the same mechanism seen from two sides: normalising by the peak of
   whatever you were handed.
-- `feat-analysis-engine.md` — what the composer nominates and how.
+- [[feat-analysis-engine]] — what the composer nominates and how.
+
+## Decisions
+
+Written as a narrative before this file had a Decisions log, so the reasoning
+is in the sections above rather than as a dated list. New choices about this
+feature belong here, newest last.
