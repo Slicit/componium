@@ -1,1 +1,7 @@
 node_modules/
+
+# The browser suite's output. The traces are worth keeping until the next
+# run and worth nothing after it.
+playwright-report/
+test-results/
+.last-run.json

@@ -111,13 +111,13 @@ jobs:
         # should not be blocked on them; adding a new error should block
         # it, which is what this catches.
         working-directory: web
-        run: npx oxlint src
+        run: npx oxlint src e2e
 
       - name: formatting
         # oxfmt is the arbiter, so that nobody spends a review on where a
         # line wraps. Run `npx oxfmt --write src` in web/ to fix.
         working-directory: web
-        run: npx oxfmt --check src
+        run: npx oxfmt --check src e2e
 
       - name: the committed bundle is current
         # internal/studio/webdist is committed, the same bargain as vendoring
@@ -149,6 +149,41 @@ jobs:
             echo "files with CRLF line endings:"; echo "$bad"; exit 1
           fi
 
+  browser:
+    # The handful of things jsdom cannot answer: whether something is actually
+    # visible once it is open, whether a keyboard reaches it, and whether a
+    # real pointer event does what a synthetic one claimed. Every failure this
+    # covers shipped past a green unit suite. See web/e2e/README.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: install
+        working-directory: web
+        run: npm ci
+      - name: browser
+        # Pinned to the version in the lockfile by playwright itself, so this
+        # cannot drift from what the specs were written against.
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: the browser suite
+        working-directory: web
+        run: npm run test:e2e
+      - name: what failed, if anything did
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 7
+
   smoke:
     # Builds the binary and runs it against the example score and rig. The unit
     # tests cover the pieces; this is the only job that checks they still add up
@@ -175,7 +210,7 @@ jobs:
   image:
     # Only after everything else passes. Publishing an image that fails its own
     # tests would make the registry a worse source of truth than the repository.
-    needs: [go, python, javascript, web, line-endings, smoke]
+    needs: [go, python, javascript, web, browser, line-endings, smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

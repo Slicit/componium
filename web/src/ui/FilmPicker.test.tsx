@@ -169,16 +169,17 @@ describe('the pointer', () => {
     expect(onPick).toHaveBeenCalledWith(FILMS[2].name);
   });
 
-  /* Not covered: closing on a press outside.
+  /* Not covered here, and no longer uncovered: closing on a press outside.
    *
    * The library watches for a real pointer sequence and inspects where it
-   * came from, and jsdom does not produce one that satisfies it — the same
-   * wall the right-click menu's arrow keys hit. Asserting it with a hand made
-   * event, which is what this file did before, only proved that the old
-   * hand-rolled version checked the event's name.
+   * came from, and jsdom does not produce one that satisfies it, the same
+   * wall the right-click menu's arrow keys hit. Asserting it with a hand
+   * made event, which is what this file did before, only proved that the
+   * old hand-rolled version checked the event's name.
    *
-   * The other two ways out are covered above and below: Escape, and choosing a
-   * film. This one wants a person, once.
+   * It is asserted in a real browser instead, along with whether this list
+   * is genuinely painted on top of the page rather than merely holding a
+   * large z-index: web/e2e/picker.spec.ts.
    */
 
   it('forgets the query, so it opens ready for a fresh search', () => {

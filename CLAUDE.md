@@ -35,6 +35,26 @@ The house rules look for `onClick` on a non-interactive element, and those
 handlers were `onPointerDown`. A rule written from memory catches the cases
 its author thought of.
 
+## The browser suite
+
+```sh
+cd web
+npm run test:e2e            # starts its own studio and dev server, stops them again
+```
+
+Thirteen specs in real Chromium, and they are deliberately few. Anything that
+can be proven in vitest is proven in vitest, because 749 unit tests run in
+seventeen seconds and this runs in thirty for thirteen.
+
+What belongs there is only what jsdom structurally cannot answer: whether
+something is actually visible (it does no layout and stacks nothing), whether
+a keyboard reaches it (focus never moves on its own), and whether a real input
+event does what a synthetic one claimed (Radix inspects where a PointerEvent
+came from, and `new Event('pointerdown')` carries none of that).
+
+Each of those has already shipped past a green suite here. See
+`web/e2e/README.md`, and prefer `npx playwright show-trace` over adding logs.
+
 ## Editing a file
 
 **Never put a program inside an ssh argument.** A heredoc or a quoted command
