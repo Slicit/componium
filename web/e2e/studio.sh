@@ -43,6 +43,12 @@ done
 cp examples/demo.componium "$root/scores/Sintel.2010.1080p.x264.componium"
 cp examples/demo-rig.toml "$root/rigs/demo-rig.toml"
 
+# Two rigs, not one. The studio's rig picker hides itself when there is
+# nothing to choose between, which is right, and meant that no screenshot
+# and no spec had ever seen it: a control that only exists on a shelf with
+# two things on it needs a fixture with two things on it.
+cp examples/room-rig.toml "$root/rigs/room-rig.toml"
+
 exec go run ./cmd/componium studio \
     -score "$root/scores/Sintel.2010.1080p.x264.componium" \
     -media "$root/films" \
