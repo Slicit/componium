@@ -129,9 +129,14 @@ describe('the shelf', () => {
     // The machine that runs the room for real is not the machine somebody
     // sets it up on.
     await open();
-    const link = screen.getAllByText('export')[1] as HTMLAnchorElement;
+    const link = screen.getByTitle('Download bench as a file') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/api/rigs/export?rig=bench');
     expect(link.hasAttribute('download')).toBe(true);
+    /* An anchor rather than a button, deliberately: there is a real file at
+     * a real URL, so right click and save as work. It is shaped like the
+     * buttons it stands among, which is what `dl-link` is for. */
+    expect(link.tagName).toBe('A');
+    expect(link.className).toContain('dl-link');
   });
 
   it('says why a refusal happened rather than failing quietly', async () => {

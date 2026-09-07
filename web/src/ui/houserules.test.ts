@@ -143,6 +143,94 @@ describe('buttons', () => {
     }
     expect(bad).toEqual([]);
   });
+
+  it('a word that has a glyph is not shipped as a word', () => {
+    /* The icon rule has two halves and only one of them was checked. An action
+     * with a settled, universal glyph uses the glyph: delete is a bin, edit is
+     * a pencil, save a disk, search a magnifier. Spelling one out costs a row
+     * of width to say something a person reads faster as a shape.
+     *
+     * The library got this right and admin did not, for weeks, in the same
+     * table-row idiom: a bin beside a film and the word "remove" beside a rig.
+     * Nothing noticed, because the rule was a paragraph.
+     *
+     * Only whole labels count. "Remove this track" in a menu is a sentence and
+     * a menu is a list of sentences; "Save the rig" names what it saves; Reset
+     * and Rebuild have no glyph two people would read the same way. It is the
+     * bare verb, alone on a button, that had a glyph waiting for it. */
+    const glyphed = ['delete', 'remove', 'rename', 'edit', 'save', 'close', 'search'];
+    const bad: string[] = [];
+    for (const file of files) {
+      for (const tag of tags(file.text, 'button')) {
+        const body = file.text.slice(tag.end).split('</button>')[0];
+        const label = body
+          .replace(/<[^>]*>/g, '')
+          .replace(/\{[^}]*\}/g, '')
+          .trim()
+          .toLowerCase();
+        if (glyphed.includes(label)) {
+          bad.push(file.name + ': a button labelled "' + label + '", which has an icon');
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('a download is shaped like the buttons it stands among', () => {
+    /* `adm-link` renders an underlined run of text with no padding, which is
+     * right for its one real use: a board's name, in a row where picking the
+     * board is the point. Three download anchors had borrowed it, and a bare
+     * link in a row of buttons sits a few pixels above their baseline and reads
+     * as something else entirely.
+     *
+     * They stay anchors. There is a real file at a real URL, so right click,
+     * save as and open in a new tab all work, and none of that survives being
+     * turned into a button with a click handler. `dl-link` gives them a
+     * button's shape without giving that up. */
+    const bad: string[] = [];
+    for (const file of files) {
+      for (const tag of tags(file.text, 'a')) {
+        if (!/\bdownload\b/.test(tag.attrs)) continue;
+        if (/adm-link/.test(tag.attrs)) {
+          bad.push(file.name + ': a download styled as a name-button');
+        } else if (!/dl-link/.test(tag.attrs)) {
+          bad.push(file.name + ': a download with no dl-link');
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('pages', () => {
+  it('every page uses the shared page shell', () => {
+    /* `.page` sets the measure, the padding, and the size of an h2. A page
+     * without it starts its headings at the right tag and the wrong size, and
+     * the size is the part a reader actually notices.
+     *
+     * Both halves of this had drifted. Rigs was inside no shell at all, so its
+     * title rendered several points larger than the identical tag on the four
+     * admin pages beside it. The library, the only page outside admin, was
+     * still wearing `.panel`, which is the style of a small box inside the
+     * studio, so the one page a person is most likely to open announced itself
+     * in 11px uppercase grey. */
+    const shells = [...PAGES, 'ui/LibraryPage.tsx'];
+    const bad: string[] = [];
+    for (const name of shells) {
+      const file = files.find((f) => f.name === name);
+      if (!file) {
+        bad.push(name + ' is missing');
+        continue;
+      }
+      if (!/className="page\b/.test(file.text)) {
+        bad.push(name + ' does not use the page shell');
+      }
+      if (/className="[^"]*\bpanel\b/.test(file.text)) {
+        bad.push(name + ' is dressed as a panel');
+      }
+    }
+    expect(bad).toEqual([]);
+  });
 });
 
 describe('inputs', () => {

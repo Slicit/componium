@@ -38,13 +38,15 @@ export function LibraryPage({ onOpen }: { onOpen: (film: string) => void }) {
   );
 
   return (
-    <section className="panel lib-page">
-      <h2>
-        Library{' '}
-        <span className="dim small">
-          one film, one score; analysis runs in the background, one at a time
-        </span>
-      </h2>
+    <section className="page page-wide">
+      <h2>Library</h2>
+      {/* Beside the title rather than inside it: a heading is what a screen
+          reader jumps between, and a sentence of description folded into one
+          gets read out on every jump. Every admin page already does it this
+          way. */}
+      <p className="dim small">
+        One film, one score; analysis runs in the background, one at a time.
+      </p>
       <Library onOpen={open} fps={ASSUMED_FPS} />
     </section>
   );

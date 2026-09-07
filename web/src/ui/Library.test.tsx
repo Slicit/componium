@@ -216,8 +216,8 @@ describe('reaching what the model said', () => {
     const buttons = rows().map((r) =>
       Array.from(r.querySelectorAll('button')).map((b) => b.textContent),
     );
-    expect(buttons[0]).not.toContain('vision');
-    expect(buttons[1]).toContain('vision');
+    expect(buttons[0]).not.toContain('Vision');
+    expect(buttons[1]).toContain('Vision');
   });
 
   it('says what a rebuild does about the description', async () => {

@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Icon } from '../Icon';
 
 interface Shelf {
   shelf: boolean;
@@ -128,7 +129,7 @@ export function Rigs() {
 
   if (!shelf.shelf) {
     return (
-      <section className="adm-card">
+      <div className="page">
         <h2>Rigs</h2>
         <p className="dim small">
           This studio was started with <code>-rig</code> pointing at a single file rather than a
@@ -136,16 +137,16 @@ export function Rigs() {
           be chosen, copied and swapped from here.
         </p>
         <p>
-          <a className="adm-link" href="/api/rigs/export" download>
+          <a className="dl-link" href="/api/rigs/export" download>
             Export {shelf.current || 'the rig'}
           </a>
         </p>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="adm-card">
+    <div className="page page-wide">
       <div className="adm-row">
         <h2>Rigs</h2>
         <span className="spacer" />
@@ -178,78 +179,83 @@ export function Rigs() {
       {error && <p className="adm-warn">{error}</p>}
       {note && <p className="dim small">{note}</p>}
 
-      <div className="adm-scroll">
-        <table className="adm-table">
-          <thead>
-            <tr>
-              <th />
-              <th>Rig</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {shelf.rigs.map((r) => {
-              const current = r === shelf.current;
-              return (
-                <tr key={r} className={current ? 'is-current' : undefined}>
-                  <td>
-                    <input
-                      type="radio"
-                      name="rig"
-                      checked={current}
-                      disabled={busy}
-                      aria-label={'Use ' + plain(r)}
-                      onChange={() => void send('/api/rigs', { rig: r }, 'now using ' + plain(r))}
-                    />
-                  </td>
-                  <td>
-                    {plain(r)}
-                    {current && <span className="dim small"> in use</span>}
-                  </td>
-                  <td className="adm-actions">
-                    <a
-                      className="adm-link"
-                      download
-                      href={'/api/rigs/export?rig=' + encodeURIComponent(plain(r))}
-                    >
-                      export
-                    </a>
-                    <button
-                      disabled={busy}
-                      title={'Rename ' + plain(r) + '. The name inside the file is left alone.'}
-                      aria-label={'Rename ' + plain(r)}
-                      onClick={() => rename(r)}
-                    >
-                      rename
-                    </button>
-                    <button
-                      disabled={busy}
-                      title={'Start a new rig from ' + plain(r)}
-                      onClick={() => setAdding({ name: '', from: r })}
-                    >
-                      copy
-                    </button>
-                    <button
-                      className="adm-remove"
-                      disabled={busy || shelf.rigs.length <= 1}
-                      title={
-                        shelf.rigs.length <= 1
-                          ? 'The only rig on the shelf. A shelf with nothing on it ' +
-                            'is a studio that will not open.'
-                          : 'Remove ' + plain(r)
-                      }
-                      aria-label={'Remove ' + plain(r)}
-                      onClick={() => forget(r)}
-                    >
-                      remove
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <section className="adm-card">
+        <div className="adm-scroll">
+          <table className="adm-table">
+            <thead>
+              <tr>
+                <th />
+                <th>Rig</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {shelf.rigs.map((r) => {
+                const current = r === shelf.current;
+                return (
+                  <tr key={r} className={current ? 'is-current' : undefined}>
+                    <td>
+                      <input
+                        type="radio"
+                        name="rig"
+                        checked={current}
+                        disabled={busy}
+                        aria-label={'Use ' + plain(r)}
+                        onChange={() => void send('/api/rigs', { rig: r }, 'now using ' + plain(r))}
+                      />
+                    </td>
+                    <td>
+                      {plain(r)}
+                      {current && <span className="dim small"> in use</span>}
+                    </td>
+                    <td className="adm-actions">
+                      <a
+                        className="dl-link"
+                        download
+                        href={'/api/rigs/export?rig=' + encodeURIComponent(plain(r))}
+                        title={'Download ' + plain(r) + ' as a file'}
+                      >
+                        Export
+                      </a>
+                      <button
+                        disabled={busy}
+                        title={'Rename ' + plain(r) + '. The name inside the file is left alone.'}
+                        aria-label={'Rename ' + plain(r)}
+                        className="icon-btn"
+                        onClick={() => rename(r)}
+                      >
+                        <Icon name="edit" />
+                      </button>
+                      <button
+                        disabled={busy}
+                        title={'Start a new rig from ' + plain(r)}
+                        aria-label={'Start a new rig from ' + plain(r)}
+                        onClick={() => setAdding({ name: '', from: r })}
+                      >
+                        Copy
+                      </button>
+                      <button
+                        className="danger icon-btn"
+                        disabled={busy || shelf.rigs.length <= 1}
+                        title={
+                          shelf.rigs.length <= 1
+                            ? 'The only rig on the shelf. A shelf with nothing on it ' +
+                              'is a studio that will not open.'
+                            : 'Remove ' + plain(r)
+                        }
+                        aria-label={'Remove ' + plain(r)}
+                        onClick={() => forget(r)}
+                      >
+                        <Icon name="trash" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {adding && (
         <div className="adm-card adm-inset">
@@ -311,6 +317,6 @@ export function Rigs() {
           </p>
         </div>
       )}
-    </section>
+    </div>
   );
 }
