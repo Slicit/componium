@@ -848,7 +848,7 @@ export function App({
         {live.state.problem && !live.armed && (
           <p className="bar-problem" role="alert">
             <strong>Not live:</strong> {live.state.problem}
-            <button className="bar-dismiss" onClick={live.forget} aria-label="Dismiss">
+            <button className="bar-dismiss small-btn" onClick={live.forget} aria-label="Dismiss">
               dismiss
             </button>
           </p>

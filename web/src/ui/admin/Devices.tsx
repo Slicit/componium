@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { Icon } from '../Icon';
 
 interface Device {
   id: string;
@@ -294,7 +295,7 @@ export function Devices() {
   const real = devices.filter(isReal).length;
 
   return (
-    <div className="adm-page adm-wide">
+    <div className="page page-wide">
       <h2>Devices</h2>
       <p className="dim">
         This is the rig file, not a copy of it. Edit it here or in a text editor; both write the
@@ -523,7 +524,7 @@ export function Devices() {
                             />
                             {((d.brightness ?? 0) !== 0 || (d.saturation ?? 0) !== 0) && (
                               <button
-                                className="adm-remove"
+                                className="small-btn"
                                 disabled={!editable}
                                 title={'Put ' + d.id + ' back to what the score says'}
                                 aria-label={'Reset trim for ' + d.id}
@@ -539,7 +540,7 @@ export function Devices() {
                       </td>
                       <td>
                         <button
-                          className="adm-remove"
+                          className="danger icon-btn"
                           disabled={!editable}
                           title={'Remove ' + d.id}
                           aria-label={'Remove ' + d.id}
@@ -549,7 +550,7 @@ export function Devices() {
                             setSaved(false);
                           }}
                         >
-                          remove
+                          <Icon name="trash" />
                         </button>
                       </td>
                     </tr>

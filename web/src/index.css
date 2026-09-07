@@ -181,8 +181,17 @@ body {
   padding: 3px 9px;
 }
 
+/* `.dl-link` is here rather than in a rule of its own further down.
+
+   It had one, on the argument that an anchor and a button do not agree on
+   enough by default for a shared rule to cover both. That was a rationale
+   rather than a reason: the two need the same seven declarations and the
+   anchor needs three more, which is what the rule below it is for. The
+   copy was caught the same day by a test asserting each button size is
+   stated once, which is exactly the drift it would have become. */
 select,
-button {
+button,
+.dl-link {
   font: inherit;
   font-size: 12px;
   color: var(--ink);
@@ -191,10 +200,12 @@ button {
   border-radius: 4px;
   padding: 4px 8px;
 }
-button {
+button,
+.dl-link {
   cursor: pointer;
 }
-button:hover {
+button:hover,
+.dl-link:hover {
   border-color: #3a4553;
 }
 
@@ -864,17 +875,27 @@ button[aria-disabled='true']:hover {
   margin-left: auto;
 }
 
-.adm {
+/* A page with a column of sections down its left side.
+
+   Admin had this and the library did not, which is why the library's rows
+   ran up against the left edge of the window while every admin page began
+   200px in. Two pages reached the same way from the same bar should not
+   start in different places.
+
+   Named for the shape rather than for admin, for the same reason `.page`
+   is: a class named after the first thing that used it is a class the
+   second thing does not think it is allowed to use. */
+.sidebar {
   display: flex;
   min-height: calc(100vh - 34px);
 }
-.adm-menu {
+.sidebar-menu {
   flex: 0 0 200px;
   border-right: 1px solid var(--line);
   padding: 12px 8px;
   align-self: stretch;
 }
-.adm-menu ul {
+.sidebar-menu ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -882,7 +903,7 @@ button[aria-disabled='true']:hover {
   flex-direction: column;
   gap: 2px;
 }
-.adm-menu a {
+.sidebar-menu a {
   display: block;
   padding: 6px 10px;
   border-radius: 3px;
@@ -890,26 +911,33 @@ button[aria-disabled='true']:hover {
   text-decoration: none;
   font-size: 13px;
 }
-.adm-menu a:hover {
+.sidebar-menu a:hover {
   color: var(--ink);
   background: var(--surface-2);
 }
-.adm-menu a.is-current {
+.sidebar-menu a.is-current {
   color: var(--ink);
   background: var(--surface-2);
   font-weight: 500;
 }
 
-.adm-body {
+.sidebar-body {
   flex: 1 1 auto;
   min-width: 0;
 }
-.adm-page {
+/* A page: something reached from the top bar, with a title and a
+   description under it. Named for what it is rather than for admin, which
+   is where it started, because the library is one too and was dressed as a
+   panel inside the studio long after it stopped being one. A shared shell
+   is what makes "a page starts at h2" mean the same thing on every page
+   rather than the same tag at four different sizes. */
+.page {
   max-width: 62ch;
   padding: 20px 24px 60px;
 }
-/* The device table needs the width; prose does not. */
-.adm-wide {
+/* Tables need the width; prose does not, and 62ch is the measure prose
+   wants. A page with a table in it says so. */
+.page-wide {
   max-width: none;
 }
 .adm-edit input[type='text'] {
@@ -946,10 +974,6 @@ button[aria-disabled='true']:hover {
 .adm-row .spacer {
   flex: 1 1 auto;
 }
-.adm-remove {
-  font-size: 11px;
-  padding: 2px 8px;
-}
 .adm-problems {
   margin: 0;
   padding-left: 20px;
@@ -957,11 +981,11 @@ button[aria-disabled='true']:hover {
   font-size: 13px;
   color: var(--warn, #c1121f);
 }
-.adm-page h2 {
+.page h2 {
   margin: 0 0 4px;
   font-size: 19px;
 }
-.adm-page > p.dim {
+.page > p.dim {
   margin: 0 0 20px;
   line-height: 1.55;
 }
@@ -1099,10 +1123,6 @@ button[aria-disabled='true']:hover {
   margin: 6px 0 8px;
   line-height: 1.5;
 }
-.adm-reset {
-  font-size: 11px;
-  padding: 2px 8px;
-}
 
 /* A refusal gets a line of its own, because a refusal in a tooltip is a
    refusal nobody reads. */
@@ -1119,8 +1139,6 @@ button[aria-disabled='true']:hover {
 }
 .bar-dismiss {
   margin-left: auto;
-  font-size: 11px;
-  padding: 2px 8px;
   flex: 0 0 auto;
 }
 
@@ -1182,13 +1200,37 @@ button[aria-disabled='true']:hover {
   justify-content: space-between;
   margin-bottom: 6px;
 }
-.small-btn {
+/* There are two button sizes and this is the second one.
+
+   The default is the button above: 12px, 4px by 8px, for something that
+   acts on the whole page. This is for a row: a table has ten of them and
+   they should not shout.
+
+   It arrived as five separate rules with five names and the identical two
+   declarations (`adm-remove`, `adm-reset`, `bar-dismiss`, `small-btn`,
+   `trim-reset`), a sixth a pixel taller on the library's rows, and a
+   seventh with a different horizontal pad. Each was used in exactly one
+   file, which is how it happened: nobody adding the second one could see
+   the first. The selectors below say where a row is, so a new button in a
+   row is the right size without being told. */
+.small-btn,
+.lib-row .lib-actions button,
+.lib-row .lib-actions .dl-link,
+.adm-actions button,
+.adm-actions .dl-link,
+.adm-table td button,
+.adm-table td .dl-link {
   font-size: 11px;
   padding: 2px 8px;
-  background: var(--surface-2);
+}
+
+/* Quieter than the buttons around it, for a control that is present rather
+   than offered. Separated from the size above because they are two
+   different decisions and only one file wants both. */
+.quiet {
   color: var(--muted);
 }
-.small-btn:hover {
+.quiet:hover:not(:disabled) {
   color: var(--ink);
 }
 .force-row {
@@ -1222,26 +1264,11 @@ button[aria-disabled='true']:hover {
 
 /* --- library ------------------------------------------------------------ */
 
-.panel {
-  margin-top: 14px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  background: var(--surface);
-  padding: 10px 12px 12px;
-}
-.panel h2 {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 8px;
-}
-.panel h2 .small {
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 400;
-}
+/* `.panel` lived here and styled exactly one element: the library's own
+   title, as an 11px uppercase grey label. That was right while the library
+   was a panel inside the studio and wrong from the day it became a place in
+   the top bar, which left the only page outside admin announcing itself in
+   a third of the type size of every page inside it. It is a `.page` now. */
 
 .lib-head {
   display: flex;
@@ -1325,8 +1352,10 @@ button[aria-disabled='true']:hover {
 .lib-actions .slot-vision {
   width: 56px;
 }
+/* Wide enough for the count. At 46px "Builds 1" wrapped onto two lines and
+   made that one row taller than every other row in the table. */
 .lib-actions .slot-builds {
-  width: 46px;
+  width: 62px;
 }
 .lib-actions .slot-icon {
   width: 30px;
@@ -1342,14 +1371,24 @@ button[aria-disabled='true']:hover {
 .lib-head .lib-actions .slot {
   width: auto;
 }
-.lib-actions button {
-  font-size: 11px;
-  padding: 3px 8px;
-}
-.lib-actions button.danger {
+/* A destructive action reads as one, wherever it is written.
+
+   This was `.lib-actions button.danger` and nothing else, so the class did
+   its job on the library's bin and did nothing at all on the four other
+   elements carrying it: the three admin bins and the viewport delete. That
+   is the quiet failure this stylesheet has produced before, and it is quiet
+   in both directions, since a class that is present and inert looks exactly
+   like a deliberate choice not to colour something.
+
+   `:not(:disabled)` is load-bearing rather than tidy. The rule that dims a
+   disabled button is `button:disabled`, which carries the same specificity
+   as `button.danger` and sits earlier in the file, so without the guard a
+   disabled bin would win the tie and look like a live one. That is the same
+   trap the disabled rule itself was written to escape. */
+button.danger:not(:disabled) {
   color: var(--warn);
 }
-.lib-actions button.danger:hover {
+button.danger:hover:not(:disabled) {
   border-color: #5a2f2a;
 }
 
@@ -1533,7 +1572,6 @@ button[aria-disabled='true']:hover {
   white-space: nowrap;
 }
 .views-del {
-  padding: 2px 7px;
   line-height: 1;
 }
 .views-save {
@@ -2220,6 +2258,25 @@ button[aria-disabled='true']:hover {
   box-shadow: inset 0 0 0 1px var(--line, #ccc);
 }
 
+/* A download, shaped like the buttons it stands among.
+
+   It stays an anchor: there is a real file at a real URL, so right click,
+   save as, and open in a new tab all work, and none of that survives being
+   turned into a button with a click handler. What it does not stay is a
+   bare underlined link, which has no padding and so sits a few pixels above
+   the baseline of every button beside it. That is the same problem
+   `.icon-btn` above solves for glyphs.
+
+   The values are the base button rule's, deliberately repeated rather than
+   shared through a class both use: an anchor and a button do not agree on
+   enough by default for one rule to cover both, and the pair drifting apart
+   is visible in the row the moment it happens. */
+.dl-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 /* A name that is a button, because picking a board is what the row is for. */
 .adm-link {
   background: none;
@@ -2312,8 +2369,6 @@ button[aria-disabled='true']:hover {
   color: var(--warn, #c1121f);
 }
 .trim-reset {
-  font-size: 11px;
-  padding: 2px 8px;
   margin-left: auto;
 }
 

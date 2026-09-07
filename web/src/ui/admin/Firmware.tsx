@@ -76,7 +76,7 @@ export function Firmware() {
   }, [usable, build, loaded]);
 
   return (
-    <div className="adm-page">
+    <div className="page">
       <h2>Node firmware</h2>
       <p className="dim">
         One board carries whatever its configuration says it carries: several devices on one socket,

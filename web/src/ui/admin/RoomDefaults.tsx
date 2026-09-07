@@ -43,7 +43,7 @@ function Row({ name }: { name: SettingName }) {
       />
       <p className="dim small">{spec.hint}</p>
       <button
-        className="adm-reset"
+        className="small-btn"
         disabled={isDefault}
         onClick={() => {
           clearSetting(name);
@@ -59,7 +59,7 @@ function Row({ name }: { name: SettingName }) {
 
 export function RoomDefaults() {
   return (
-    <div className="adm-page">
+    <div className="page">
       <h2>Room preview</h2>
       <p className="dim">
         Kept in this browser rather than in the rig, because they are judgements about a preview on

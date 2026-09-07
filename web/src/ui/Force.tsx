@@ -33,7 +33,7 @@ export function Force(props: {
     <div className="force">
       <div className="force-head">
         <span className="dim small">Force a device, 0 releases it back to the score</span>
-        <button className="small-btn" onClick={() => onChange(new Map())}>
+        <button className="small-btn quiet" onClick={() => onChange(new Map())}>
           Release all
         </button>
       </div>

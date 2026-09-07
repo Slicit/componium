@@ -380,7 +380,7 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
             <span className="slot slot-get">
               {e.hasScore && (
                 <a
-                  className="adm-link"
+                  className="dl-link"
                   download
                   href={'/api/score/export?film=' + encodeURIComponent(e.film)}
                   title="Download this score, to keep or to carry to another machine"
@@ -441,7 +441,7 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                   onClick={() => setReading(e.film)}
                   title="Read what the model said about this film, and ask it to look again"
                 >
-                  vision
+                  Vision
                 </button>
               )}
             </span>
@@ -453,8 +453,8 @@ export function Library(props: { onOpen: (film: string) => void; fps: Fps }) {
                   title="Every build of this film, and what each step cost"
                 >
                   {open === e.film
-                    ? 'hide'
-                    : `builds${e.builds?.length ? ' ' + e.builds.length : ''}`}
+                    ? 'Hide'
+                    : `Builds${e.builds?.length ? ' ' + e.builds.length : ''}`}
                 </button>
               )}
             </span>

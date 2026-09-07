@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { Icon } from '../Icon';
 
 import { Boards } from './Boards';
 
@@ -214,7 +215,7 @@ export function Nodes() {
   };
 
   return (
-    <div className="adm-page adm-wide">
+    <div className="page page-wide">
       <h2>Boards</h2>
       <p className="dim">
         What is physically wired to one ESP32. Separate from the rig, which says what instruments
@@ -290,7 +291,7 @@ export function Nodes() {
             )}
             {board.instruments.length > 0 && (
               <button
-                className="adm-reset"
+                className="small-btn"
                 onClick={() => setDevices(board.instruments.map(fromBoard))}
               >
                 Fetch the board's current configuration
@@ -479,14 +480,15 @@ export function Nodes() {
                       </td>
                       <td>
                         <button
-                          className="adm-remove"
+                          className="danger icon-btn"
+                          title={'Remove ' + d.id}
                           aria-label={'Remove ' + d.id}
                           onClick={() => {
                             setDevices((was) => was.filter((_, n) => n !== i));
                             setSaved(false);
                           }}
                         >
-                          remove
+                          <Icon name="trash" />
                         </button>
                       </td>
                     </tr>

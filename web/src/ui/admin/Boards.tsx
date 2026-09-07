@@ -316,7 +316,7 @@ export function Boards({ onPick, picked }: { onPick: (name: string) => void; pic
                       ) : null}
                       {editable && (
                         <button
-                          className="adm-remove"
+                          className="small-btn"
                           aria-label={'Forget ' + b.name}
                           onClick={() => forget(b.name)}
                         >

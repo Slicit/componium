@@ -31,8 +31,8 @@ export function Admin({ route }: { route: Route }) {
   const page: PageId = known ? (route.page as PageId) : PAGES[0].id;
 
   return (
-    <div className="adm">
-      <nav className="adm-menu" aria-label="Admin sections">
+    <div className="sidebar">
+      <nav className="sidebar-menu" aria-label="Admin sections">
         <ul>
           {PAGES.map((p) => (
             <li key={p.id}>
@@ -50,7 +50,7 @@ export function Admin({ route }: { route: Route }) {
           ))}
         </ul>
       </nav>
-      <div className="adm-body">
+      <div className="sidebar-body">
         {page === 'rigs' && <Rigs />}
         {page === 'devices' && <Devices />}
         {page === 'boards' && <Nodes />}

@@ -121,6 +121,27 @@ that needs the name.
 cannot be tabbed to, cannot be pressed from a keyboard, and are announced as
 nothing. The fix is always the same and is never more work.
 
+**A bare verb that has a glyph is not shipped as a word.** The other half of
+the icon rule above, and the half that actually drifted: the library put a
+bin beside a film while three admin tables spelled out `remove` in the same
+row idiom. Only whole labels count, so "Remove this track" in a menu and
+"Save the rig" on a button are both fine. It is `delete`, `remove`,
+`rename`, `edit`, `save`, `close` and `search`, alone on a button, that
+already had a glyph waiting.
+
+**A download stays an anchor and looks like a button.** `<a download>` keeps
+right click, save as, and open in a new tab, none of which survive being
+turned into a button with a click handler. It carries `dl-link`, which is a
+button's shape. It must not carry `adm-link`, which is an underlined run of
+text with no padding and belongs to the one thing it was written for, a
+board's name in a row where picking the board is the point.
+
+**A page uses the page shell.** `.page` sets the measure, the padding and the
+size of an h2, so "a page starts at h2" means the same thing everywhere
+rather than the same tag at four different sizes. Rigs had no shell at all
+and the library was still wearing `.panel`, the style of a small box inside
+the studio, months after it became a place in the top bar.
+
 ## Exceptions to the UI rules
 
 Every rule above is one this codebase actually broke once, so all of them are
