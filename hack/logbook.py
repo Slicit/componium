@@ -114,6 +114,26 @@ def load():
     return out
 
 
+def loose_links(known):
+    """The three hand-written files link to features too, and rot the same way.
+
+    candidates.md is append-only and long-lived, which makes it the most
+    likely place for a link to a feature that was later renamed.
+    """
+    problems = []
+    for name in ["candidates.md", "notes.md", "ideas.md"]:
+        path = os.path.join(ROOT, "LOGBOOK", name)
+        if not os.path.exists(path):
+            continue
+        text = open(path, encoding="utf-8").read()
+        for target in LINK.findall(text):
+            if target not in known:
+                problems.append(
+                    "LOGBOOK/" + name + ": [[" + target + "]] does not name a feature file"
+                )
+    return problems
+
+
 def check(features):
     problems = []
     known = {f.name for f in features}
@@ -150,6 +170,7 @@ def check(features):
         if not f.hook:
             problems.append(where + ": the Intent section is empty, so the index has no line")
 
+    problems.extend(loose_links(known))
     return problems
 
 
