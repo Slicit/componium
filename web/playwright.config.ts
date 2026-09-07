@@ -51,7 +51,32 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/shots/**',
+    },
+    {
+      /* The documentation screenshots. Not part of the suite: they take
+       * longer, they write files into docs/, and a red build because a
+       * picture moved is a build people stop reading.
+       *
+       *     npm run shots
+       *
+       * SwiftShader is what gets WebGL without a GPU or a display, so the
+       * room renders in software rather than photographing as a black
+       * rectangle. It is slow, and it is a real browser running real
+       * three.js, which is the difference between believing the room works
+       * and seeing that it does. */
+      name: 'shots',
+      testMatch: '**/shots/*.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: ['--enable-unsafe-swiftshader'] },
+      },
+    },
+  ],
 
   webServer: [
     {

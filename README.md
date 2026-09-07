@@ -15,6 +15,12 @@ timecode. Instruments are plugins: if you can control it, you can score it.
 > fan, a fogger or a platform. Read [docs/wet-and-hot.md](docs/wet-and-hot.md)
 > before pointing it at anything that can hurt you.
 
+![The Componium studio](docs/screenshots/studio.png)
+
+*The studio: the film, a preview of the room, and the score. Captured from a
+running instance over the example score; see
+[docs/screenshots/](docs/screenshots/) for what is fixture and what is real.*
+
 ## Try it with no hardware
 
 ```sh
@@ -128,6 +134,8 @@ See [LOGBOOK/features/feat-composer.md](LOGBOOK/features/feat-composer.md).
 
 - [ROADMAP.md](ROADMAP.md) — milestones and their ordering rationale
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help, and the CLA
+- [docs/screenshots/](docs/screenshots/) — what it looks like, captured rather
+  than drawn
 - [docs/running.md](docs/running.md) — the four processes, and the order to
   bring them up in
 - [docs/troubleshooting.md](docs/troubleshooting.md) — organised by what you are
