@@ -128,6 +128,10 @@ See [LOGBOOK/features/feat-composer.md](LOGBOOK/features/feat-composer.md).
 
 - [ROADMAP.md](ROADMAP.md) — milestones and their ordering rationale
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help, and the CLA
+- [docs/running.md](docs/running.md) — the four processes, and the order to
+  bring them up in
+- [docs/troubleshooting.md](docs/troubleshooting.md) — organised by what you are
+  looking at
 - [docs/cip.md](docs/cip.md) — Componium Instrument Protocol
 - [docs/hardware.md](docs/hardware.md) — what to buy, in what order, and why
 - [docs/wet-and-hot.md](docs/wet-and-hot.md) — fog, water, heat and moving mass
