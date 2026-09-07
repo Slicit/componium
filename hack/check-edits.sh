@@ -54,6 +54,14 @@ git ls-files '*.py' | while read -r f; do
     python3 -m py_compile "$f" || fail "$f does not compile"
 done
 
+# --- the record ----------------------------------------------------------
+# Cheap, and it is the thing nothing else notices: a feature file with no
+# Intent, a status nobody updated, a [[link]] to a file that was renamed, an
+# INDEX.md that has drifted from the files it indexes.
+say "logbook"
+python3 hack/logbook.py check
+python3 hack/logbook.py index --check
+
 say "go format"
 unformatted=$(gofmt -l ./cmd ./internal 2>/dev/null || true)
 if [ -n "$unformatted" ]; then

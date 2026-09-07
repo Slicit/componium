@@ -94,4 +94,4 @@ Firmware updated to honour `hold_ms`, still uncompiled.
 ## Links
 
 - Branch: `feat-spans`
-- Related features: `feat-safety`, `feat-esp32-node`, `feat-score-format`
+- Related features: [[feat-safety]], [[feat-esp32-node]], [[feat-score-format]]

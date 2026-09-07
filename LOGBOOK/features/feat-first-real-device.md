@@ -5,6 +5,8 @@ branch: feat-first-real-device
 
 # feat-first-real-device · one ESP32, one WLED strip, one fan
 
+## Intent
+
 The first hardware in the project. Two devices chosen because `docs/hardware.md`
 already argued for them: light and wind are the two instrument kinds that cannot
 hurt anybody, and between them they exercise both halves of the system.
@@ -247,3 +249,11 @@ The last three are the whole point and none of them can be done from here. The
 numbers in `examples/bench-rig.toml` are placeholders in the strict sense: they
 are what somebody guessed, and the first real job is to replace them with what
 somebody measured.
+
+## Links
+
+- Branch: `feat-first-real-device`
+- Related features: [[feat-esp32-node]], [[feat-nodes-carry-several-devices]],
+  [[feat-ota]]
+- `docs/hardware.md` for what to buy; `docs/troubleshooting.md` for the fan
+  that will not turn, which starts with this feature's own bring-up steps

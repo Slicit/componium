@@ -1,9 +1,14 @@
+---
+status: deferred
+branch: none
+---
+
 # feat-body-haptics — premium seat shake and directional shoulder punch
 
 Status: **deferred, not started.** Recorded 2026-08-29 at the user's request so
 the idea is not lost. Nothing here is implemented.
 
-## What
+## Intent
 
 Two effects that act on the body rather than on the room:
 
@@ -51,8 +56,8 @@ dependency with weights, a licence and a download.
   motion estimate — frequency content from frame to frame differences rather
   than a single amplitude. That part could be done first and separately.
 
-## Related
+## Links
 
-- `feat-analysis-engine.md` — what the composer nominates today.
-- `feat-motion-and-wet.md` — the existing motion path and washout filter.
-- `feat-safety.md` — spans, duty cycles, all-stop.
+- [[feat-analysis-engine]] — what the composer nominates today.
+- [[feat-motion-and-wet]] — the existing motion path and washout filter.
+- [[feat-safety]] — spans, duty cycles, all-stop.

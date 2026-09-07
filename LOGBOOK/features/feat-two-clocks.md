@@ -5,6 +5,8 @@ branch: feat-two-clocks
 
 # feat-two-clocks · transient evidence and persistent judgement, asked apart
 
+## Intent
+
 Three complaints arrived together and turned out to be one shape. The
 descriptions read the same for every film. Wind blows on any movement. Scent is
 a number with two values. Each was going to get its own patch until the
@@ -200,9 +202,27 @@ the 0.2% floor exist; anything new gets its own before it is built.
 **Reverting is a result.** The scene-as-judgement change was reverted the same
 hour it was measured, and the finding it produced is what this plan rests on.
 
-## Related
+## Links
 
 - `LOGBOOK/experiments/README-scene-steadiness.md` — the measurement above
 - `LOGBOOK/experiments/README.md` — the dust trace, and why 512px keyframes
-- `feat-rest.md` — the amplitude and density work this leaves untouched
+- [[feat-rest]] — the amplitude and density work this leaves untouched
 - `composer/calm.py` — the ranked budget stages 2 and 5 depend on
+
+## Decisions
+
+Written as a narrative before this file had a Decisions log, so the reasoning
+is in the sections above rather than as a dated list. New choices about this
+feature belong here, newest last.
+
+## Verification
+
+The composer's own suite: `composer/test_wind_causes.py`, `test_scent.py`,
+`test_calm.py` and `test_buff.py` cover the stages that landed, and
+`test_vision_gate.py` covers the seam between the two passes.
+
+Underneath those are the runs kept in `LOGBOOK/experiments/`, which are
+measurements rather than tests: a model's actual answers to actual frames,
+written down, so that a later change can be compared against what happened
+instead of against somebody's memory of what happened. Vision passes are
+expensive enough that re-running one to settle an argument is not free.

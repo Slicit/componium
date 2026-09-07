@@ -66,4 +66,4 @@ curve updates 649 over 14s, about 47 per second at a 20ms interval
 ## Links
 
 - Branch: `feat-score-format`
-- Related features: `feat-timing-core`, `feat-composer` consumes this format
+- Related features: [[feat-timing-core]], [[feat-composer]] consumes this format

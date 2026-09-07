@@ -22,5 +22,5 @@
        check its protocol numbers against the flasher SDK. */
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src"]
+  "include": ["src", "e2e"]
 }

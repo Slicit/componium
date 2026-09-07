@@ -376,5 +376,16 @@ Supersedes the 2026-08-29 decision above that used
 - Branch: `feat-timing-core`
 - PR: TBD
 - Related ideas: none
-- Related features: `feat-composer` depends on the score format, not on this
+- Related features: [[feat-composer]] depends on the score format, not on this
 - External: mpv IPC protocol, `mpv --input-ipc-server`
+
+## Verification
+
+Go tests, and the limit of them is worth stating. The clock, the latency
+compensation and the scheduler are exercised against a simulated player, which
+proves the arithmetic and proves nothing about a real one. The milestone table
+records M1 as verified against tests for that reason, and M2, the time source,
+against live mpv.
+
+`componium tune` exists because the gap between those two is real and has to be
+measured on each machine rather than assumed. See [[feat-tuning]].

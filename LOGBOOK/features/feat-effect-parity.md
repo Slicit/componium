@@ -5,6 +5,8 @@ branch: fix-effect-parity
 
 # fix-effect-parity · the library and the timeline say the same thing
 
+## Intent
+
 Reported as: insert Strobe at the playhead, get one light event with no
 intensity and no points. Three separate faults, all of them the same shape, all
 of them a preset being mistranslated on the way into a track.
@@ -116,3 +118,17 @@ walks an index still only asks the question you wrote down.**
   insert into a blend with the curve it replaces. An existing test caught that
   within a minute of it being written, which is the argument for the test file
   in one sentence.
+
+## Verification
+
+`web/src/core/parity.test.ts`, which walks the preset index rather than a list
+somebody wrote out by hand: every preset the picker offers is inserted and the
+result asserted, and every preset it withholds is asserted to genuinely fail.
+Both directions, because "everything offered works" is satisfied by offering
+nothing.
+
+## Links
+
+- Branch: `fix-effect-parity`
+- Related features: [[feat-score-editing]], [[feat-studio]]
+- The rule it produced is in `LOGBOOK/notes.md`, under anti-patterns

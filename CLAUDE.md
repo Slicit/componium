@@ -35,6 +35,26 @@ The house rules look for `onClick` on a non-interactive element, and those
 handlers were `onPointerDown`. A rule written from memory catches the cases
 its author thought of.
 
+## The browser suite
+
+```sh
+cd web
+npm run test:e2e            # starts its own studio and dev server, stops them again
+```
+
+Thirteen specs in real Chromium, and they are deliberately few. Anything that
+can be proven in vitest is proven in vitest, because 749 unit tests run in
+seventeen seconds and this runs in thirty for thirteen.
+
+What belongs there is only what jsdom structurally cannot answer: whether
+something is actually visible (it does no layout and stacks nothing), whether
+a keyboard reaches it (focus never moves on its own), and whether a real input
+event does what a synthetic one claimed (Radix inspects where a PointerEvent
+came from, and `new Event('pointerdown')` carries none of that).
+
+Each of those has already shipped past a green suite here. See
+`web/e2e/README.md`, and prefer `npx playwright show-trace` over adding logs.
+
 ## Editing a file
 
 **Never put a program inside an ssh argument.** A heredoc or a quoted command
@@ -100,6 +120,59 @@ that needs the name.
 **An action is a button.** Never a div, span, td or li with an onClick: those
 cannot be tabbed to, cannot be pressed from a keyboard, and are announced as
 nothing. The fix is always the same and is never more work.
+
+## Exceptions to the UI rules
+
+Every rule above is one this codebase actually broke once, so all of them are
+worth keeping. But a rule with no way to say "not this one, and here is why"
+gets deleted the first time it is inconvenient, and then nothing is checked at
+all. That reasoning already produced `hack/dep-age-allow.json`. This is the
+same thing for the UI.
+
+None of these are new. Every one was already in the code, as an unexplained
+array in `web/src/ui/houserules.test.ts`, which is the worst place for it: a
+carve-out nobody can see is indistinguishable from a rule nobody wrote.
+`houserules.test.ts` now reads this list back, so a path here that stops
+existing fails the build, and a file carved out in the test without a line here
+fails it too.
+
+- `web/src/ui/shad/` · Components copied in from shadcn and adapted. The rules
+  read source rather than the DOM, and these render through Radix, so a button
+  in the source is `<AlertDialogPrimitive.Action>`: a scan for `<button>` finds
+  nothing and reports that everything is fine. A check that passes by seeing
+  nothing is the worst kind there is, so the whole directory is excluded and
+  the wrapper boundary below is what holds instead. What actually covers them
+  is `Confirm.test.tsx`, which puts the same questions to the DOM by accessible
+  name.
+
+The five files below may import from `ui/shad` directly. Nothing else may. The
+boundary is what makes the exclusion above safe: it keeps the application
+speaking its own vocabulary rather than a library's, it means swapping or
+dropping that library touches five files, and it gives each component one place
+for the rendering test that is the only kind able to see it at all.
+
+- `web/src/ui/Confirm.tsx` · wraps AlertDialog. The destructive path, and the
+  one that replaced `window.confirm`.
+- `web/src/ui/Modal.tsx` · wraps Dialog.
+- `web/src/ui/Tip.tsx` · wraps Tooltip, and re-exports its provider.
+- `web/src/ui/Menu.tsx` · wraps DropdownMenu. The right-click menu.
+- `web/src/ui/FilmPicker.tsx` · wraps Popover.
+
+Two more, of a different kind: files the rules cannot see rather than files
+allowed past them.
+
+- `web/src/ui/room/Room3D.js` · The rules scan `.tsx` only, so nothing above
+  applies to the room's renderer. It is a direct port of a renderer that
+  already worked, described by a `.d.ts` rather than rewritten, and `tsconfig`
+  says the same thing about the typechecker. If it grows UI of its own, that UI
+  is unchecked.
+- `web/src/ui/Timeline.tsx` · Its surface is a `<div>` carrying
+  `onPointerDown`, `onDoubleClick` and `onContextMenu`. That is not an action
+  dressed as a div, it is a drawing surface, and the rule against clickable
+  divs looks for `onClick` and so does not fire. Worth naming anyway: passing a
+  check is not the same as satisfying it. The keyboard route to everything the
+  surface does is the key map and the right-click menu, and
+  `web/e2e/menu.spec.ts` is what proves that route works.
 
 ## Dependencies
 

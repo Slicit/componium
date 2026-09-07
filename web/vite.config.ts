@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+/* Which studio `npm run dev` talks to. The default is the one a person
+ * starts by hand next to it; the browser suite overrides it to point at
+ * its own throwaway studio over fixture films (e2e/studio.sh). */
+const studio = process.env.COMPONIUM_STUDIO || 'http://127.0.0.1:8799';
+
 /* Built output lands where Go embeds it.
  *
  * `internal/studio/webdist` rather than beside the old assets, so the two
@@ -23,8 +28,8 @@ export default defineConfig({
     /* `npm run dev` talks to a studio started separately, so the front end can
      * hot reload against real scores instead of fixtures. */
     proxy: {
-      '/api': 'http://127.0.0.1:8799',
-      '/media': 'http://127.0.0.1:8799',
+      '/api': studio,
+      '/media': studio,
     },
   },
   test: {

@@ -19,7 +19,7 @@
  * labelled all along, which is exactly how a checker loses its credibility.
  */
 import { describe, expect, it } from 'vitest';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const SRC = join(new URL('../..', import.meta.url).pathname.replace(/\/$/, ''), 'src');
@@ -50,6 +50,17 @@ const all = sources(SRC).map((path) => ({
  * the dialog's buttons by their accessible names, which is the same
  * question these rules ask, put to the DOM instead of the file. */
 const files = all.filter((f) => !f.name.startsWith('ui/shad/'));
+
+/* The only files allowed to reach into ui/shad. Listed in CLAUDE.md too,
+ * with a reason each, and the last test in this file insists the two agree:
+ * a carve-out that exists only in a test file is one nobody can review. */
+const wrappers = [
+  'ui/Confirm.tsx',
+  'ui/Modal.tsx',
+  'ui/Tip.tsx',
+  'ui/Menu.tsx',
+  'ui/FilmPicker.tsx',
+];
 
 type Tag = { attrs: string; end: number; selfClosing: boolean };
 
@@ -166,13 +177,6 @@ describe('components from a library', () => {
      * dropping a library touches one file; and the wrapper is a place a
      * rendering test can live, which is the only kind of test that can see
      * these at all. */
-    const wrappers = [
-      'ui/Confirm.tsx',
-      'ui/Modal.tsx',
-      'ui/Tip.tsx',
-      'ui/Menu.tsx',
-      'ui/FilmPicker.tsx',
-    ];
     const bad: string[] = [];
     for (const file of all) {
       if (file.name.startsWith('ui/shad/') || wrappers.includes(file.name)) continue;
@@ -229,5 +233,40 @@ describe('headings', () => {
       }
     }
     expect(bad).toEqual([]);
+  });
+});
+
+describe('the exceptions register', () => {
+  /* CLAUDE.md carries a list of the places these rules deliberately do not
+   * reach. It is only worth having if it cannot rot, which is what these three
+   * check: that it exists, that everything in it is still real, and that the
+   * carve-outs in this file are all in it.
+   *
+   * The third is the one that matters. Every exception here began as an array
+   * in this file with a comment beside it, which is a carve-out only somebody
+   * reading the test can find. */
+  const REPO = join(SRC, '..', '..');
+  const rules = readFileSync(join(REPO, 'CLAUDE.md'), 'utf8');
+  const section = (rules.split('## Exceptions to the UI rules')[1] || '').split('\n## ')[0];
+  const entries = [...section.matchAll(/^- `([^`]+)` \u00b7 (.+)$/gm)].map((m) => ({
+    path: m[1],
+    why: m[2],
+  }));
+
+  it('is there, and every entry gives a reason', () => {
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries.filter((e) => e.why.trim().length < 10)).toEqual([]);
+  });
+
+  it('names only files that still exist', () => {
+    const gone = entries.filter((e) => !existsSync(join(REPO, e.path)));
+    expect(gone.map((e) => e.path)).toEqual([]);
+  });
+
+  it('accounts for every carve-out this file makes', () => {
+    const listed = new Set(entries.map((e) => e.path));
+    const undocumented = wrappers.map((w) => 'web/src/' + w).filter((p) => !listed.has(p));
+    expect(undocumented).toEqual([]);
+    expect(listed.has('web/src/ui/shad/')).toBe(true);
   });
 });

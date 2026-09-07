@@ -126,4 +126,4 @@ flashes : five
 ## Links
 
 - Branch: `feat-analysis-engine`
-- Related features: `feat-composer-v1`, `feat-spans`
+- Related features: [[feat-composer-v1]], [[feat-spans]]

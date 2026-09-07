@@ -62,18 +62,18 @@ describe('choosing', () => {
 
   /* Not covered here, deliberately: the keyboard navigation itself.
    *
-   * Arrow keys, Home, End and typeahead are Radix's, and they work by moving
-   * real DOM focus inside a focus scope. None of that lands in jsdom — focus
-   * does not enter the menu at all — so a test of it would be measuring the
-   * test environment. Three attempts at writing around that produced three
-   * tests that passed for the wrong reason.
+   * Arrow keys, Home, End and typeahead are Radix's, and they work by
+   * moving real DOM focus inside a focus scope. None of that lands in
+   * jsdom, where focus does not enter the menu at all, so a test of it here
+   * would be measuring the test environment. Three attempts at writing
+   * around that produced three tests that passed for the wrong reason.
    *
-   * That navigation is the whole reason for the change, so its absence from
-   * this file is worth being loud about: it needs a person with a keyboard,
-   * once, in a real browser. Everything either side of it is asserted below
-   * and above — that the right items are offered, that choosing one runs it
-   * and closes, that a disabled one does not run, and that Escape and a scroll
-   * both get out without running anything.
+   * It is covered in a real browser instead, which also turned up that the
+   * list stops at its last item rather than wrapping: web/e2e/menu.spec.ts.
+   * Everything either side of it is asserted below and above, that the
+   * right items are offered, that choosing one runs it and closes, that a
+   * disabled one does not run, and that Escape and a scroll both get out
+   * without running anything.
    */
 
   it('does not run an item that says why it cannot', async () => {

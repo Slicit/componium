@@ -5,6 +5,8 @@ branch: main
 
 # feat-nodes-carry-several-devices · one board, several instruments
 
+## Intent
+
 One ESP32 driving one fan is a demonstration, not a rig. A board has thirty odd
 usable pins, eight RMT channels and eight LEDC channels, and a room needs more
 instruments than it has boards. Recorded as ADR 0007.
