@@ -175,11 +175,24 @@ describe('the button sizes', () => {
     expect(found.map((b) => b.selector)).toHaveLength(1);
   });
 
-  it('says the default button once', () => {
-    /* The base `button` rule. If a second block ever restates it, the two will
-     * drift and only one of them will be found by whoever goes looking. */
+  it('says the default control size in these two places and no others', () => {
+    /* Two, and they cannot be folded into one.
+     *
+     * A button and a text field on the same row have to be the same height,
+     * so they share the size. They cannot share a rule: a field sits on
+     * `--surface` and a button on `--surface-2`, and the field's rule is
+     * wrapped in `:where()` so that the four places which style their own
+     * fields still win. A button rule with no specificity would lose to
+     * everything.
+     *
+     * So the assertion is the set rather than the count. A third entry here
+     * is the drift this is watching for; a change to these two is a
+     * deliberate change to the size, and belongs in this list. */
     const found = sized('12px', '4px 8px');
-    expect(found.map((b) => b.selector)).toEqual(['select, button, .dl-link']);
+    expect(found.map((b) => b.selector).sort()).toEqual([
+      ":where(input[type='text'], input[type='number'], input[type='password'], textarea)",
+      'select, button, .dl-link',
+    ]);
   });
 
   it('has no third size hiding between them', () => {

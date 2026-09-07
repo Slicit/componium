@@ -144,6 +144,37 @@ body {
   font-family: var(--mono);
 }
 
+/* One height for everything in this bar.
+
+   There were three, and not one of them was a decision: the timecode came
+   out 27px, the toggles 21px and Undo, Redo and Saved 25px, each being
+   whatever its own font size and padding happened to add up to. On a single
+   row of controls that reads as carelessness even to somebody who could not
+   say why.
+
+   27px, which is the timecode's, because that is the one the eye lands on
+   first and the one the rest were closest to. Stated as a height rather
+   than by tuning three paddings until they agree, since padding that adds
+   up to the right number today stops adding up the moment a font changes.
+
+   The selector says "a control in this bar" rather than naming each one, so
+   a control added later is the right height without being told. The two
+   panels below open inside the bar and are not part of the row. */
+.controls .tc,
+.controls button,
+.controls select {
+  height: 27px;
+}
+.controls .tc,
+.controls button {
+  display: inline-flex;
+  align-items: center;
+}
+.controls .views-panel button,
+.controls .trim-panel button {
+  height: auto;
+}
+
 .bar h1 {
   font-size: 15px;
   font-weight: 600;
@@ -179,6 +210,45 @@ body {
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 3px 9px;
+}
+
+/* Text fields, which had no rule of any kind.
+
+   `select` and `button` were styled on the line above and `input` was not, so
+   every text and number field in the studio rendered in the browser's own
+   chrome: a white box with black text and an inset grey bevel, dropped into a
+   dark application. The device table is the clearest case, six white boxes in
+   a row, and the library's filter was worse in a quieter way, since it sets
+   `background: none` and never set a colour, so what you typed was black on
+   near-black.
+
+   Nobody wrote this rule because nothing looked broken to whoever added the
+   next field: it looked exactly like the field beside it.
+
+   `:where()` so the whole thing carries no specificity at all. The four
+   neighbourhoods that did style their own fields (`.insp-input`, `.lib-find`,
+   `.dev-trim`, `.adm-edit`) were written against the browser default and are
+   deliberate; a base rule that outranked them would undo four considered
+   decisions to fix an oversight. This is a floor, not an override.
+
+   Ranges, checkboxes, radios, colours and file pickers are left out on
+   purpose. Each draws something that is not a box of text, and giving them a
+   text field's border is how a slider ends up in a rectangle. */
+:where(input[type='text'], input[type='number'], input[type='password'], textarea) {
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+:where(input[type='text'], input[type='number'], input[type='password'], textarea):focus {
+  border-color: var(--accent);
+  outline: none;
+}
+:where(input, textarea)::placeholder {
+  color: var(--muted);
 }
 
 /* `.dl-link` is here rather than in a rule of its own further down.
@@ -738,7 +808,7 @@ button[aria-disabled='true']:hover {
    and is currently off is part of reading what the timeline is showing. */
 .toggle {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   padding: 3px 7px;
   color: var(--muted);
@@ -939,6 +1009,24 @@ button[aria-disabled='true']:hover {
    wants. A page with a table in it says so. */
 .page-wide {
   max-width: none;
+}
+/* The widths below are in characters of content.
+
+   They were written against a field with no padding at all, because until
+   the base field rule existed there was none. `box-sizing: border-box` is
+   set globally, so adding 8px each side took that room out of the
+   characters instead of adding to them, and the latency field went from
+   showing 0.02 to showing 0.0. A value silently truncated in a box that
+   still looks like it fits is the worst version of this: there is nothing
+   to notice.
+
+   `content-box` restores what `7ch` was written to mean. It is on the
+   fields with a character width rather than on fields generally, because
+   everything else here is sized by its container and wants the border box. */
+.adm-edit input,
+.adm-row input,
+.dev-trim input {
+  box-sizing: content-box;
 }
 .adm-edit input[type='text'] {
   width: 15ch;
