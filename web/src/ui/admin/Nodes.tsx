@@ -291,7 +291,7 @@ export function Nodes() {
             )}
             {board.instruments.length > 0 && (
               <button
-                className="adm-reset"
+                className="small-btn"
                 onClick={() => setDevices(board.instruments.map(fromBoard))}
               >
                 Fetch the board's current configuration

@@ -43,7 +43,7 @@ function Row({ name }: { name: SettingName }) {
       />
       <p className="dim small">{spec.hint}</p>
       <button
-        className="adm-reset"
+        className="small-btn"
         disabled={isDefault}
         onClick={() => {
           clearSetting(name);

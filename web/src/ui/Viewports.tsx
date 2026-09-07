@@ -88,7 +88,7 @@ export function Viewports(props: {
               </button>
               <span className="dim small views-note">{describe(v.viewport)}</span>
               <button
-                className="danger views-del"
+                className="danger views-del small-btn"
                 onClick={() => onRemove(v.name)}
                 title={'Delete ' + v.name}
                 aria-label={'Delete ' + v.name}

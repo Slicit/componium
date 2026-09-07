@@ -38,16 +38,29 @@ export function LibraryPage({ onOpen }: { onOpen: (film: string) => void }) {
   );
 
   return (
-    <section className="page page-wide">
-      <h2>Library</h2>
-      {/* Beside the title rather than inside it: a heading is what a screen
+    <div className="sidebar">
+      {/* Empty, and holding the geometry on purpose.
+
+          The library had no column down its left and admin did, so the two
+          places reached from the same bar began 200px apart and the library
+          read as the one that had been forgotten. There is nothing to put in
+          here yet; when there is, it is a `<nav>` with the same list admin
+          has. Until then it is a div rather than an empty landmark, because
+          a navigation region containing no navigation is worse than none. */}
+      <div className="sidebar-menu" aria-hidden="true" />
+      <div className="sidebar-body">
+        <section className="page page-wide">
+          <h2>Library</h2>
+          {/* Beside the title rather than inside it: a heading is what a screen
           reader jumps between, and a sentence of description folded into one
           gets read out on every jump. Every admin page already does it this
           way. */}
-      <p className="dim small">
-        One film, one score; analysis runs in the background, one at a time.
-      </p>
-      <Library onOpen={open} fps={ASSUMED_FPS} />
-    </section>
+          <p className="dim small">
+            One film, one score; analysis runs in the background, one at a time.
+          </p>
+          <Library onOpen={open} fps={ASSUMED_FPS} />
+        </section>
+      </div>
+    </div>
   );
 }

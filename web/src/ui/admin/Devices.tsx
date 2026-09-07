@@ -524,7 +524,7 @@ export function Devices() {
                             />
                             {((d.brightness ?? 0) !== 0 || (d.saturation ?? 0) !== 0) && (
                               <button
-                                className="adm-remove"
+                                className="small-btn"
                                 disabled={!editable}
                                 title={'Put ' + d.id + ' back to what the score says'}
                                 aria-label={'Reset trim for ' + d.id}

@@ -142,6 +142,58 @@ describe('every colour resolves', () => {
   });
 });
 
+describe('the button sizes', () => {
+  /* Two sizes, and each said once.
+   *
+   * The small one was five separate rules with five names carrying the
+   * identical two declarations, plus a sixth a pixel taller and a seventh with
+   * a different horizontal pad. Every one of them was used in exactly one
+   * file, which is how it happened rather than a mystery: whoever added the
+   * second could not see the first, and nothing failed.
+   *
+   * A rule that a class exists is not worth writing. A rule that the same
+   * size is not defined twice under two names is, because that is the one that
+   * decays on its own.
+   */
+  /* Comments out first: a block's selector is whatever precedes its brace,
+   * and the paragraph explaining the rule is part of that text. */
+  const bare = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+  const blocks = [...bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    selector: m[1].trim().replace(/\s+/g, ' '),
+    body: m[2],
+  }));
+
+  const sized = (px: string, pad: string) =>
+    blocks.filter(
+      (b) =>
+        new RegExp('font-size:\\s*' + px + ';').test(b.body) &&
+        new RegExp('padding:\\s*' + pad + ';').test(b.body),
+    );
+
+  it('says the small button once', () => {
+    const found = sized('11px', '2px 8px');
+    expect(found.map((b) => b.selector)).toHaveLength(1);
+  });
+
+  it('says the default button once', () => {
+    /* The base `button` rule. If a second block ever restates it, the two will
+     * drift and only one of them will be found by whoever goes looking. */
+    const found = sized('12px', '4px 8px');
+    expect(found.map((b) => b.selector)).toEqual(['select, button, .dl-link']);
+  });
+
+  it('has no third size hiding between them', () => {
+    /* 3px and 1px vertical padding at 11px both existed. Neither was a
+     * decision; both were somebody matching a neighbour by eye. */
+    const near = [
+      ...sized('11px', '3px 8px'),
+      ...sized('11px', '1px 8px'),
+      ...sized('12px', '3px 8px'),
+    ];
+    expect(near.map((b) => b.selector)).toEqual([]);
+  });
+});
+
 describe('the palette', () => {
   it('still paints exactly the colours it shipped with', () => {
     const drifted: string[] = [];

@@ -165,7 +165,7 @@ export function LiveTrim({ lights }: { lights: string[] }) {
                   </output>
                 </label>
                 <button
-                  className="trim-reset"
+                  className="trim-reset small-btn"
                   onClick={() => reset(id)}
                   disabled={!touched(id)}
                   title={'Back to the score as written for ' + id}
