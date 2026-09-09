@@ -86,6 +86,18 @@ class Span:
         """A time within what was decoded, as a time in the film."""
         return self.decode_start + t
 
+    def to_chunk_time(self, t: float) -> float:
+        """A time in the film, as a time within what was decoded.
+
+        The inverse of to_film_time, and it exists because a kept
+        description is written in film time while everything computed
+        inside a chunk counts from that chunk's own start. Reading one back
+        without this puts every observation in the film at the same offset
+        into every chunk, which is the exact shape of the bug that once
+        piled every chunk's cues into the first chunk-length of the film.
+        """
+        return t - self.decode_start
+
     def contains(self, t: float) -> bool:
         """Is this film time inside the range proper, ignoring the lead."""
         if t < self.start - 1e-9:
