@@ -295,6 +295,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/build", s.handleBuild)
 	mux.HandleFunc("/api/prepare", s.handlePrepare)
 	mux.HandleFunc("/api/layout", s.handleLayout)
+	mux.HandleFunc("/api/analysis", s.handleAnalysis)
 	mux.HandleFunc("/api/versions", s.handleVersions)
 	mux.HandleFunc("/api/seen", s.handleSeen)
 	mux.HandleFunc("/api/context", s.handleContext)

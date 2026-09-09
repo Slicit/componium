@@ -10,6 +10,7 @@ import { Devices } from './Devices';
 import { Rigs } from './Rigs';
 import { Nodes } from './Nodes';
 import { Firmware } from './Firmware';
+import { Analysis } from './Analysis';
 import { RoomDefaults } from './RoomDefaults';
 import { isCurrent, routeHash, type Route } from '../../core/route';
 
@@ -20,6 +21,7 @@ export const PAGES = [
   { id: 'boards', label: 'Boards', hint: 'What is physically wired to an ESP32' },
   { id: 'firmware', label: 'Firmware', hint: 'Put the node firmware on an ESP32' },
   { id: 'room', label: 'Room preview', hint: 'How the 3D preview opens' },
+  { id: 'analysis', label: 'Analysis', hint: 'What the composer is told before it reads a film' },
 ] as const;
 
 export type PageId = (typeof PAGES)[number]['id'];
@@ -56,6 +58,7 @@ export function Admin({ route }: { route: Route }) {
         {page === 'boards' && <Nodes />}
         {page === 'firmware' && <Firmware />}
         {page === 'room' && <RoomDefaults />}
+        {page === 'analysis' && <Analysis />}
       </div>
     </div>
   );
