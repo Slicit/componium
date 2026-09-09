@@ -7,6 +7,45 @@ Each entry says what was noticed, what it would take, and what triggered it:
 (noticed while doing something else), `out-of-band` (found by accident, usually
 by something failing).
 
+## 2026-09-10
+
+- **`compress()` turns a step into a ramp, and it does it to every curve in
+  every score.** It drops a point when it is within `--threshold` of the *last
+  kept one*, which is a good rule for noticing change and the wrong rule for a
+  series that is read back by linear interpolation: a long flat stretch is
+  dropped whole, so nothing holds the flat value just before a step and the
+  reader slides from the last kept point all the way up to it. Measured on a
+  synthetic series, 100 seconds of silence then a four second gust at 0.55:
+  496 frames compress to 4 points, and **a fan that should blow for 4 seconds
+  blows for 94**.
+
+  This is almost certainly the real answer to "too much wind". It was invisible
+  until the gate arrived because the old wind signal was smooth and continuous,
+  which is the one shape this compressor handles correctly; the gate produces
+  hard steps, and every step grew a ramp in front of it. A rebuild of the Rebel
+  Moon cut with the gate at 0.25 came out *less* silent than the score it
+  replaced, 11 per cent against 28.6, and at a gate of 1.0, with the camera
+  contributing nothing at all, it was still 10.7 per cent, which is what proved
+  the wind was not the cause.
+
+  `scenes.snap` already exists as a partial fix for exactly this, inserting a
+  holding point before each scene cut so curves step rather than ramp. It only
+  helps where a step coincides with a detected cut, and a cause boundary
+  usually does not. The general fix is the same move: when a point is kept
+  because it differs from the last kept one, emit the frame before it at the
+  old value first. That changes every curve in every score, so it wants its own
+  pass, its own before-and-after on a real film, and a decision about what it
+  does to score size. (trigger: out-of-band, source: verifying the wind gate on
+  a real rebuild, agent: claude-code)
+
+- **The wind gate is merged and its default is 0.25, and it cannot be judged
+  until the compressor above is fixed.** The gate is right at frame level and
+  there are tests that say so, including that no height ever gates a cause. But
+  what reaches a fan is the compressed curve, so the measured effect of the
+  setting today is roughly the opposite of the intended one. Nothing was
+  rebuilt with it: both feature scores are still the 2026-08-31 ones. (trigger:
+  deferred, source: the wind gate, agent: claude-code)
+
 ## 2026-09-09
 
 - **Expansion is capped, never gated, and that is what "too much wind on camera
