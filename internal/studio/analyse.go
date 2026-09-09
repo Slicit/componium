@@ -274,6 +274,10 @@ func (j *Jobs) runChunk(ctx context.Context, film, source string, c Chunk,
 	// smoke cue addressed to a fog.main that does not exist.
 	args = append(args, j.devices...)
 	args = append(args, j.keptDescription(film, look)...)
+	// How much of a moving camera counts as wind. A setting rather than a
+	// constant because the right answer is a judgement about a room and a
+	// fan, and the person who owns those is not the person who owns wind.py.
+	args = append(args, j.windGateArgs()...)
 	// The vision seam, when one is configured.
 	//
 	// Off unless asked for, because it needs a model on the other end of it

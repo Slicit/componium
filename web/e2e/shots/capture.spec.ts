@@ -84,6 +84,7 @@ for (const [page_, label] of [
   ['boards', 'Boards'],
   ['firmware', 'Firmware'],
   ['room', 'Room preview'],
+  ['analysis', 'Analysis'],
 ] as const) {
   test('admin: ' + label, async ({ page }) => {
     await shoot(page, '#/admin/' + page_, 'admin-' + page_, async () => {

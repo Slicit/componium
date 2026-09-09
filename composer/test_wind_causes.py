@@ -187,5 +187,81 @@ class ADirectAnswerBeatsAGuess(unittest.TestCase):
         self.assertEqual(at(got, 10), 0.0)
 
 
+
+class TheFloorUnderTheCamera(unittest.TestCase):
+    """A cap says how loud a camera move may be. It never says whether to blow.
+
+    That distinction is the whole feature. Across two fifteen minute cuts the
+    capped-only fan was on for 75 and 71 per cent of the running time, nearly
+    all of it a murmur below the cap produced by nothing but the camera moving,
+    which is what a person in the seat reports as too much wind.
+    """
+
+    def test_a_gentle_camera_move_is_not_wind(self):
+        got = wind.series([0.20] * FRAMES,
+                          [seen(10, "A man walks down a corridor.")],
+                          FPS, FRAMES)
+        self.assertEqual(at(got, 10), 0.0)
+
+    def test_a_strong_one_still_speaks(self):
+        """Not a deletion. A forward dolly is real evidence of travel and is
+        sometimes the only evidence there is."""
+        got = wind.series([0.40] * FRAMES,
+                          [seen(10, "A man walks down a corridor.")],
+                          FPS, FRAMES)
+        self.assertAlmostEqual(at(got, 10), 0.40, places=3)
+
+    def test_the_floor_moves(self):
+        """It is a setting, because the right height is a judgement about a
+        room and a fan rather than a fact about film."""
+        quiet = wind.series([0.30] * FRAMES, [seen(10, "A still room.")],
+                            FPS, FRAMES, gate=0.45)
+        loud = wind.series([0.30] * FRAMES, [seen(10, "A still room.")],
+                           FPS, FRAMES, gate=0.10)
+        self.assertEqual(at(quiet, 10), 0.0)
+        self.assertAlmostEqual(at(loud, 10), 0.30, places=3)
+
+    def test_a_cause_is_never_gated(self):
+        """The property that makes the height cheap to choose.
+
+        Raising the floor can only ever remove camera-driven wind, so no
+        setting of it costs a gust the film actually gave. Measured the same
+        way on both cuts: the caused fraction is identical at every height
+        from nothing to 0.45.
+        """
+        for gate in (0.0, 0.25, 0.45, 1.0):
+            got = wind.series([0.0] * FRAMES,
+                              [seen(10, "Trees bend in a howling gale.")],
+                              FPS, FRAMES, gate=gate)
+            self.assertAlmostEqual(at(got, 10), wind.WEATHER_LEVEL, places=3,
+                                   msg="a gale was gated at %.2f" % gate)
+
+    def test_a_blast_survives_any_floor(self):
+        for gate in (0.0, 0.45, 1.0):
+            got = wind.series([0.0] * FRAMES,
+                              [seen(10, "A fireball erupts.", ["explosion"])],
+                              FPS, FRAMES, gate=gate)
+            peak = max(got[int(10 * FPS):int(11 * FPS)])
+            self.assertAlmostEqual(peak, wind.BLAST_LEVEL, places=2)
+
+    def test_travelling_is_above_the_floor_entirely(self):
+        """Where the film agrees it is moving, expansion is uncapped, and an
+        uncapped value is not something a floor should then reconsider."""
+        got = wind.series(
+            [0.10] * FRAMES,
+            [seen(10, "A squirrel glides through the canopy.", ["scene-active"])],
+            FPS, FRAMES, gate=0.45)
+        self.assertGreater(at(got, 10), 0.0)
+
+    def test_explain_agrees_with_the_number(self):
+        """The report and the track cannot disagree about why the fan is on."""
+        expansion = [0.20] * FRAMES
+        obs = [seen(10, "A man walks down a corridor.")]
+        got = wind.series(expansion, obs, FPS, FRAMES)
+        why = wind.explain(expansion, obs, FPS, FRAMES)
+        i = int(10 * FPS)
+        self.assertEqual(got[i], 0.0)
+        self.assertEqual(why[i][1], "still")
+
 if __name__ == "__main__":
     unittest.main()

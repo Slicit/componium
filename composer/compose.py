@@ -747,7 +747,8 @@ def build(args) -> str:
 
     if args.wind_id:
         expansion = motion_est.wind_series(movements, args.fps)
-        blown = wind.series(expansion, seen_rows, args.fps, len(expansion))
+        blown = wind.series(expansion, seen_rows, args.fps, len(expansion),
+                            gate=args.wind_gate)
         wpts = compress([(i / args.fps, (v * args.wind_gain,))
                          for i, v in enumerate(blown)], args.threshold)
         wpts = scenes.snap(wpts, cuts)
@@ -902,6 +903,10 @@ def main(argv=None):
     p.add_argument("--wind-id", default="wind.main",
                    help="instrument for wind from camera speed; empty to skip")
     p.add_argument("--wind-gain", type=float, default=1.0)
+    p.add_argument("--wind-gate", type=float, default=wind.CARRIED_GATE,
+                   help="below this, a moving camera with nothing agreeing "
+                        "is not wind and the fan stays off "
+                        "(0 restores the old always-on behaviour)")
     p.add_argument("--no-dynamics", action="store_true",
                    help="do not protect calm scenes or enforce a rest budget")
     p.add_argument("--calm-threshold", type=float, default=0.18,

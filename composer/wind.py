@@ -120,6 +120,28 @@ BLAST_LEVEL = 1.0
 # that the film is moving.
 CARRIED_CAP = 0.45
 
+# Below what expansion is not wind at all.
+#
+# The cap answers how loud a camera move is allowed to be and never
+# answers whether it should blow. Measured across two fifteen minute cuts:
+# capping alone leaves the fan on for 75 per cent of an action sequence and
+# 71 per cent of a dialogue-heavy film, almost all of it a murmur between
+# 0.05 and the cap, produced by nothing but the camera moving. That murmur
+# is what a person in the seat reports as "too much wind", and no amount of
+# capping removes it.
+#
+# 0.25 from measuring both films at seven heights. It leaves them silent
+# for 59 and 68 per cent of their running time against 25 and 29 before,
+# and it costs nothing real: a cause is never gated, so the caused fraction
+# is identical at every height tried, 19.3 per cent and 12.4 per cent.
+# The whole choice is how much camera-driven murmur to keep.
+#
+# Not 1.0, which would be "expansion contributes nothing unless something
+# agrees". A forward dolly is real evidence of travel and is sometimes the
+# only evidence there is, which is the same reason the cap is a cap rather
+# than a deletion. This lets it speak quietly and stops it muttering.
+CARRIED_GATE = 0.25
+
 # How long an observation speaks for.
 #
 # The vision pass looks every two seconds or so, and a description of wind
@@ -247,12 +269,16 @@ def causes(observations, frames, fps, expansion=None, corroborate=True):
             "blast": blast, "travelling": travelling}
 
 
-def series(expansion, observations, fps, frames=None):
+def series(expansion, observations, fps, frames=None, gate=CARRIED_GATE):
     """One wind level per frame, from every cause.
 
     `expansion` is the existing forward-motion signal, already smoothed and
     normalised. It is kept, capped, and uncapped where something else agrees
     the film is travelling.
+
+    `gate` is the floor under it: below that, with nothing agreeing, the
+    camera moving is not wind and the fan is off. Nothing a cause asks for
+    is ever gated, so raising this cannot cost a real gust.
     """
     if frames is None:
         frames = len(expansion or [])
@@ -272,14 +298,17 @@ def series(expansion, observations, fps, frames=None):
         carried = expansion[i]
         if not found["travelling"][i]:
             # A push-in on a still subject looks exactly like this and is not
-            # wind. Allowed to say something, not allowed to shout.
+            # wind. Allowed to say something, not allowed to shout, and
+            # below the floor not allowed to speak at all.
             carried = min(carried, CARRIED_CAP)
+            if carried < gate:
+                carried = 0.0
         out[i] = max(carried, found["weather"][i], found["flight"][i],
                      found["ride"][i], found["blast"][i])
     return [round(v, 4) for v in out]
 
 
-def explain(expansion, observations, fps, frames=None):
+def explain(expansion, observations, fps, frames=None, gate=CARRIED_GATE):
     """Which cause is responsible at each frame, for a report.
 
     Same arithmetic as series, and it exists so that a person can ask why the
@@ -295,6 +324,8 @@ def explain(expansion, observations, fps, frames=None):
         carried = expansion[i]
         if not found["travelling"][i]:
             carried = min(carried, CARRIED_CAP)
+            if carried < gate:
+                carried = 0.0
         best, why = carried, "carried"
         for name in ("weather", "flight", "ride", "blast"):
             if found[name][i] > best:

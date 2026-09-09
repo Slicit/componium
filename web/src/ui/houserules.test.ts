@@ -109,6 +109,7 @@ const PAGES = [
   'ui/admin/Nodes.tsx',
   'ui/admin/Firmware.tsx',
   'ui/admin/RoomDefaults.tsx',
+  'ui/admin/Analysis.tsx',
 ];
 
 describe('buttons', () => {
