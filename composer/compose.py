@@ -448,6 +448,54 @@ def write_observations(args, observations, span) -> str:
     return os.path.basename(path)
 
 
+def read_observations(path, span=None) -> list:
+    """A description written by an earlier run, back in this chunk's clock.
+
+    Wind is the reason this exists. It is built from what the film says as much
+    as from what the picture does: weather, flight, being carried, a blast. All
+    of those are read out of the vision pass, and `wind.series` deliberately
+    falls back to bare optical expansion when it is handed nothing, so a build
+    that skipped the vision pass got the old single-signal fan back without
+    anything reporting that it had.
+
+    That is not hypothetical. The studio reuses a kept description rather than
+    paying for the model twice, and applies it afterwards with remap.py, which
+    only rewrites cue tracks. Wind is a curve, so it fell through the gap: both
+    feature scores on this box were built that way and blow for most of their
+    running time.
+
+    Times are converted out of film time on the way in. A kept description is
+    written in film time and everything inside a chunk counts from that chunk's
+    start, so a file read without converting would land every observation at
+    the wrong second, and near enough to plausible to go unnoticed.
+    """
+    rows = []
+    if not path or not os.path.exists(path):
+        return rows
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except ValueError:
+                # A partial file is still a useful one: this is written a chunk
+                # at a time and the thing writing it can be interrupted.
+                continue
+            at = float(row.get("t", 0.0))
+            if span is not None:
+                if not span.contains(at):
+                    continue
+                at = span.to_chunk_time(at)
+                if at < 0.0:
+                    continue
+            rows.append({"t": at,
+                         "labels": row.get("labels") or [],
+                         "seen": row.get("seen") or ""})
+    return rows
+
+
 def _bank(args):
     """The scents this rig actually holds, in bank order.
 
@@ -687,6 +735,16 @@ def build(args) -> str:
     # big-buck-bunny its four hardest moments were a tranquil garden, a perched
     # bird, a standing rabbit and a hanging squirrel. See composer/wind.py and
     # LOGBOOK/experiments/README-wind-causes.md.
+    # A description this run did not gather, when there is one to read.
+    #
+    # Only wind reads these. The cues a description implies are applied by
+    # remap.py after the build, so adding them here as well would put every
+    # vision cue in the score twice.
+    if not seen_rows and args.seen:
+        seen_rows = read_observations(args.seen, span)
+        if seen_rows:
+            report(f"{len(seen_rows)} kept observations read for wind\n")
+
     if args.wind_id:
         expansion = motion_est.wind_series(movements, args.fps)
         blown = wind.series(expansion, seen_rows, args.fps, len(expansion))
@@ -798,6 +856,9 @@ def main(argv=None):
     p.add_argument("--hash-file", default="",
                    help="hash this file instead of the input, for when the input "
                         "is a prepared copy and the score should bind to the film")
+    p.add_argument("--seen",
+                   help="a description kept from an earlier run, read when "
+                        "the vision pass is not being run again")
     p.add_argument("--no-subtitles", action="store_true",
                    help="do not mine the subtitle track for effect cues")
     p.add_argument("--subtitle-stream", type=int, default=0,

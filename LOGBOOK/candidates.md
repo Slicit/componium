@@ -7,6 +7,39 @@ Each entry says what was noticed, what it would take, and what triggered it:
 (noticed while doing something else), `out-of-band` (found by accident, usually
 by something failing).
 
+## 2026-09-09
+
+- **Expansion is capped, never gated, and that is what "too much wind on camera
+  moves" actually is.** `wind.series` takes `max(carried, weather, flight, ride,
+  blast)` and limits bare expansion to `CARRIED_CAP = 0.45` when nothing
+  corroborates travel. A cap changes how loud a camera move is and not whether
+  it blows at all, so a pan that reads 0.30 still reads 0.30. Measured on the
+  fifteen minute Rebel Moon cut: 62 per cent of the running time sits between
+  0.05 and 0.45 with no cause behind it, and letting the composer read the kept
+  description (this branch) moved that figure by 0.2 points while nearly
+  doubling the strong wind. The change that would answer the complaint is a
+  floor rather than a cap: below some expansion level, with nothing agreeing,
+  wind is zero. Deliberately not decided here, because the threshold changes
+  the feel of every score ever built and wants a person watching a film, not a
+  percentage. (trigger: out-of-band, source: the --seen work, agent:
+  claude-code)
+
+- **Nothing has ever been analysed with the `wind` and `carried` labels.** The
+  prompt in `hack/vlm-label.py` gained them on 2026-09-05 in the same commit as
+  `composer/wind.py`, and every description on the box predates it, so the only
+  path that has ever run is the keyword-over-prose stopgap `wind.py` calls a
+  stopgap in its own docstring. Worth one film's re-analysis to find out
+  whether the labels fire at all before assuming they are better. (trigger:
+  deferred, source: the --seen work, agent: claude-code)
+
+- **A boat in the ocean has no cause.** Sustained sea motion is neither a wind
+  noun in the prose nor forward expansion in the picture, so none of the four
+  causes reaches it. It looks like a job for the scene pass (a place plus
+  activity, held for the length of the scene) rather than the frame pass, which
+  is the same shape as the argument stage 2 of [[feat-two-clocks]] already
+  makes for context. (trigger: out-of-scope, source: user report 2026-09-09,
+  agent: claude-code)
+
 ## 2026-09-07
 
 Backfilled in one pass. This file had been empty since it was created on

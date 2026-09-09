@@ -227,6 +227,34 @@ func (j *Jobs) runAnalyse(film string) error {
 // A chunk that is merely last in a shortened run is not open ended, and saying
 // otherwise sends it decoding to the end of the film — measured at chunk three
 // of a fifteen minute run reading an hour and three quarters it had no use for.
+// keptDescription tells the composer about a description it is reusing.
+//
+// remap.py applies a kept description's cues after a build, and that covers
+// every track it can: cue tracks. Wind is a curve. It is built inside the
+// composer out of what the film says as much as out of what the picture
+// does, and handed nothing it falls back to bare optical expansion, which is
+// a push-in detector: a pan across a still room reads as maximal and a
+// forward dolly reads as nothing.
+//
+// So a reuse build quietly produced the old single-signal fan, and nothing
+// anywhere reported it. Both feature scores on the demonstration box were
+// built that way and blow for more than eighty per cent of their running
+// time, against about an eighth that the descriptions can account for.
+//
+// Nothing when the vision pass is running: the composer has the real thing
+// in hand then, and reading a file would be answering the same question
+// twice from a worse source.
+func (j *Jobs) keptDescription(film string, look bool) []string {
+	if look {
+		return nil
+	}
+	seen := j.SeenPath(film)
+	if !fileExists(seen) {
+		return nil
+	}
+	return []string{"--seen", seen}
+}
+
 func (j *Jobs) runChunk(ctx context.Context, film, source string, c Chunk,
 	total int, peak float64, openEnded bool, look bool) error {
 
@@ -245,6 +273,7 @@ func (j *Jobs) runChunk(ctx context.Context, film, source string, c Chunk,
 	// composer's guesses, or a rig whose fogger is called fog.left gets every
 	// smoke cue addressed to a fog.main that does not exist.
 	args = append(args, j.devices...)
+	args = append(args, j.keptDescription(film, look)...)
 	// The vision seam, when one is configured.
 	//
 	// Off unless asked for, because it needs a model on the other end of it
