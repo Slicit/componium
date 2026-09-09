@@ -57,6 +57,71 @@ class TestCompress(unittest.TestCase):
         self.assertEqual(len(compose.compress([(0.0, (0.0,))], 0.1)), 1)
 
 
+def read_back(kept, at):
+    """What a reader interpolating between the survivors actually sees.
+
+    Every test above asks which points were kept. None of them asked what the
+    line through those points looks like, which is the only thing a fan ever
+    experiences, and that is how a four second gust came to blow for ninety
+    four seconds without a single test noticing.
+    """
+    for i in range(len(kept) - 1):
+        (t0, v0), (t1, v1) = kept[i], kept[i + 1]
+        if t0 <= at <= t1:
+            if t1 == t0:
+                return v0[0]
+            return v0[0] + (v1[0] - v0[0]) * (at - t0) / (t1 - t0)
+    return kept[-1][1][0]
+
+
+class TestCompressKeepsTheShape(unittest.TestCase):
+    """What the curve says when it is read back, which is the point of it."""
+
+    def test_a_step_stays_a_step(self):
+        fps = 4
+        series = [0.0] * (100 * fps) + [0.55] * (4 * fps) + [0.0] * (20 * fps)
+        points = [(i / fps, (v,)) for i, v in enumerate(series)]
+        kept = compose.compress(points, 0.02)
+
+        # Silent for the whole hundred seconds, not ramping through them.
+        for at in (10, 50, 90, 99):
+            self.assertAlmostEqual(read_back(kept, at), 0.0, places=6,
+                                   msg="the fan was already running at %ds" % at)
+        # And the gust is there, at full, when it should be.
+        self.assertAlmostEqual(read_back(kept, 101), 0.55, places=6)
+        self.assertAlmostEqual(read_back(kept, 110), 0.0, places=6)
+
+    def test_a_ramp_is_not_padded(self):
+        """The fix costs nothing where there was nothing wrong: a curve that
+        genuinely rises has its own frame before every kept point already."""
+        fps = 4
+        series = [i / 100.0 for i in range(100)]
+        points = [(i / fps, (v,)) for i, v in enumerate(series)]
+        kept = compose.compress(points, 0.02)
+        plain = [p for p in points if p in kept]
+        self.assertEqual(len(kept), len(plain))
+        for at in (5, 12, 20):
+            self.assertAlmostEqual(read_back(kept, at), at * fps / 100.0, places=2)
+
+    def test_it_still_compresses(self):
+        """A holding point per change, not a point per frame. The whole reason
+        this function exists is that a score has to stay openable."""
+        fps = 4
+        series = ([0.0] * (30 * fps) + [0.8] * (2 * fps)) * 10
+        points = [(i / fps, (v,)) for i, v in enumerate(series)]
+        kept = compose.compress(points, 0.02)
+        self.assertLess(len(kept), len(points) / 20)
+
+    def test_the_worst_case_is_bounded(self):
+        """Alternating every frame is the shape that cannot be compressed. It
+        must not come out longer than it went in."""
+        fps = 4
+        series = [0.0 if i % 2 else 1.0 for i in range(200)]
+        points = [(i / fps, (v,)) for i, v in enumerate(series)]
+        kept = compose.compress(points, 0.02)
+        self.assertLessEqual(len(kept), len(points))
+
+
 class TestRender(unittest.TestCase):
     def setUp(self):
         self.meta = {"title": "Dune", "duration": 9312.0,

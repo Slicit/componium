@@ -195,7 +195,7 @@ def rms_windows(samples, window: int, peak: float = 0.0) -> list[float]:
 # --------------------------------------------------------------------------
 
 def compress(points, threshold: float):
-    """Drop points that are within threshold of the last kept one.
+    """Drop points that say nothing the last kept one did not.
 
     A two hour film sampled four times a second is 28,800 points per track.
     Most of them say the same thing as their neighbour.  Keeping only
@@ -204,14 +204,43 @@ def compress(points, threshold: float):
 
     The first and last points are always kept, so the curve still spans the
     whole film.
+
+    ## The holding point, which is the whole difficulty
+
+    A score is read back by interpolating between the points that survive,
+    so what matters is not which points are dropped but what the line
+    through the survivors looks like. Dropping every point within a
+    threshold of the last kept one is right for noticing a change and wrong
+    for reconstructing one: a long flat stretch is dropped whole, so nothing
+    holds the flat value just before a step and the reader slides all the
+    way from the last kept point up to it.
+
+    It is not a rounding error. Measured with hack/windramp.py, on a hundred
+    seconds of silence followed by a four second gust: 496 frames became 4
+    points, and a fan that should have blown for four seconds blew for
+    ninety-four, reaching half power a full minute before anything happened.
+
+    So a point kept because it differs brings the frame before it along, at
+    the old value. The reader then holds flat and steps, which is what the
+    samples said. A curve that genuinely ramps is untouched: there the frame
+    before was itself kept, and there is nothing to add.
+
+    scenes.snap does this already for scene cuts, and for the same reason.
+    It could only ever help where a change landed on a cut, and the changes
+    that matter most here, a cue starting and a gust ending, rarely do.
     """
     if len(points) <= 2:
         return list(points)
     kept = [points[0]]
-    for p in points[1:-1]:
+    spoke = 0
+    for i in range(1, len(points) - 1):
+        p = points[i]
         last = kept[-1][1]
         if max(abs(a - b) for a, b in zip(p[1], last)) >= threshold:
+            if i - 1 > spoke:
+                kept.append(points[i - 1])
             kept.append(p)
+            spoke = i
     kept.append(points[-1])
     return kept
 
