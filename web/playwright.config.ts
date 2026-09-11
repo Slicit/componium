@@ -30,6 +30,11 @@ const webPort = Number(process.env.COMPONIUM_E2E_WEB || 5273);
 export default defineConfig({
   testDir: './e2e',
 
+  /* Signed in once, for every spec. The studio is private, so without this
+   * each of them would begin by being sent to a form, and eighteen specs
+   * would each carry a copy of a detail none of them are about. */
+  globalSetup: './e2e/global-setup.ts',
+
   /* One worker, and it is not about this machine being small.
    *
    * Both servers are shared: the specs drive one studio holding one score, so
@@ -47,6 +52,7 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://127.0.0.1:' + webPort,
+    storageState: './e2e/.signed-in.json',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

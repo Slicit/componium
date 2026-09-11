@@ -18,6 +18,8 @@ func studioCmd(args []string) error {
 	scoresPath := fs.String("scores", "", "where generated scores live (default: beside the films)")
 	composer := fs.String("composer", "", "path to compose.py, so the library can analyse films")
 	firmware := fs.String("firmware", "", "directory of node firmware images the admin page can flash")
+	usersPath := fs.String("users", os.Getenv("COMPONIUM_USERS"),
+		"file of who may sign in; it holds password verifiers, so keep it out of version control")
 	boardsPath := fs.String("boards", os.Getenv("COMPONIUM_BOARDS"),
 		"file remembering which boards exist; it holds their secrets, so keep it out of version control")
 	db := fs.String("db", os.Getenv("COMPONIUM_DB"), "Postgres URL for derived data; without it observations stay files")
@@ -50,7 +52,7 @@ func studioCmd(args []string) error {
 	s, err := studio.New(studio.Options{
 		Score: *scorePath, Rig: *rigPath, Media: *mediaPath,
 		Scores: *scoresPath, Composer: comp, Firmware: *firmware, DB: *db,
-		Boards: *boardsPath, Addr: *addr, Advertise: *advertise,
+		Boards: *boardsPath, Users: *usersPath, Addr: *addr, Advertise: *advertise,
 	})
 	if err != nil {
 		return err

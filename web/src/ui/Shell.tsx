@@ -12,23 +12,36 @@
  * one that is hidden is still the one holding the score.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { App } from '../App';
 import { Nav } from './Nav';
 import { Admin } from './admin/Admin';
 import { LibraryPage } from './LibraryPage';
 import { TooltipProvider } from './Tip';
 import { useRoute } from './useRoute';
+import { readSession, type Session } from '../core/session';
 
 export function Shell() {
   const route = useRoute();
   const [wanted, setWanted] = useState<string | null>(null);
+  /* Asked once. Nothing here enforces anything, and it is not a guard: the
+   * server refuses what a role does not reach whatever this says. It is
+   * what stops the bar offering a page that would only ever answer 403.
+   *
+   * Signed out is the honest starting value. A request that reaches this
+   * far already carried a session, because the page itself is behind the
+   * same rule, so the only way to see it is a session that expired while
+   * the tab was open. */
+  const [session, setSession] = useState<Session>({ signedIn: false });
+  useEffect(() => {
+    void readSession().then(setSession);
+  }, []);
   const studio = route.section === '';
 
   return (
     <TooltipProvider delayDuration={400} skipDelayDuration={300}>
       <div className="shell">
-        <Nav route={route} />
+        <Nav route={route} session={session} />
         <div className="shell-body">
           <div
             className={studio ? 'shell-here' : 'shell-away'}

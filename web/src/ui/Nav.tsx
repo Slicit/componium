@@ -18,6 +18,7 @@
  */
 
 import { isCurrent, routeHash, type Route } from '../core/route';
+import { atLeast, signOut, type Session } from '../core/session';
 
 /* Left, in the order you would go looking. Admin is not among them: it is
  * placed separately below, and putting it in this list would quietly move it
@@ -30,7 +31,7 @@ const PLACES = [
 /** Where a page puts the controls that belong beside its name. */
 export const NAV_SLOT = 'nav-slot';
 
-export function Nav({ route }: { route: Route }) {
+export function Nav({ route, session }: { route: Route; session: Session }) {
   return (
     <nav className="nav" aria-label="Sections">
       <span className="nav-mark">
@@ -54,14 +55,32 @@ export function Nav({ route }: { route: Route }) {
 
       <div className="nav-slot" id={NAV_SLOT} />
 
-      <a
-        href={routeHash('admin')}
-        className={'nav-admin' + (isCurrent(route, 'admin') ? ' is-current' : '')}
-        aria-current={isCurrent(route, 'admin') ? 'page' : undefined}
-        title="Devices, firmware and preview settings"
-      >
-        Admin
-      </a>
+      {/* Who you are, and the way out. Small and to the right, because it is
+          a fact about this browser rather than a place to go. */}
+      {session.signedIn && (
+        <span className="nav-who dim small">
+          {session.name}
+          <span className="nav-role">{session.role}</span>
+          <button className="small-btn quiet" onClick={() => void signOut()}>
+            Sign out
+          </button>
+        </span>
+      )}
+
+      {/* Hidden rather than disabled for anybody who is not an administrator.
+          The server refuses every route behind it either way; a link that is
+          present and always refuses teaches somebody that the studio is
+          broken rather than that the page is not theirs. */}
+      {atLeast(session.role, 'admin') && (
+        <a
+          href={routeHash('admin')}
+          className={'nav-admin' + (isCurrent(route, 'admin') ? ' is-current' : '')}
+          aria-current={isCurrent(route, 'admin') ? 'page' : undefined}
+          title="Devices, firmware, users and preview settings"
+        >
+          Admin
+        </a>
+      )}
     </nav>
   );
 }

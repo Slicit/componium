@@ -12,6 +12,7 @@ import { Nodes } from './Nodes';
 import { Firmware } from './Firmware';
 import { Analysis } from './Analysis';
 import { RoomDefaults } from './RoomDefaults';
+import { Users } from './Users';
 import { isCurrent, routeHash, type Route } from '../../core/route';
 
 /** The menu, in the order a rig gets built: what it is, then how it looks. */
@@ -22,6 +23,7 @@ export const PAGES = [
   { id: 'firmware', label: 'Firmware', hint: 'Put the node firmware on an ESP32' },
   { id: 'room', label: 'Room preview', hint: 'How the 3D preview opens' },
   { id: 'analysis', label: 'Analysis', hint: 'What the composer is told before it reads a film' },
+  { id: 'users', label: 'Users', hint: 'Who may open this studio, and what they may do' },
 ] as const;
 
 export type PageId = (typeof PAGES)[number]['id'];
@@ -59,6 +61,7 @@ export function Admin({ route }: { route: Route }) {
         {page === 'firmware' && <Firmware />}
         {page === 'room' && <RoomDefaults />}
         {page === 'analysis' && <Analysis />}
+        {page === 'users' && <Users />}
       </div>
     </div>
   );
