@@ -9,11 +9,13 @@ drives your *instruments* (motion rig, fans, DMX fixtures, foggers, misters,
 shakers) through a single *conductor* that keeps everything locked to playback
 timecode. Instruments are plugins: if you can control it, you can score it.
 
-> Status: **alpha.** Every part exists and is tested, and none of it has ever
-> driven a physical device. Drivers are verified over real sockets against real
-> listeners, which proves the protocol and proves nothing about a fixture, a
-> fan, a fogger or a platform. Read [docs/wet-and-hot.md](docs/wet-and-hot.md)
-> before pointing it at anything that can hurt you.
+> Status: **alpha.** One fan has run: an ESP32 driving a 12 V fan through a
+> MOSFET, with its start and stall thresholds measured rather than guessed.
+> Nothing else has moved. Every other driver is verified over a real socket
+> against a real listener, which proves the protocol and proves nothing about
+> a fixture, a fogger or a platform. Read
+> [docs/wet-and-hot.md](docs/wet-and-hot.md) before pointing it at anything
+> that can hurt you.
 
 ![The Componium studio](docs/screenshots/studio.png)
 
@@ -28,8 +30,13 @@ curl -fsSL https://raw.githubusercontent.com/Slicit/componium/main/install.sh | 
 ```
 
 Four questions, one image, and the studio comes up with an empty library
-waiting for a film. `update.sh` beside it keeps it current and never
-touches your films or your scores. See
+waiting for a film. `update.sh` beside it keeps it current and never touches
+your films or your scores.
+
+It is private: nothing is reachable without signing in. The first
+administrator is made on the first start with a password the installer prints
+once and leaves in a file on the host, and you add everybody else under
+**Admin, Users** as a viewer, an operator or an administrator. See
 [docs/installing.md](docs/installing.md).
 
 ## Try it with no hardware
@@ -41,7 +48,9 @@ componium play -score examples/demo.componium -rig examples/demo-rig.toml
 
 Everything in that rig is virtual, so it prints what a real rig would have been
 told. `componium node` adds a software instrument over the network, and
-`componium studio` opens the timeline in a browser.
+`componium studio` opens the timeline in a browser. The studio asks you to
+sign in wherever it runs, and makes an administrator the first time with the
+password in a file beside its user list.
 
 To generate a score from a film:
 
@@ -61,6 +70,7 @@ componium validate -score film.componium -rig my-rig.toml
 | `componium doctor` | print the tuning profile and what it means |
 | `componium node` | run a software instrument node |
 | `componium studio` | edit a score in a browser |
+| `componium import-vision` | move kept descriptions into a database |
 
 
 ## What it is not
@@ -79,7 +89,7 @@ componium validate -score film.componium -rig my-rig.toml
 | **conductor** | Runtime that keeps every instrument locked to playback timecode |
 | **cue** | One timed, discrete event |
 | **curve** | A continuous, sampled channel (sway, wind speed, colour) |
-| **pit** | The hub instruments register with |
+| **rig** | The file saying which instruments exist and how to reach them |
 | **rehearse** | Dry run with all hardware stubbed out |
 
 ## The three hard problems
@@ -107,16 +117,19 @@ media = { duration = "2:35:12", hash = "sha256:…" }
 instrument = "light.ambient"
 type = "curve"
 interpolation = "linear"
+# Channels run 0 to 1, not 0 to 255. An instrument decides what full means.
 points = [
-  { t = "00:12:04.000", value = { r = 0,   g = 0,   b = 0  } },
-  { t = "00:12:06.500", value = { r = 255, g = 180, b = 90 } },
+  { t = "00:12:04.000", value = { r = 0.0, g = 0.0, b = 0.0 } },
+  { t = "00:12:06.500", value = { r = 1.0, g = 0.7, b = 0.35 } },
 ]
 
 [[track]]
 instrument = "wind.main"
 type = "cue"
+# The numbers an instrument is given live in params. A cue that puts them
+# beside `action` still parses, and arrives with nothing in it.
 cues = [
-  { t = "01:04:22.100", action = "gust", intensity = 0.8, duration = "4s" },
+  { t = "01:04:22.100", action = "gust", params = { intensity = 0.8 }, duration = "4s" },
 ]
 ```
 
@@ -143,7 +156,8 @@ See [LOGBOOK/features/feat-composer.md](LOGBOOK/features/feat-composer.md).
 
 ## Documentation
 
-- [ROADMAP.md](ROADMAP.md) — milestones and their ordering rationale
+- [LOGBOOK.md](LOGBOOK.md) — what is built, what is next, and what each
+  milestone was verified against
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help, and the CLA
 - [docs/screenshots/](docs/screenshots/) — what it looks like, captured rather
   than drawn
