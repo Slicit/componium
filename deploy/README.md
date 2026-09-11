@@ -1,5 +1,13 @@
 # Running the demonstration
 
+> This is the demonstration, not an installation. It generates a clip,
+> seeds a score and loops a player so the whole system can be seen working
+> in one command on a machine with no films and no hardware.
+>
+> To put Componium on a server, use `install.sh` at the root of the
+> repository and `docker-compose.server.yml` beside this file. See
+> [../docs/installing.md](../docs/installing.md).
+
 ```sh
 docker compose -f deploy/docker-compose.yml up -d
 ```

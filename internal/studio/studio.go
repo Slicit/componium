@@ -216,6 +216,42 @@ func New(o Options) (*Server, error) {
 	if s.sc == nil {
 		s.openFirstAvailable()
 	}
+	// An empty library is where every new installation starts.
+	//
+	// Refusing here is defensible when somebody named a score that is not
+	// there, and wrong when they pointed this at a directory they are about
+	// to put films into: the studio is the thing you would use to put them
+	// there. A fresh server install did exactly that and the container
+	// restarted forever, saying a score was missing from a directory whose
+	// whole purpose is to be filled by the page that would not open.
+	//
+	// So with a media directory in hand, start on an empty score. It is a
+	// real file in the scores directory rather than something held in
+	// memory, because every path that follows expects a score with somewhere
+	// to be saved, and a special case that exists only until the first film
+	// arrives is a special case nobody will remember is there.
+	//
+	// One empty track, because the format requires at least one and refuses
+	// to write a score without it. Addressed at the first instrument the rig
+	// names, so the track that exists is one this installation can actually
+	// play rather than a placeholder naming hardware nobody has.
+	if s.sc == nil && o.Media != "" {
+		first := "wind.main"
+		if s.rig != nil && len(s.rig.Instruments) > 0 {
+			first = s.rig.Instruments[0].ID
+		}
+		s.path = filepath.Join(scores, "untitled.componium")
+		s.sc = &score.Score{
+			Meta: score.Meta{
+				Componium: score.Version,
+				Title:     "untitled",
+			},
+			Tracks: []score.Track{{Instrument: first, Type: score.TrackCue}},
+		}
+		if err := s.sc.Save(s.path); err != nil {
+			return nil, fmt.Errorf("empty library, and %s could not be written: %w", s.path, err)
+		}
+	}
 	if s.sc == nil {
 		return nil, fmt.Errorf("no score given and none found in %s", scores)
 	}

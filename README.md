@@ -21,6 +21,17 @@ timecode. Instruments are plugins: if you can control it, you can score it.
 running instance over the example score; see
 [docs/screenshots/](docs/screenshots/) for what is fixture and what is real.*
 
+## Put it on a server
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Slicit/componium/main/install.sh | bash
+```
+
+Four questions, one image, and the studio comes up with an empty library
+waiting for a film. `update.sh` beside it keeps it current and never
+touches your films or your scores. See
+[docs/installing.md](docs/installing.md).
+
 ## Try it with no hardware
 
 ```sh
@@ -136,6 +147,8 @@ See [LOGBOOK/features/feat-composer.md](LOGBOOK/features/feat-composer.md).
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to help, and the CLA
 - [docs/screenshots/](docs/screenshots/) — what it looks like, captured rather
   than drawn
+- [docs/installing.md](docs/installing.md) — putting it on a server, and
+  keeping it up to date
 - [docs/running.md](docs/running.md) — the four processes, and the order to
   bring them up in
 - [docs/troubleshooting.md](docs/troubleshooting.md) — organised by what you are

@@ -1,0 +1,76 @@
+# A version somebody can install.
+#
+# CI publishes `:main` and a tag per commit, which is right for a box that
+# follows the branch and wrong for an install script: "latest" has to mean a
+# version that was deliberately cut, not whatever landed an hour ago.
+#
+# Tagging v0.2.0 publishes ghcr.io/slicit/componium:0.2.0 and moves :latest,
+# and install.sh asks GitHub for the newest release and installs exactly that.
+#
+#   git tag -a v0.2.0 -m "what changed"
+#   git push origin v0.2.0
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the version this tag names
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "number=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+      - name: log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Three names for one image: the exact version, so an install can be
+          # pinned and rolled back; `latest`, which is what install.sh resolves
+          # to; and the commit, so a tag can always be traced to a build.
+          tags: |
+            ghcr.io/slicit/componium:${{ steps.version.outputs.number }}
+            ghcr.io/slicit/componium:latest
+            ghcr.io/slicit/componium:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: the release itself
+        # So that install.sh's "newest release" query has something to find.
+        # The body is deliberately short: what changed belongs in the tag
+        # message and in the log, and duplicating it here means maintaining it
+        # in two places.
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            Install or upgrade:
+
+                curl -fsSL https://raw.githubusercontent.com/Slicit/componium/main/install.sh | bash
+
+            Already installed:
+
+                /opt/componium/update.sh
+
+            Image: `ghcr.io/slicit/componium:${{ steps.version.outputs.number }}`

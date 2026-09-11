@@ -1,0 +1,207 @@
+# Componium, installed on a server.
+#
+#   ./install.sh            writes the .env beside this and starts it
+#   ./update.sh             same again, keeping every answer
+#
+# Not the same file as docker-compose.yml beside it. That one is the
+# demonstration: it generates a clip, seeds a score and loops a player, so that
+# somebody with no films and no hardware can see the whole system work in one
+# command. This one assumes you have films, and that the scores it writes are
+# worth keeping.
+#
+# Two halves, and most installs want only the first:
+#
+#   the library     the studio and its database. Films in, scores out. This is
+#                   the part with a URL, and it is what runs on a server.
+#   the show        a player, a conductor and a software instrument, under the
+#                   `show` profile. This is the box in the room, and it is off
+#                   unless asked for, because a server in a cupboard has no
+#                   reason to be driving a fan.
+#
+#       docker compose --profile show up -d
+
+name: componium
+
+# Every container that touches a bind mount runs as the host user who owns it.
+# The image has its own unprivileged user, which is right for a container
+# writing only to its own volumes and wrong the moment it writes to a directory
+# somebody owns: the uid inside would not match the uid outside and every write
+# is refused, which surfaces as an analysis that will not start rather than as
+# a permission error anybody could read.
+x-user: &asuser
+  user: "${COMPONIUM_UID:-1000}:${COMPONIUM_GID:-1000}"
+
+x-image: &image
+  image: ${COMPONIUM_IMAGE:-ghcr.io/slicit/componium}:${COMPONIUM_TAG:-latest}
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: ${COMPONIUM_LOG_MAX_SIZE:-10m}
+      max-file: "${COMPONIUM_LOG_MAX_FILES:-3}"
+
+services:
+  # Derived data: observations, the analysis queue, kept score metadata.
+  #
+  # Losing it costs an afternoon of re-analysis and nothing else. Scores, rigs
+  # and films are files and are not in here. See
+  # docs/adr/0006-postgres-for-derived-data.md.
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: componium
+      POSTGRES_USER: componium
+      POSTGRES_PASSWORD: ${COMPONIUM_DB_PASSWORD:-componium}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      # Healthy means answering, not merely started. The studio opens the
+      # database as it boots and treats a refusal as fatal.
+      test: ["CMD-SHELL", "pg_isready -U componium"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    <<: *logging
+    restart: unless-stopped
+
+  # The library and the timeline editor. The part with a URL.
+  studio:
+    <<: [*image, *asuser, *logging]
+    command:
+      - studio
+      - -media=/media
+      - -scores=/scores
+      - -rig=/rigs
+      - -boards=/state/boards.toml
+      - -firmware=/firmware
+      - -addr=0.0.0.0:8722
+      # Where a board fetches firmware from when told to update itself.
+      #
+      # Required here and nowhere else. A studio on the host finds this out by
+      # opening a socket towards the board and reading which of its own
+      # addresses the kernel chose; in a container that is a bridge address on
+      # 172.16/12, reachable from the other containers and from nothing else,
+      # and nothing about it looks wrong from inside. install.sh asks for the
+      # host's address on the network the boards are on.
+      - -advertise=${COMPONIUM_ADVERTISE:-}
+    environment:
+      # The vision seam, off unless a command is named. Analysis works without
+      # it; naming one turns frame labelling on for every film analysed here.
+      COMPONIUM_VLM_COMMAND: ${COMPONIUM_VLM_COMMAND:-}
+      COMPONIUM_VLM_FRAMES: ${COMPONIUM_VLM_FRAMES:-}
+      COMPONIUM_VLM_EVERY: ${COMPONIUM_VLM_EVERY:-}
+      COMPONIUM_VLM_WORKERS: ${COMPONIUM_VLM_WORKERS:-}
+      COMPONIUM_VLM_HOST: ${COMPONIUM_VLM_HOST:-}
+      COMPONIUM_VLM_MODEL: ${COMPONIUM_VLM_MODEL:-}
+      COMPONIUM_VLM_API: ${COMPONIUM_VLM_API:-}
+      COMPONIUM_DB: postgres://componium:${COMPONIUM_DB_PASSWORD:-componium}@db:5432/componium
+    volumes:
+      # Films. Read and written: the library uploads, prepares and deletes.
+      - ${COMPONIUM_MEDIA}:/media
+      # Scores, and the descriptions kept beside them. The expensive output.
+      - ${COMPONIUM_SCORES}:/scores
+      # The shelf. Writable here and only here: the admin edits the rig files
+      # rather than keeping copies, which is what stops the studio and the
+      # conductor holding different ideas about what is on the end of a wire.
+      - ${COMPONIUM_RIGS}:/rigs
+      # Which boards exist and the secrets to reach them. A directory rather
+      # than a file, because the studio writes it by renaming a new one over
+      # the old and a single-file bind mount has no directory to do that in.
+      - ${COMPONIUM_STATE}:/state
+      # Firmware images the admin page can flash over USB. A build artefact of
+      # a different toolchain, so it is mounted rather than baked in. Absent is
+      # fine and the page says so.
+      - ${COMPONIUM_FIRMWARE}:/firmware:ro
+    ports:
+      - "${COMPONIUM_BIND:-0.0.0.0}:${COMPONIUM_PORT:-8722}:8722"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------- the show
+  #
+  # Everything below is the room rather than the library, and none of it starts
+  # without `--profile show`.
+
+  # mpv is the reference time source: it reports position once per frame, which
+  # is what makes a three millisecond clock possible.
+  player:
+    <<: [*image, *asuser, *logging]
+    profiles: [show]
+    entrypoint:
+      - mpv
+      - --no-config
+      - --vo=null
+      - --ao=null
+      - --idle=yes
+      - --input-ipc-server=/run/componium/mpv.sock
+    volumes:
+      - ${COMPONIUM_MEDIA}:/media:ro
+      - ipc:/run/componium
+    restart: unless-stopped
+
+  # A software instrument: exactly what the ESP32 firmware does, minus the
+  # pins. Useful on a server for proving the protocol end to end without
+  # hardware, and harmless to leave running.
+  node:
+    <<: [*image, *asuser, *logging]
+    profiles: [show]
+    command:
+      - node
+      - -id=${COMPONIUM_NODE_ID:-wind.main}
+      - -kind=${COMPONIUM_NODE_KIND:-wind}
+      - -addr=0.0.0.0:5570
+      - -latency=${COMPONIUM_NODE_LATENCY:-1200ms}
+    restart: unless-stopped
+
+  # The conductor. Follows the player, dispatches every cue early by its
+  # instrument's declared latency, and drives the rig over the network.
+  conductor:
+    <<: [*image, *asuser, *logging]
+    profiles: [show]
+    entrypoint:
+      - sh
+      - -c
+      - |
+        # Bounded, and loud when it expires. An unbounded wait here sits on a
+        # socket that is never coming while the container reports Up, which is
+        # a worse failure than crashing because it looks like success.
+        n=0
+        until [ -S /run/componium/mpv.sock ]; do
+          n=$$((n + 1))
+          if [ $$n -gt 150 ]; then
+            echo "no mpv socket after 30s: is the player running, and can it" >&2
+            echo "write to /run/componium?" >&2
+            exit 1
+          fi
+          sleep 0.2
+        done
+        exec componium play \
+          -score "$${COMPONIUM_SCORE:-/scores}" \
+          -rig /rigs \
+          -boards /state/boards.toml \
+          -socket /run/componium/mpv.sock
+    environment:
+      COMPONIUM_SCORE: ${COMPONIUM_SCORE:-}
+    volumes:
+      - ipc:/run/componium:ro
+      - ${COMPONIUM_SCORES}:/scores:ro
+      - ${COMPONIUM_RIGS}:/rigs:ro
+      - ${COMPONIUM_STATE}:/state:ro
+    depends_on:
+      player:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  # Only what nobody would miss.
+  #
+  # Films, scores, rigs and the board list are bind mounts, under paths
+  # install.sh asks for, so they can be dropped in, backed up and deleted from
+  # outside a container. A named volume would put a person's own films
+  # somewhere only Docker can reach, and the first time they wanted to copy one
+  # in they would have to learn what a volume is.
+  db:
+  ipc:
