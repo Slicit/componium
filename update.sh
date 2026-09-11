@@ -21,11 +21,18 @@
 #
 set -Eeuo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$here"
 
 if [ ! -f install.sh ]; then
   echo "install.sh is not beside update.sh; run this from the install directory." >&2
   exit 1
 fi
 
-exec ./install.sh --yes "$@"
+# --dir is the whole point of running this copy rather than a fresh one.
+#
+# Without it, install.sh falls back to its default of /opt/componium, so an
+# install anywhere else upgraded a directory it had nothing to do with and
+# created it if it was not there. The install being upgraded was left
+# untouched, on the old image, reporting success.
+exec ./install.sh --yes --dir "$here" "$@"

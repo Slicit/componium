@@ -245,8 +245,13 @@ resolve_version() {
   fi
 }
 
+# tmp is not local: the EXIT trap below runs after this function has
+# returned, in a scope where a local is gone, and `set -u` then ends the
+# script on its way out with "tmp: unbound variable" and no other clue.
+tmp=""
+
 download_bundle() {
-  local tmp url src item
+  local url src item
 
   # A checkout already on this machine, rather than a download. Useful for
   # installing an unreleased branch, and it is what the test uses: an
@@ -261,7 +266,7 @@ download_bundle() {
   fi
 
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' EXIT
+  trap 'rm -rf "${tmp:-}"' EXIT
 
   if [ "$VERSION" = "main" ]; then
     url="https://codeload.github.com/$REPO/tar.gz/refs/heads/main"
@@ -322,11 +327,26 @@ configure() {
     info "An existing configuration was found; keeping your settings."
     MEDIA="${MEDIA:-$(read_existing COMPONIUM_MEDIA)}"
     SCORES="${SCORES:-$(read_existing COMPONIUM_SCORES)}"
-    previous="$(read_existing COMPONIUM_PORT)"; [ -n "$previous" ] && PORT="$previous"
-    previous="$(read_existing COMPONIUM_BIND)"; [ -n "$previous" ] && BIND="$previous"
-    previous="$(read_existing COMPONIUM_ADVERTISE)"; [ -n "$previous" ] && ADVERTISE="$previous"
-    previous="$(read_existing COMPONIUM_PROFILES)"; [ "$previous" = "show" ] && WITH_SHOW="yes"
-    confirm "Review the settings again?" "no" || return
+    # `if` rather than `[ ... ] && VAR=x`: the short form returns 1 when the
+    # test is false, and under `set -e` that ends the script. Every line here
+    # is "keep the old value if there was one", so the ordinary case, an
+    # upgrade of an install that never turned the show profile on, stopped
+    # the updater with no message at all.
+    previous="$(read_existing COMPONIUM_PORT)"
+    if [ -n "$previous" ]; then PORT="$previous"; fi
+    previous="$(read_existing COMPONIUM_BIND)"
+    if [ -n "$previous" ]; then BIND="$previous"; fi
+    previous="$(read_existing COMPONIUM_ADVERTISE)"
+    if [ -n "$previous" ]; then ADVERTISE="$previous"; fi
+    previous="$(read_existing COMPONIUM_PROFILES)"
+    if [ "$previous" = "show" ]; then WITH_SHOW="yes"; fi
+    # `return 0`, not `return`. A bare return carries the exit status of the
+    # last command, which here is the `confirm` that just answered no, so
+    # configure returned 1 and `set -e` ended the installer. Every upgrade
+    # that kept its settings, which is what --yes always does, stopped here.
+    if ! confirm "Review the settings again?" "no"; then
+      return 0
+    fi
   fi
 
   say ""

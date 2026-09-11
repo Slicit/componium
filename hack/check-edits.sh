@@ -58,6 +58,13 @@ done
 # Cheap, and it is the thing nothing else notices: a feature file with no
 # Intent, a status nobody updated, a [[link]] to a file that was renamed, an
 # INDEX.md that has drifted from the files it indexes.
+# --- the installer ------------------------------------------------------
+# It has no compiler and no test runner of its own, and three of its faults
+# reached a release: an updater that upgraded the wrong directory, and two
+# separate ways a `set -e` shell ends without a word.
+say "installer"
+sh hack/check-install.sh > /dev/null
+
 say "logbook"
 python3 hack/logbook.py check
 python3 hack/logbook.py index --check
