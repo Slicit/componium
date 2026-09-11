@@ -53,7 +53,7 @@ func newServer(t *testing.T) (*Server, string) {
 func get(t *testing.T, s *Server) wireScore {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/score", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/score", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET returned %d: %s", rec.Code, rec.Body)
 	}
@@ -69,7 +69,7 @@ func put(t *testing.T, s *Server, in wireScore) *httptest.ResponseRecorder {
 	b, _ := json.Marshal(in)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/api/score", bytes.NewReader(b))
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 	return rec
 }
 
@@ -155,7 +155,7 @@ func TestInvalidEditIsRefusedAndTheFileIsUntouched(t *testing.T) {
 func TestServesThePage(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET / returned %d", rec.Code)
 	}
@@ -167,7 +167,7 @@ func TestServesThePage(t *testing.T) {
 func TestUnsupportedMethodIsRejected(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/score", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/api/score", nil))
 	if rec.Code != http.StatusMethodNotAllowed {
 		t.Errorf("DELETE returned %d, want 405", rec.Code)
 	}
@@ -180,7 +180,7 @@ func TestRigIsInferredWhenNoneIsGiven(t *testing.T) {
 	// to whatever the score addresses.
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/rig", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/rig", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("GET /api/rig returned %d", rec.Code)
 	}
@@ -204,7 +204,7 @@ func TestRigIsInferredWhenNoneIsGiven(t *testing.T) {
 func TestKindIsTakenFromTheInstrumentIdWhenInferring(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/rig", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/rig", nil))
 	var got wireRig
 	json.Unmarshal(rec.Body.Bytes(), &got)
 
@@ -232,7 +232,7 @@ func TestDefaultPositionsDifferByKind(t *testing.T) {
 func TestMediaIsRefusedWhenNoneIsLoaded(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("GET /media returned %d with no media, want 404", rec.Code)
 	}
@@ -258,7 +258,7 @@ func TestMediaSupportsRangeRequests(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/media", nil)
 	req.Header.Set("Range", "bytes=100-199")
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusPartialContent {
 		t.Fatalf("range request returned %d, want 206", rec.Code)
@@ -328,7 +328,7 @@ func mediaDir(t *testing.T) (*Server, string) {
 func TestMediaListingOnlyIncludesPlayableFiles(t *testing.T) {
 	s, _ := mediaDir(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/media", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/media", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("returned %d", rec.Code)
 	}
@@ -350,7 +350,7 @@ func TestMediaListingOnlyIncludesPlayableFiles(t *testing.T) {
 func TestMediaPickerServesTheNamedFile(t *testing.T) {
 	s, _ := mediaDir(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media?file=b.mkv", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media?file=b.mkv", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("returned %d", rec.Code)
 	}
@@ -377,7 +377,7 @@ func TestMediaPickerRefusesAnythingNotInTheListing(t *testing.T) {
 		q := req.URL.Query()
 		q.Set("file", attempt)
 		req.URL.RawQuery = q.Encode()
-		s.Handler().ServeHTTP(rec, req)
+		signedIn(t, s).ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusNotFound {
 			t.Errorf("%q returned %d, want 404", attempt, rec.Code)
@@ -388,7 +388,7 @@ func TestMediaPickerRefusesAnythingNotInTheListing(t *testing.T) {
 func TestMediaDefaultsToTheFirstFilm(t *testing.T) {
 	s, _ := mediaDir(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
 	if rec.Code != http.StatusOK {
 		t.Errorf("returned %d with no file named, want the first film", rec.Code)
 	}
@@ -408,7 +408,7 @@ func TestASingleFileStillWorks(t *testing.T) {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/media", nil))
 	if rec.Code != http.StatusOK || rec.Body.String() != "hello" {
 		t.Errorf("single file mode returned %d %q", rec.Code, rec.Body.String())
 	}
@@ -423,7 +423,7 @@ func TestAssetsAreNotCached(t *testing.T) {
 	// content-hashed bundles and does its own cache busting.
 	for _, path := range []string{"/legacy/", "/legacy/app.js", "/legacy/style.css"} {
 		rec := httptest.NewRecorder()
-		s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		if got := rec.Header().Get("Cache-Control"); !strings.Contains(got, "no-store") {
 			t.Errorf("%s served with Cache-Control %q, want no-store", path, got)
 		}
@@ -436,7 +436,7 @@ func TestAssetsAreNotCached(t *testing.T) {
 func TestAssetUrlsCarryAContentVersion(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
 
 	body := rec.Body.String()
 	if strings.Contains(body, "__V__") {
@@ -453,7 +453,7 @@ func TestTheVersionIsStableAndShort(t *testing.T) {
 	s, _ := newServer(t)
 	get := func() string {
 		rec := httptest.NewRecorder()
-		s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
+		signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
 		i := strings.Index(rec.Body.String(), "?v=")
 		if i < 0 {
 			t.Fatal("no version in the page")
@@ -508,7 +508,7 @@ func TestAFilmWithNoScoreIsRefusedRatherThanSubstituted(t *testing.T) {
 	q := req.URL.Query()
 	q.Set("film", "a.mp4")
 	req.URL.RawQuery = q.Encode()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("returned %d for a film with no score, want 404: %s", rec.Code, rec.Body)
@@ -529,7 +529,7 @@ func TestAFilmWithAScoreIsOpened(t *testing.T) {
 	q := req.URL.Query()
 	q.Set("film", "a.mp4")
 	req.URL.RawQuery = q.Encode()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("returned %d: %s", rec.Code, rec.Body)
@@ -548,7 +548,7 @@ func upload(t *testing.T, s *Server, name string, body []byte) *httptest.Respons
 	q.Set("name", name)
 	req.URL.RawQuery = q.Encode()
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 	return rec
 }
 
@@ -619,7 +619,7 @@ func TestDeleteRemovesTheFilm(t *testing.T) {
 	s, films := mediaDir(t)
 	req := httptest.NewRequest(http.MethodDelete, "/api/delete?file=a.mp4", nil)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("delete returned %d: %s", rec.Code, rec.Body)
@@ -636,7 +636,7 @@ func TestDeleteCanTakeTheScoreWithIt(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/delete?file=a.mp4&score=1", nil)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, req)
+	signedIn(t, s).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("delete returned %d: %s", rec.Code, rec.Body)
@@ -658,7 +658,7 @@ func TestDeleteRefusesAnythingNotInTheListing(t *testing.T) {
 		q.Set("file", attempt)
 		req.URL.RawQuery = q.Encode()
 		rec := httptest.NewRecorder()
-		s.Handler().ServeHTTP(rec, req)
+		signedIn(t, s).ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusNotFound {
 			t.Errorf("%q returned %d, want 404", attempt, rec.Code)

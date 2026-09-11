@@ -13,7 +13,7 @@ import (
 func TestTheRootServesTheRebuiltStudio(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d, want 200", rec.Code)
@@ -33,7 +33,7 @@ func TestTheRootServesTheRebuiltStudio(t *testing.T) {
 func TestTheOriginalStudioIsStillReachable(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/legacy/", nil))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d, want 200", rec.Code)
@@ -47,7 +47,7 @@ func TestLegacyAssetsResolve(t *testing.T) {
 	s, _ := newServer(t)
 	for _, path := range []string{"/legacy/app.js", "/legacy/room3d.js", "/legacy/style.css"} {
 		rec := httptest.NewRecorder()
-		s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		if rec.Code != http.StatusOK {
 			t.Errorf("%s gave %d", path, rec.Code)
 		}
@@ -59,7 +59,7 @@ func TestLegacyAssetsResolve(t *testing.T) {
 func TestUnknownPathsGoToTheApp(t *testing.T) {
 	s, _ := newServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/anything", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/anything", nil))
 	if rec.Code != http.StatusOK && rec.Code != http.StatusNotFound {
 		t.Errorf("status %d", rec.Code)
 	}

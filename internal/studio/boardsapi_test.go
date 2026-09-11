@@ -71,7 +71,7 @@ func do(t *testing.T, s *Server, method, url, body string) *httptest.ResponseRec
 		r.Header.Set("Content-Type", "application/json")
 	}
 	w := httptest.NewRecorder()
-	s.Handler().ServeHTTP(w, r)
+	signedIn(t, s).ServeHTTP(w, r)
 	return w
 }
 

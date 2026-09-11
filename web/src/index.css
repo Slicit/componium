@@ -938,6 +938,28 @@ button[aria-disabled='true']:hover {
   max-width: 200px;
 }
 
+/* Who is signed in. Beside Admin rather than in the list of places,
+   because it is a fact about this browser and not somewhere to go. */
+.nav-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-right: 4px;
+}
+.nav-role {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+/* The identity block already pushes itself right, so Admin beside it must
+   not push as well: two things claiming the same auto margin leaves a gap
+   between them the width of the bar. */
+.nav-who + .nav-admin {
+  margin-left: 0;
+}
+
 /* Hard right, and away from the others. It is the way out of the working
    surface rather than a place within it, and sitting next to Library made
    it read as a third of the same kind. */

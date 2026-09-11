@@ -486,12 +486,36 @@ wait_for_health() {
   return 1
 }
 
+# first_password prints the generated administrator once, if there is one.
+#
+# The studio writes it, not this script: it is the thing that knows whether
+# anybody existed already. It goes into a 0600 file in the state directory
+# rather than into this output alone, because an installer run under `tee`,
+# in CI, or over a shared terminal puts everything it prints somewhere it
+# was not meant to go.
+first_password() {
+  local file="$INSTALL_DIR/state/initial-admin-password.txt"
+  $SUDO test -f "$file" 2>/dev/null || return 0
+  local password
+  password="$($SUDO grep -E "^Password:" "$file" 2>/dev/null | head -1 | sed "s/^Password:[[:space:]]*//")"
+  [ -n "$password" ] || return 0
+  say ""
+  say "  ${BOLD}Sign in as${RESET}   admin"
+  say "  ${BOLD}Password${RESET}     $password"
+  say ""
+  say "  ${DIM}This studio is private: nothing in it is reachable without signing in."
+  say "  The password is also in $file, readable only by you."
+  say "  Change it under Admin, Users, then delete that file.${RESET}"
+}
+
 summary() {
   local host="${ADVERTISE:-localhost}"
   say ""
   say "${GREEN}${BOLD}Componium is running.${RESET}"
   say ""
   say "  ${BOLD}Studio${RESET}     http://$host:$PORT"
+  first_password
+  say ""
   say "  ${BOLD}Films${RESET}      $MEDIA"
   say "  ${BOLD}Scores${RESET}     $SCORES"
   say "  ${BOLD}Rigs${RESET}       $INSTALL_DIR/rigs"

@@ -3,5 +3,7 @@ node_modules/
 # The browser suite's output. The traces are worth keeping until the next
 # run and worth nothing after it.
 playwright-report/
+# The session the browser suite signs in with, written on every run.
+e2e/.signed-in.json
 test-results/
 .last-run.json

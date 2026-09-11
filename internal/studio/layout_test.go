@@ -40,7 +40,7 @@ cues = [ { t = "00:00:01.000", action = "gust" } ]
 func TestLayoutIsEmptyBeforeAnyoneArrangesAnything(t *testing.T) {
 	s, _ := layoutServer(t)
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d, want 200", rec.Code)
@@ -59,7 +59,7 @@ func TestLayoutRoundTrips(t *testing.T) {
 	body := `{"order":["b","a"],"collapsed":["a"],"hidden":["c"]}`
 
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/layout", strings.NewReader(body)))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/layout", strings.NewReader(body)))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("put status %d: %s", rec.Code, rec.Body)
 	}
@@ -77,7 +77,7 @@ func TestLayoutRoundTrips(t *testing.T) {
 	}
 
 	rec = httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
 	var got layoutState
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
 		t.Fatal(err)
@@ -95,7 +95,7 @@ func TestCorruptLayoutIsDiscardedRatherThanFatal(t *testing.T) {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/layout", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d, want 200", rec.Code)
 	}
@@ -105,7 +105,7 @@ func TestLayoutRefusesSomethingEnormous(t *testing.T) {
 	s, _ := layoutServer(t)
 	huge := `{"order":[` + strings.Repeat(`"x",`, 200000) + `"y"]}`
 	rec := httptest.NewRecorder()
-	s.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/layout", strings.NewReader(huge)))
+	signedIn(t, s).ServeHTTP(rec, httptest.NewRequest(http.MethodPut, "/api/layout", strings.NewReader(huge)))
 	if rec.Code == http.StatusOK {
 		t.Error("a quarter-megabyte arrangement was accepted")
 	}

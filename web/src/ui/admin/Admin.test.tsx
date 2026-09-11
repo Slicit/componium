@@ -533,7 +533,9 @@ describe('room defaults', () => {
 
 describe('the top bar', () => {
   it('offers the studio and the admin, and says which you are in', () => {
-    render(<Nav route={parseRoute('#/admin/firmware')} />);
+    render(
+      <Nav route={parseRoute('#/admin/firmware')} session={{ signedIn: true, role: 'admin' }} />,
+    );
     const admin = screen.getByRole('link', { name: 'Admin' });
     expect(admin.classList.contains('is-current')).toBe(true);
     expect(screen.getByRole('link', { name: 'Studio' }).classList.contains('is-current')).toBe(
@@ -542,7 +544,7 @@ describe('the top bar', () => {
   });
 
   it('gets back to the studio with a hash the router reads as home', () => {
-    render(<Nav route={parseRoute('#/admin')} />);
+    render(<Nav route={parseRoute('#/admin')} session={{ signedIn: true, role: 'admin' }} />);
     const studio = screen.getByRole('link', { name: 'Studio' }) as HTMLAnchorElement;
     expect(parseRoute(studio.getAttribute('href')!)).toEqual({ section: '', page: '' });
   });

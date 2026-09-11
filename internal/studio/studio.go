@@ -35,6 +35,7 @@ import (
 	"github.com/Slicit/componium/internal/score"
 	"github.com/Slicit/componium/internal/store"
 	"github.com/Slicit/componium/internal/store/pg"
+	"github.com/Slicit/componium/internal/users"
 )
 
 //go:embed assets
@@ -76,6 +77,10 @@ type Options struct {
 	// needed to reach them. Empty means they are not remembered, and the admin
 	// page says so rather than losing an edit.
 	Boards string
+	// Users is the file of who may sign in. Empty puts it beside the board
+	// list, or beside the scores when there is no board list, because both
+	// of those are already this installation's own directory.
+	Users string
 	// Firmware is a directory of node images the admin page can flash to a
 	// board over USB. Empty is the ordinary case: the image belongs to a
 	// different toolchain on a different release schedule, so it is a
@@ -130,6 +135,16 @@ type Server struct {
 	live        *live
 	liveProblem string
 	jobs        *Jobs
+	// users is who may open this studio, and sessions is who currently has.
+	// Sessions are in memory: a restart signs everybody out, which is a
+	// property rather than a gap, and the alternative is a second thing to
+	// keep, expire and back up for no benefit anybody asked for.
+	users    *users.Shelf
+	sessions *sessions
+	// firstRunNote is where the generated administrator password was left,
+	// when this installation generated one. Shown on the sign-in page so the
+	// first person is told where to look rather than left guessing.
+	firstRunNote string
 }
 
 // New opens a studio.
@@ -216,6 +231,46 @@ func New(o Options) (*Server, error) {
 	if s.sc == nil {
 		s.openFirstAvailable()
 	}
+	// Who may open this. Beside the board list when there is one, because
+	// that directory is already this installation's own and already holds
+	// credentials; beside the scores otherwise, because there is always a
+	// scores directory and a studio with nowhere to keep its users is a
+	// studio nobody can sign in to.
+	// Named, or derived from somewhere this installation already owns.
+	//
+	// Never a bare filename. `filepath.Join("", "users.toml")` is a
+	// relative path, so a studio started with only -score wrote its user
+	// list and the first administrator's password into whatever directory it
+	// happened to be launched from. The test suite did exactly that and left
+	// both files in the source tree.
+	usersPath := o.Users
+	if usersPath == "" {
+		dir := ""
+		switch {
+		case o.Boards != "":
+			dir = filepath.Dir(o.Boards)
+		case scores != "":
+			dir = scores
+		case o.Score != "":
+			dir = filepath.Dir(o.Score)
+		}
+		if dir == "" {
+			return nil, fmt.Errorf("nowhere to keep the user list: give -users, -boards, -scores or -media")
+		}
+		usersPath = filepath.Join(dir, "users.toml")
+	}
+	people, err := users.Load(usersPath)
+	if err != nil {
+		return nil, err
+	}
+	s.users = people
+	s.sessions = newSessions()
+	note, err := ensureFirstAdmin(people)
+	if err != nil {
+		return nil, err
+	}
+	s.firstRunNote = note
+
 	// An empty library is where every new installation starts.
 	//
 	// Refusing here is defensible when somebody named a score that is not
@@ -332,6 +387,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/prepare", s.handlePrepare)
 	mux.HandleFunc("/api/layout", s.handleLayout)
 	mux.HandleFunc("/api/analysis", s.handleAnalysis)
+	mux.HandleFunc("/api/session", s.handleSession)
+	mux.HandleFunc("/api/users", s.handleUsers)
+	mux.HandleFunc("/signin", s.handleSignin)
 	mux.HandleFunc("/api/versions", s.handleVersions)
 	mux.HandleFunc("/api/seen", s.handleSeen)
 	mux.HandleFunc("/api/context", s.handleContext)
@@ -343,7 +401,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/jobs", s.handleJobs)
 	mux.HandleFunc("/api/upload", s.handleUpload)
 	mux.HandleFunc("/api/delete", s.handleDelete)
-	return mux
+	return s.guard(mux)
 }
 
 // mediaFiles lists what can be previewed.

@@ -20,7 +20,7 @@ port=${COMPONIUM_E2E_PORT:-8798}
 root=${COMPONIUM_E2E_ROOT:-/tmp/componium-e2e}
 
 rm -rf "$root"
-mkdir -p "$root/films" "$root/scores" "$root/rigs"
+mkdir -p "$root/films" "$root/scores" "$root/rigs" "$root/state"
 
 # The films are empty files. The picker lists names and nothing here plays one,
 # so a byte of video would only make the fixture slow to build. The names are
@@ -35,6 +35,10 @@ for film in \
 do
     : > "$root/films/$film"
 done
+
+# The studio is private, so it makes an administrator on its first start and
+# leaves the password in $root/state. e2e/global-setup.ts reads it there and
+# signs in once for the whole run.
 
 # One score, so the timeline has cues and curve points to right click on, and
 # one rig so the instruments those cues name actually exist. Both are the
@@ -54,4 +58,5 @@ exec go run ./cmd/componium studio \
     -media "$root/films" \
     -scores "$root/scores" \
     -rig "$root/rigs" \
+    -users "$root/state/users.toml" \
     -addr "127.0.0.1:$port"

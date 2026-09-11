@@ -77,6 +77,59 @@ To pin or roll back:
 Every release publishes `ghcr.io/slicit/componium:<version>` as well as moving
 `:latest`, so a version you once ran is always still there.
 
+## Signing in
+
+The studio is private. Nothing in it is reachable without a session: not the
+timeline, not the library, not the API. The one exception is `/firmware/`,
+which an ESP32 fetches when it is told to update itself, because a board has
+no way to sign in and putting it behind the session would mean no board could
+ever update again.
+
+**The first administrator is made on the first start**, with a password
+generated for you and written to
+
+    /opt/componium/state/initial-admin-password.txt
+
+readable only by you. The installer prints it once as well. It is a file
+rather than only a line of output because an installer run under `tee`, in CI,
+or over somebody's shoulder puts everything it prints somewhere it was not
+meant to go. Change it under **Admin, Users**, then delete the file.
+
+### Who can do what
+
+| | |
+|---|---|
+| **viewer** | watches a score and changes nothing |
+| **operator** | authors scores, analyses films, runs shows |
+| **admin** | also the rigs, the boards, the firmware, the analysis settings, and this list |
+
+Add people under **Admin, Users**. Passwords are not kept: each person has a
+verifier their password reproduces, which cannot be turned back into one, so
+somebody who forgets theirs needs a new one set rather than recovered.
+Removing somebody, or changing their password or role, signs them out of
+wherever they are immediately.
+
+The last administrator cannot be removed or demoted. A studio with nobody who
+can add a user has one way back, which is editing a TOML file over SSH, and
+the person who would have to do that is the person who just locked themselves
+out of it.
+
+### What is stored, and where
+
+`/opt/componium/state/users.toml`, 0600, beside the board list, because both
+are credentials. Anybody who can read it can spend a GPU on it offline, so it
+belongs on the host and not in the repository or a backup that travels.
+
+Sessions live in memory, so restarting the studio signs everybody out. That is
+a property rather than a gap: the alternative is a second thing to keep, expire
+and back up, for a studio that takes two seconds to sign back in to.
+
+### If you lock yourself out
+
+Stop the studio, delete `state/users.toml`, start it again. It makes a new
+administrator and writes the password where it wrote the first one. Films,
+scores and rigs are untouched: the user list is the only thing that file holds.
+
 ## The first five minutes
 
 1. Copy a film into the media directory.
@@ -101,9 +154,12 @@ subtitles out of the box, which is most of what it uses anyway. Pointing it at
 a vision model is a separate decision with a GPU behind it; set
 `COMPONIUM_VLM_COMMAND` and the rest in `.env`.
 
-**The port is published on every interface** unless you say otherwise. There is
-no authentication in front of the studio, so on a machine that faces the
-internet put it behind something that has some, or bind it to one interface:
+**The port is published on every interface** unless you say otherwise. There
+is a sign-in in front of the studio now, and it is a sign-in rather than a
+hardened front door: no rate limiting, no second factor, and plain HTTP
+unless something in front of it is terminating TLS. On a machine that faces
+the internet, put it behind something that does those, or bind it to one
+interface:
 
 ```sh
 ./install.sh --bind 127.0.0.1

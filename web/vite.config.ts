@@ -30,6 +30,11 @@ export default defineConfig({
     proxy: {
       '/api': studio,
       '/media': studio,
+      /* Served by Go rather than by this bundle, deliberately: a sign-in
+       * page that depends on fetching the thing it is guarding cannot be
+       * the way past the guard. Without it here, the dev server answers
+       * /signin with index.html and the form never appears. */
+      '/signin': studio,
     },
   },
   test: {
