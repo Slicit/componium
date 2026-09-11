@@ -34,7 +34,15 @@ func TestTheScoreInTheReadmeLoads(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fence := "```"
+	// Three backticks, written as escapes rather than as themselves.
+	//
+	// check-edits.sh greps Go files for two adjacent backticks, because that
+	// is what a shell leaves behind when it has eaten the contents of a raw
+	// string or a struct tag, and both of those have shipped here. A markdown
+	// fence written literally contains exactly that pattern, so this file
+	// broke the check the day it was added: a test about the README made the
+	// tool that guards every edit report a mangled file.
+	fence := "\x60\x60\x60"
 	found := regexp.MustCompile("(?s)" + fence + "toml\n(.*?)" + fence).FindSubmatch(body)
 	if found == nil {
 		t.Fatal("the README no longer shows a score; if that is deliberate, delete this test")
